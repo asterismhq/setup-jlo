@@ -16,7 +16,7 @@ export function evaluatePullRequestState(view: {
   state: string
   mergedAt: string | null
 }): PollEvaluation {
-  if (view.mergedAt && view.mergedAt !== 'null') {
+  if (view.mergedAt) {
     return { status: 'merged', mergedAt: view.mergedAt }
   }
   if (view.state.toUpperCase() === 'CLOSED') {

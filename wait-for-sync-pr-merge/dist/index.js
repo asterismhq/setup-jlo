@@ -30233,7 +30233,7 @@ exports.evaluatePullRequestState = evaluatePullRequestState;
 const core = __importStar(__nccwpck_require__(7484));
 const src_1 = __nccwpck_require__(9811);
 function evaluatePullRequestState(view) {
-    if (view.mergedAt && view.mergedAt !== 'null') {
+    if (view.mergedAt) {
         return { status: 'merged', mergedAt: view.mergedAt };
     }
     if (view.state.toUpperCase() === 'CLOSED') {
