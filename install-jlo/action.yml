@@ -1,0 +1,26 @@
+name: install-jlo
+description: Install jlo CLI based on .jlo/.jlo-version resolved from the target branch control plane
+inputs:
+  token:
+    description: GitHub token with read access to target and release repositories
+    required: true
+  submodule_token:
+    description: Optional token for authenticated submodule fetch in main mode
+    required: false
+  target_branch:
+    description: Control-plane branch to read .jlo/.jlo-version from
+    required: false
+  repository:
+    description: Repository containing .jlo/.jlo-version
+    required: false
+  release_repository:
+    description: Repository hosting jlo installer release assets
+    required: false
+outputs:
+  version-token:
+    description: Raw token read from .jlo/.jlo-version
+  install-mode:
+    description: Resolved installation mode (release-tag or main)
+runs:
+  using: node20
+  main: dist/index.js

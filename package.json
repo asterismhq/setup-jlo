@@ -1,0 +1,33 @@
+{
+  "name": "jlo-actions",
+  "version": "0.1.0",
+  "description": "Standalone GitHub Actions monorepo for jlo runtime actions",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "vitest run",
+    "build": "node scripts/build-all.mjs",
+    "package": "npm run package:install-jlo && npm run package:wait",
+    "package:install-jlo": "ncc build -s install-jlo/src/index.ts -o install-jlo/dist --license licenses.txt",
+    "package:wait": "ncc build -s wait-for-sync-pr-merge/src/index.ts -o wait-for-sync-pr-merge/dist --license licenses.txt",
+    "verify:dist": "npm run package && git diff --exit-code -- install-jlo/dist wait-for-sync-pr-merge/dist",
+    "ci": "npm run lint && npm test && npm run build && npm run verify:dist"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.29.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^24.0.3",
+    "@vercel/ncc": "^0.38.3",
+    "eslint": "^9.29.0",
+    "globals": "^16.2.0",
+    "js-yaml": "^4.1.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.34.1",
+    "vitest": "^3.2.4"
+  }
+}

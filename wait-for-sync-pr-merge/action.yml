@@ -1,0 +1,26 @@
+name: wait-for-sync-pr-merge
+description: Wait for a known sync pull request to merge and fail on closed-without-merge or timeout
+inputs:
+  token:
+    description: GitHub token with read access to pull requests
+    required: true
+  repository:
+    description: Repository slug in owner/repo form
+    required: false
+  pr_number:
+    description: Pull request number to poll
+    required: true
+  poll_interval_seconds:
+    description: Poll interval in seconds
+    required: false
+  max_attempts:
+    description: Maximum polling attempts before timeout
+    required: false
+outputs:
+  merged_at:
+    description: PR merged timestamp when merge is detected
+  final_state:
+    description: Final observed PR state
+runs:
+  using: node20
+  main: dist/index.js
