@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { resolveInstallMode } from '../install-jlo/src/index'
-import { parseVersionToken } from '../packages/shared/src/validation'
+import { resolveInstallMode } from '../src/index'
+import { parseVersionToken } from '../src/version-token'
 
-describe('install-jlo version token behavior', () => {
+describe('setup-jlo version token behavior', () => {
   it('resolves semver token to release-tag mode', () => {
     expect(resolveInstallMode('0.5.2')).toBe('release-tag')
   })

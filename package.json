@@ -1,17 +1,15 @@
 {
-  "name": "jlo-actions",
+  "name": "setup-jlo",
   "version": "0.1.0",
-  "description": "Standalone GitHub Actions monorepo for jlo runtime actions",
+  "description": "GitHub Action for setting up the jlo CLI",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
     "lint": "eslint .",
     "test": "vitest run",
-    "build": "node scripts/build-all.mjs",
-    "package": "npm run package:install-jlo && npm run package:wait",
-    "package:install-jlo": "ncc build -s install-jlo/src/index.ts -o install-jlo/dist --license licenses.txt",
-    "package:wait": "ncc build -s wait-for-sync-pr-merge/src/index.ts -o wait-for-sync-pr-merge/dist --license licenses.txt",
-    "verify:dist": "npm run package && git diff --exit-code -- install-jlo/dist wait-for-sync-pr-merge/dist",
+    "build": "tsc --noEmit",
+    "package": "ncc build -s src/index.ts -o dist --license licenses.txt",
+    "verify:dist": "node ./scripts/verify-dist.mjs",
     "ci": "npm run lint && npm test && npm run build && npm run verify:dist"
   },
   "dependencies": {

@@ -1,32 +1,40 @@
-# jlo-actions
+# setup-jlo
 
-Standalone TypeScript GitHub Actions monorepo for reusable jlo workflow runtime actions.
+GitHub Action for setting up the `jlo` CLI after resolving `.jlo/.jlo-version` from the control-plane target branch.
 
-## Public actions
-
-- `asterismhq/jlo-actions/install-jlo@v1`
-  - installs `jlo` after resolving `.jlo/.jlo-version` from the control-plane target branch
-  - required input: `token`
-  - action contract: [`install-jlo/README.md`](install-jlo/README.md)
-- `asterismhq/jlo-actions/wait-for-sync-pr-merge@v1`
-  - polls a known pull request until merge and fails on close-without-merge or timeout
-  - required inputs: `token`, `pr_number`
-  - action contract: [`wait-for-sync-pr-merge/README.md`](wait-for-sync-pr-merge/README.md)
-
-## Minimal usage
+## Usage
 
 ```yaml
-- uses: asterismhq/jlo-actions/install-jlo@v1
+- uses: asterismhq/setup-jlo@v1
   with:
     token: ${{ secrets.JLO_RELEASE_PAT }}
-
-- uses: asterismhq/jlo-actions/wait-for-sync-pr-merge@v1
-  with:
-    token: ${{ secrets.JLO_BOT_PAT }}
-    pr_number: ${{ steps.sync_pr.outputs.pr_number }}
+    submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 ```
 
-Each public action requires explicit inputs. The root README is an index. Per-action inputs, outputs, permissions, and failure modes are defined in each action README.
+## Inputs
+
+- `token` (required): token with read access to the target repository and release assets
+- `submodule_token` (optional): token for private submodule fetch in `main` mode builds
+- `target_branch` (optional): branch containing `.jlo/.jlo-version`, defaults to `JLO_TARGET_BRANCH`
+- `repository` (optional): repository containing `.jlo/.jlo-version`, defaults to `GITHUB_REPOSITORY`
+- `release_repository` (optional): installer release source, defaults to `asterismhq/jlo`
+
+## Outputs
+
+- `version-token`: raw token from `.jlo/.jlo-version`
+- `install-mode`: `release-tag` or `main`
+
+## Required permissions
+
+- repository contents read for control-plane version resolution
+- repository contents read for installer release asset download
+
+## Failure modes
+
+- missing `.jlo/.jlo-version` on target branch
+- invalid token format, must be semver or `main`
+- unsupported runner OS or architecture for installer bootstrap
+- installer asset download failure or installer execution failure
 
 ## Repository commands
 
@@ -35,6 +43,7 @@ Each public action requires explicit inputs. The root README is an index. Per-ac
 - `npm run build`
 - `npm run package`
 - `npm run verify:dist`
+- `npm run ci`
 
 ## Local verification
 
@@ -43,19 +52,11 @@ npm ci
 npm run ci
 ```
 
-## Runner model
-
-Repository workflows run on self-hosted runners.
-
-Node.js is still fixed by workflow configuration through `.nvmrc` and `actions/setup-node`.
-
 ## Release model
 
-The repository versions as one unit.
+The repository versions as one action.
 
 - tags: `vX.Y.Z`
 - moving major tag for consumers: `v1`
 
-Both public actions execute from committed `dist/index.js` artifacts.
-`dist/` is part of the repository contents used by `uses:` and is not gitignored.
-Release tags publish repository state, not bundled action files as separate release assets.
+`dist/` is committed because `uses:` executes repository contents directly from the tagged revision.

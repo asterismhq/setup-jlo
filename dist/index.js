@@ -29922,89 +29922,7 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 5500:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.parseRepositorySlug = parseRepositorySlug;
-exports.createGitHubClient = createGitHubClient;
-exports.readTextFileFromBranch = readTextFileFromBranch;
-exports.getPullRequestView = getPullRequestView;
-const github_1 = __nccwpck_require__(3228);
-function parseRepositorySlug(slug) {
-    const [owner, repo] = slug.split('/');
-    if (!owner || !repo) {
-        throw new Error(`Invalid repository '${slug}'. Expected '<owner>/<repo>' format.`);
-    }
-    return { owner, repo };
-}
-function createGitHubClient(token) {
-    return (0, github_1.getOctokit)(token);
-}
-async function readTextFileFromBranch(options) {
-    const { token, repository, branch, path } = options;
-    const octokit = createGitHubClient(token);
-    const repoRef = parseRepositorySlug(repository);
-    const response = await octokit.rest.repos.getContent({
-        owner: repoRef.owner,
-        repo: repoRef.repo,
-        path,
-        ref: branch
-    });
-    if (!('content' in response.data) || !response.data.content) {
-        throw new Error(`File '${path}' is not a regular text file in '${branch}'.`);
-    }
-    return Buffer.from(response.data.content, 'base64').toString('utf8');
-}
-async function getPullRequestView(options) {
-    const octokit = createGitHubClient(options.token);
-    const repoRef = parseRepositorySlug(options.repository);
-    const response = await octokit.rest.pulls.get({
-        owner: repoRef.owner,
-        repo: repoRef.repo,
-        pull_number: options.pullNumber
-    });
-    return {
-        state: response.data.state,
-        mergedAt: response.data.merged_at
-    };
-}
-
-
-/***/ }),
-
-/***/ 9811:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__nccwpck_require__(5500), exports);
-__exportStar(__nccwpck_require__(7458), exports);
-__exportStar(__nccwpck_require__(4278), exports);
-__exportStar(__nccwpck_require__(3533), exports);
-__exportStar(__nccwpck_require__(1468), exports);
-
-
-/***/ }),
-
-/***/ 7458:
+/***/ 8683:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -30045,7 +29963,6 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getRequiredInput = getRequiredInput;
 exports.getOptionalInput = getOptionalInput;
-exports.getPositiveIntegerInput = getPositiveIntegerInput;
 const core = __importStar(__nccwpck_require__(7484));
 function getRequiredInput(name) {
     const value = core.getInput(name);
@@ -30061,22 +29978,46 @@ function getOptionalInput(name) {
     }
     return value.trim();
 }
-function getPositiveIntegerInput(name, fallback) {
-    const raw = getOptionalInput(name);
-    if (!raw) {
-        return fallback;
+
+
+/***/ }),
+
+/***/ 7890:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.parseRepositorySlug = parseRepositorySlug;
+exports.readTextFileFromBranch = readTextFileFromBranch;
+const github_1 = __nccwpck_require__(3228);
+function parseRepositorySlug(slug) {
+    const [owner, repo] = slug.split('/');
+    if (!owner || !repo) {
+        throw new Error(`Invalid repository '${slug}'. Expected '<owner>/<repo>' format.`);
     }
-    const parsed = Number.parseInt(raw, 10);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-        throw new Error(`Input '${name}' must be a positive integer.`);
+    return { owner, repo };
+}
+async function readTextFileFromBranch(options) {
+    const { token, repository, branch, path } = options;
+    const octokit = (0, github_1.getOctokit)(token);
+    const repoRef = parseRepositorySlug(repository);
+    const response = await octokit.rest.repos.getContent({
+        owner: repoRef.owner,
+        repo: repoRef.repo,
+        path,
+        ref: branch
+    });
+    if (!('content' in response.data) || !response.data.content) {
+        throw new Error(`File '${path}' is not a regular text file in '${branch}'.`);
     }
-    return parsed;
+    return Buffer.from(response.data.content, 'base64').toString('utf8');
 }
 
 
 /***/ }),
 
-/***/ 4278:
+/***/ 9407:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -30115,60 +30056,168 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.info = info;
-exports.warning = warning;
-exports.debug = debug;
-exports.failure = failure;
+exports.resolveInstallMode = resolveInstallMode;
+const node_fs_1 = __nccwpck_require__(3024);
+const node_os_1 = __nccwpck_require__(8161);
+const node_path_1 = __nccwpck_require__(6760);
+const node_child_process_1 = __nccwpck_require__(1421);
 const core = __importStar(__nccwpck_require__(7484));
-function info(message) {
-    core.info(message);
+const action_inputs_1 = __nccwpck_require__(8683);
+const github_client_1 = __nccwpck_require__(7890);
+const version_token_1 = __nccwpck_require__(2311);
+function resolveInstallMode(token) {
+    return (0, version_token_1.parseVersionToken)(token).kind === 'release' ? 'release-tag' : 'main';
 }
-function warning(message) {
-    core.warning(message);
+function detectInstallerPlatform() {
+    const nodePlatform = process.platform;
+    const nodeArch = process.arch;
+    let os;
+    if (nodePlatform === 'linux') {
+        os = 'linux';
+    }
+    else if (nodePlatform === 'darwin') {
+        os = 'darwin';
+    }
+    else {
+        throw new Error(`Unsupported OS for installer bootstrap: ${nodePlatform}`);
+    }
+    let arch;
+    if (nodeArch === 'x64') {
+        arch = 'x86_64';
+    }
+    else if (nodeArch === 'arm64') {
+        arch = 'aarch64';
+    }
+    else {
+        throw new Error(`Unsupported architecture for installer bootstrap: ${nodeArch}`);
+    }
+    return { os, arch };
 }
-function debug(message) {
-    core.debug(message);
+function buildInstallerAssetCandidates(os, arch) {
+    if (arch === 'x86_64') {
+        return [`jlo-installer-${os}-x86_64`, `jlo-installer-${os}-amd64`];
+    }
+    return [`jlo-installer-${os}-aarch64`, `jlo-installer-${os}-arm64`];
 }
-function failure(message) {
-    throw new Error(message);
-}
-
-
-/***/ }),
-
-/***/ 3533:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.retry = retry;
-exports.sleep = sleep;
-async function retry(operation, options) {
-    const { maxAttempts, delayMs } = options;
-    let lastError;
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-        try {
-            return await operation();
+async function fetchInstallerAsset(options) {
+    const { token, releaseRepository, installerReleaseTag, candidates } = options;
+    const { owner, repo } = (0, github_client_1.parseRepositorySlug)(releaseRepository);
+    const headers = {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'setup-jlo'
+    };
+    const releaseUrl = installerReleaseTag
+        ? `https://api.github.com/repos/${owner}/${repo}/releases/tags/${installerReleaseTag}`
+        : `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
+    const releaseResponse = await fetch(releaseUrl, { headers });
+    if (!releaseResponse.ok) {
+        throw new Error(`Failed to query installer release metadata from '${releaseRepository}' (HTTP ${releaseResponse.status}).`);
+    }
+    const releaseJson = (await releaseResponse.json());
+    const assets = releaseJson.assets ?? [];
+    const matched = candidates
+        .map((candidate) => assets.find((asset) => asset.name === candidate))
+        .find((asset) => asset !== undefined);
+    if (!matched) {
+        throw new Error(`No matching installer asset for ${candidates.join(', ')} in '${releaseRepository}'.`);
+    }
+    const downloadResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/assets/${matched.id}`, {
+        headers: {
+            ...headers,
+            Accept: 'application/octet-stream'
         }
-        catch (error) {
-            lastError = error;
-            if (attempt === maxAttempts) {
-                break;
+    });
+    if (!downloadResponse.ok) {
+        throw new Error(`Failed to download installer asset '${matched.name}' (HTTP ${downloadResponse.status}).`);
+    }
+    const arrayBuffer = await downloadResponse.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+}
+async function resolveInstallerBinary(options) {
+    const bootstrapPath = process.env.JLO_INSTALLER_BOOTSTRAP_BIN;
+    if (bootstrapPath && bootstrapPath.trim().length > 0) {
+        return { path: bootstrapPath, cleanup: () => undefined };
+    }
+    const platform = detectInstallerPlatform();
+    const candidates = buildInstallerAssetCandidates(platform.os, platform.arch);
+    const installerBinary = await fetchInstallerAsset({
+        token: options.token,
+        releaseRepository: options.releaseRepository,
+        installerReleaseTag: options.installerReleaseTag,
+        candidates
+    });
+    const directory = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)((0, node_os_1.tmpdir)(), 'jlo-installer-'));
+    const binaryPath = (0, node_path_1.join)(directory, 'jlo-installer');
+    (0, node_fs_1.writeFileSync)(binaryPath, installerBinary);
+    (0, node_fs_1.chmodSync)(binaryPath, 0o755);
+    return {
+        path: binaryPath,
+        cleanup: () => (0, node_fs_1.rmSync)(directory, { recursive: true, force: true })
+    };
+}
+async function run() {
+    const token = (0, action_inputs_1.getRequiredInput)('token');
+    const submoduleToken = (0, action_inputs_1.getOptionalInput)('submodule_token');
+    const repository = (0, action_inputs_1.getOptionalInput)('repository') ?? process.env.GITHUB_REPOSITORY;
+    const targetBranch = (0, action_inputs_1.getOptionalInput)('target_branch') ?? process.env.JLO_TARGET_BRANCH;
+    const releaseRepository = (0, action_inputs_1.getOptionalInput)('release_repository') ?? 'asterismhq/jlo';
+    if (!repository) {
+        throw new Error('Input or environment for repository is required.');
+    }
+    if (!targetBranch) {
+        throw new Error('Input or environment for target_branch is required.');
+    }
+    const versionFile = await (0, github_client_1.readTextFileFromBranch)({
+        token,
+        repository,
+        branch: targetBranch,
+        path: '.jlo/.jlo-version'
+    });
+    const versionToken = versionFile.trim();
+    const installMode = resolveInstallMode(versionToken);
+    core.info(`Resolved .jlo/.jlo-version='${versionToken}' from ${repository}@${targetBranch} (${installMode}).`);
+    core.setOutput('version-token', versionToken);
+    core.setOutput('install-mode', installMode);
+    const installer = await resolveInstallerBinary({
+        token,
+        releaseRepository,
+        installerReleaseTag: process.env.JLO_INSTALLER_RELEASE_TAG
+    });
+    try {
+        const result = (0, node_child_process_1.spawnSync)(installer.path, ['install'], {
+            stdio: 'inherit',
+            env: {
+                ...process.env,
+                INSTALL_JLO_TOKEN: token,
+                INSTALL_JLO_SUBMODULE_TOKEN: submoduleToken ?? ''
             }
-            await sleep(delayMs);
+        });
+        if (typeof result.status === 'number' && result.status !== 0) {
+            throw new Error(`Installer failed with exit code ${result.status}.`);
+        }
+        if (result.error) {
+            throw result.error;
         }
     }
-    throw lastError;
+    finally {
+        installer.cleanup();
+    }
 }
-function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+if (require.main === require.cache[eval('__filename')]) {
+    run().catch((error) => {
+        if (error instanceof Error) {
+            core.setFailed(error.message);
+            return;
+        }
+        core.setFailed(String(error));
+    });
 }
 
 
 /***/ }),
 
-/***/ 1468:
+/***/ 2311:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -30185,104 +30234,6 @@ function parseVersionToken(token) {
         return { kind: 'release', version: normalized, tag: `v${normalized}` };
     }
     throw new Error(`Invalid .jlo/.jlo-version token '${normalized}'. Expected semver or 'main'.`);
-}
-
-
-/***/ }),
-
-/***/ 7653:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.evaluatePullRequestState = evaluatePullRequestState;
-const core = __importStar(__nccwpck_require__(7484));
-const src_1 = __nccwpck_require__(9811);
-function evaluatePullRequestState(view) {
-    if (view.mergedAt) {
-        return { status: 'merged', mergedAt: view.mergedAt };
-    }
-    if (view.state.toUpperCase() === 'CLOSED') {
-        return { status: 'closed_without_merge' };
-    }
-    return { status: 'pending' };
-}
-async function run() {
-    const token = (0, src_1.getRequiredInput)('token');
-    const repository = (0, src_1.getOptionalInput)('repository') ?? process.env.GITHUB_REPOSITORY;
-    const pullNumber = Number.parseInt((0, src_1.getRequiredInput)('pr_number'), 10);
-    const pollIntervalSeconds = (0, src_1.getPositiveIntegerInput)('poll_interval_seconds', 5);
-    const maxAttempts = (0, src_1.getPositiveIntegerInput)('max_attempts', 60);
-    if (!repository) {
-        throw new Error('Input or environment for repository is required.');
-    }
-    if (!Number.isFinite(pullNumber) || pullNumber <= 0) {
-        throw new Error("Input 'pr_number' must be a positive integer.");
-    }
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-        const view = await (0, src_1.getPullRequestView)({
-            token,
-            repository,
-            pullNumber
-        });
-        const decision = evaluatePullRequestState(view);
-        if (decision.status === 'merged') {
-            core.info(`Sync PR #${pullNumber} merged at ${decision.mergedAt}.`);
-            core.setOutput('merged_at', decision.mergedAt);
-            core.setOutput('final_state', 'merged');
-            return;
-        }
-        if (decision.status === 'closed_without_merge') {
-            throw new Error(`Sync PR #${pullNumber} closed without merge.`);
-        }
-        if (attempt < maxAttempts) {
-            await (0, src_1.sleep)(pollIntervalSeconds * 1000);
-        }
-    }
-    throw new Error(`Timed out waiting for sync PR #${pullNumber} to merge.`);
-}
-if (require.main === require.cache[eval('__filename')]) {
-    run().catch((error) => {
-        if (error instanceof Error) {
-            core.setFailed(error.message);
-            return;
-        }
-        core.setFailed(String(error));
-    });
 }
 
 
@@ -30392,6 +30343,14 @@ module.exports = require("net");
 
 /***/ }),
 
+/***/ 1421:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:child_process");
+
+/***/ }),
+
 /***/ 7598:
 /***/ ((module) => {
 
@@ -30405,6 +30364,30 @@ module.exports = require("node:crypto");
 
 "use strict";
 module.exports = require("node:events");
+
+/***/ }),
+
+/***/ 3024:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:fs");
+
+/***/ }),
+
+/***/ 8161:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:os");
+
+/***/ }),
+
+/***/ 6760:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:path");
 
 /***/ }),
 
@@ -32203,7 +32186,7 @@ module.exports = parseParams
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(7653);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(9407);
 /******/ 	module.exports = __webpack_exports__;
 /******/ 	
 /******/ })()

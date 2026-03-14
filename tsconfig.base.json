@@ -17,9 +17,7 @@
     ]
   },
   "include": [
-    "packages/**/*.ts",
-    "install-jlo/**/*.ts",
-    "wait-for-sync-pr-merge/**/*.ts",
+    "src/**/*.ts",
     "tests/**/*.ts"
   ]
 }
