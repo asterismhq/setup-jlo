@@ -1,6 +1,7 @@
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
-import { join, relative, resolve } from 'node:path'
+import { createRequire } from 'node:module'
+import { dirname, join, relative, resolve } from 'node:path'
 
 function listFiles(directory) {
   const entries = readdirSync(directory, { withFileTypes: true })
@@ -23,7 +24,10 @@ const tempRoot = resolve(repoRoot, '.tmp')
 mkdirSync(tempRoot, { recursive: true })
 const workspace = mkdtempSync(join(tempRoot, 'verify-dist-'))
 const generatedDist = join(workspace, 'dist')
-const nccPath = resolve(repoRoot, 'node_modules', '.bin', 'ncc')
+const require = createRequire(import.meta.url)
+const nccPkgPath = require.resolve('@vercel/ncc/package.json')
+const nccPkg = JSON.parse(readFileSync(nccPkgPath, 'utf8'))
+const nccPath = resolve(dirname(nccPkgPath), nccPkg.bin.ncc)
 
 try {
   const result = spawnSync(
