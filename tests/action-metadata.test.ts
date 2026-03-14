@@ -18,18 +18,10 @@ function loadActionFile(path: string): ActionFile {
 }
 
 describe('action metadata contracts', () => {
-  it('install-jlo declares node20 and dist entrypoint', () => {
-    const action = loadActionFile('install-jlo/action.yml')
+  it('setup-jlo declares node20 and dist entrypoint', () => {
+    const action = loadActionFile('action.yml')
     expect(action.runs.using).toBe('node20')
     expect(action.runs.main).toBe('dist/index.js')
-    expect(action.inputs.token.required).toBe(true)
-  })
-
-  it('wait-for-sync-pr-merge declares node20 and required PR input', () => {
-    const action = loadActionFile('wait-for-sync-pr-merge/action.yml')
-    expect(action.runs.using).toBe('node20')
-    expect(action.runs.main).toBe('dist/index.js')
-    expect(action.inputs.pr_number.required).toBe(true)
     expect(action.inputs.token.required).toBe(true)
   })
 })

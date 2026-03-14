@@ -1,5 +1,5 @@
-name: install-jlo
-description: Install jlo CLI based on .jlo/.jlo-version resolved from the target branch control plane
+name: setup-jlo
+description: Set up the jlo CLI based on .jlo/.jlo-version resolved from the target branch control plane
 inputs:
   token:
     description: GitHub token with read access to target and release repositories

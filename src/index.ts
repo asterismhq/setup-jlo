@@ -3,13 +3,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import * as core from '@actions/core'
-import {
-  getOptionalInput,
-  getRequiredInput,
-  parseRepositorySlug,
-  parseVersionToken,
-  readTextFileFromBranch
-} from '../../packages/shared/src'
+import { getOptionalInput, getRequiredInput } from './action-inputs'
+import { parseRepositorySlug, readTextFileFromBranch } from './github-client'
+import { parseVersionToken } from './version-token'
 
 type InstallerTarget = 'x86_64' | 'aarch64'
 type InstallerOs = 'linux' | 'darwin'
@@ -64,7 +60,7 @@ async function fetchInstallerAsset(options: {
   const headers = {
     Authorization: `Bearer ${token}`,
     Accept: 'application/vnd.github+json',
-    'User-Agent': 'jlo-actions-install-jlo'
+    'User-Agent': 'setup-jlo'
   }
 
   const releaseUrl = installerReleaseTag
