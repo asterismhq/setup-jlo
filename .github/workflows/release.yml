@@ -3,7 +3,7 @@ name: release
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*.*.*'
 
 permissions:
   contents: write
@@ -11,7 +11,17 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      major-tag: ${{ steps.version.outputs.major_tag }}
     steps:
+      - id: version
+        name: Resolve release tags
+        run: |
+          if [[ ! "${GITHUB_REF_NAME}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "Expected release tag in vX.Y.Z format, got '${GITHUB_REF_NAME}'." >&2
+            exit 1
+          fi
+          echo "major_tag=v${BASH_REMATCH[1]}" >> "${GITHUB_OUTPUT}"
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
@@ -21,3 +31,22 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+
+  move-major-tag:
+    needs: release
+    runs-on: ubuntu-latest
+    concurrency:
+      group: move-major-tag-${{ needs.release.outputs.major-tag }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref }}
+      - name: Update moving major tag
+        env:
+          MAJOR_TAG: ${{ needs.release.outputs.major-tag }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag --force --annotate "${MAJOR_TAG}" --message "Update ${MAJOR_TAG} to ${GITHUB_REF_NAME}" "${GITHUB_SHA}"
+          git push origin "refs/tags/${MAJOR_TAG}" --force
