@@ -1,8 +1,10 @@
 # setup-jlo
 
-GitHub Action for setting up the `jlo` CLI after resolving `.jlo/.jlo-version` from the control-plane target branch.
+`setup-jlo` is a GitHub Action that installs the `jlo` CLI after resolving `.jlo/.jlo-version` from the control-plane target branch. The action owns GitHub Actions execution for both release-tag installation and `main` source-build installation.
 
-## Usage
+The repository packages one distributable action. The runtime contract is intentionally narrow: resolve the version token from the target repository, install the matching `jlo` binary, and place it on the GitHub Actions path with explicit failures when prerequisites or permissions are missing.
+
+## Quick Start
 
 ```yaml
 - uses: asterismhq/setup-jlo@v1
@@ -11,52 +13,20 @@ GitHub Action for setting up the `jlo` CLI after resolving `.jlo/.jlo-version` f
     submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 ```
 
-## Inputs
+## Usage
 
-- `token` (required): token with read access to the target repository and release assets
-- `submodule_token` (optional): token for private submodule fetch in `main` mode builds
-- `target_branch` (optional): branch containing `.jlo/.jlo-version`, defaults to `JLO_TARGET_BRANCH`
-- `repository` (optional): repository containing `.jlo/.jlo-version`, defaults to `GITHUB_REPOSITORY`
-- `release_repository` (optional): `jlo` runtime release source, defaults to `asterismhq/jlo`
+Usage centers on two install modes: semver tokens download `jlo` runtime release assets and the `main` token builds `jlo` from source on the runner. The action also supports non-default target repositories, target branches, and release repositories.
 
-## Outputs
+See [docs/usage.md](docs/usage.md) for the input surface, install modes, and workflow examples.
 
-- `version-token`: raw token from `.jlo/.jlo-version`
-- `install-mode`: `release-tag` or `main`
+## Architecture
 
-## Required permissions
+The repository contains one action runtime under `src/`, one committed distribution under `dist/`, and one verification path that compares committed `dist/` output with fresh `ncc` packaging. Version-token parsing stays aligned with the `jlo` install contract while GitHub Actions execution remains local to this repository.
 
-- repository contents read for control-plane version resolution
-- repository contents read for `jlo` runtime release asset download
+See [docs/architecture.md](docs/architecture.md) for ownership boundaries, runtime flow, caching, and failure invariants.
 
-## Failure modes
+## Configuration
 
-- missing `.jlo/.jlo-version` on target branch
-- invalid token format, must be semver or `main`
-- unsupported runner OS or architecture for setup-jlo
-- release asset download failure or source-build execution failure
+Configuration consists of action inputs, runtime environment variables, token scopes, and private-action access settings. The action reads `.jlo/.jlo-version` from a target repository and reads release assets from the configured release repository.
 
-## Repository commands
-
-- `npm run lint`
-- `npm test`
-- `npm run build`
-- `npm run package`
-- `npm run verify:dist`
-- `npm run ci`
-
-## Local verification
-
-```bash
-npm ci
-npm run ci
-```
-
-## Release model
-
-The repository versions as one action.
-
-- tags: `vX.Y.Z`
-- moving major tag for consumers: `v1`
-
-`dist/` is committed because `uses:` executes repository contents directly from the tagged revision.
+See [docs/README.md](docs/README.md) and [docs/configuration/](docs/configuration/) for inputs, environment overrides, and access requirements.
