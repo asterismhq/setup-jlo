@@ -30246,7 +30246,6 @@ async function run() {
     const submoduleToken = (0, action_inputs_1.getOptionalInput)('submodule_token');
     const repository = (0, action_inputs_1.getOptionalInput)('repository') ?? process.env.GITHUB_REPOSITORY;
     const targetBranch = (0, action_inputs_1.getOptionalInput)('target_branch') ?? process.env.JLO_TARGET_BRANCH;
-    const releaseRepository = 'asterismhq/jlo';
     if (!repository) {
         throw new Error('Input or environment for repository is required.');
     }
@@ -30268,8 +30267,7 @@ async function run() {
     const installContext = (0, install_context_1.resolveInstallContext)({
         token,
         submoduleToken,
-        targetBranch,
-        releaseRepository
+        targetBranch
     });
     if (parsedVersion.kind === 'release') {
         await (0, release_install_1.installReleaseVersion)(installContext, parsedVersion);
@@ -30304,7 +30302,6 @@ function resolveInstallContext(options) {
         installToken: options.token,
         installSubmoduleToken: normalizeOptionalEnv(options.submoduleToken),
         targetBranch: options.targetBranch,
-        releaseRepository: options.releaseRepository,
         mainSourceRemoteUrl: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_REMOTE_URL),
         mainSourceRef: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_REF),
         mainSourceBranch: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_BRANCH),
@@ -30348,6 +30345,18 @@ function parseBooleanEnv(value) {
             return false;
     }
 }
+
+
+/***/ }),
+
+/***/ 6587:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.JLO_RELEASE_REPOSITORY = void 0;
+exports.JLO_RELEASE_REPOSITORY = 'asterismhq/jlo';
 
 
 /***/ }),
@@ -30462,6 +30471,7 @@ const core = __importStar(__nccwpck_require__(7484));
 const install_context_1 = __nccwpck_require__(9566);
 const cache_paths_1 = __nccwpck_require__(3392);
 const github_client_1 = __nccwpck_require__(7890);
+const jlo_release_source_1 = __nccwpck_require__(6587);
 const platform_1 = __nccwpck_require__(3728);
 async function installReleaseVersion(context, versionToken) {
     const platform = (0, platform_1.detectPlatformTuple)();
@@ -30479,7 +30489,7 @@ async function installReleaseVersion(context, versionToken) {
     const candidates = (0, platform_1.buildReleaseAssetCandidates)(platform, context.allowDarwinX8664Fallback);
     const releaseAsset = await fetchReleaseAsset({
         token: context.installToken,
-        releaseRepository: context.releaseRepository,
+        releaseRepository: jlo_release_source_1.JLO_RELEASE_REPOSITORY,
         tagVersion: versionToken.tag,
         candidates
     });
@@ -30488,7 +30498,7 @@ async function installReleaseVersion(context, versionToken) {
     try {
         (0, node_fs_1.writeFileSync)(downloadPath, releaseAsset.contents);
         if ((0, node_fs_1.statSync)(downloadPath).size === 0) {
-            throw new Error(`Downloaded release asset '${releaseAsset.name}' is missing or empty in '${context.releaseRepository}' (${versionToken.tag}).`);
+            throw new Error(`Downloaded release asset '${releaseAsset.name}' is missing or empty in '${jlo_release_source_1.JLO_RELEASE_REPOSITORY}' (${versionToken.tag}).`);
         }
         (0, cache_paths_1.ensureExecutablePermissions)(downloadPath);
         (0, node_fs_1.renameSync)(downloadPath, binaryPath);
@@ -30591,6 +30601,7 @@ const install_context_1 = __nccwpck_require__(9566);
 const cache_paths_1 = __nccwpck_require__(3392);
 const git_process_1 = __nccwpck_require__(187);
 const github_client_1 = __nccwpck_require__(7890);
+const jlo_release_source_1 = __nccwpck_require__(6587);
 const platform_1 = __nccwpck_require__(3728);
 async function installMainSource(context) {
     if (!(0, git_process_1.commandExists)('cargo')) {
@@ -30599,7 +30610,7 @@ async function installMainSource(context) {
     if (!(0, git_process_1.commandExists)('git')) {
         throw new Error('main-head install requires git on PATH.');
     }
-    const releaseRepository = (0, github_client_1.parseRepositorySlug)(context.releaseRepository);
+    const releaseRepository = (0, github_client_1.parseRepositorySlug)(jlo_release_source_1.JLO_RELEASE_REPOSITORY);
     const defaultSourceRemoteUrl = `https://github.com/${releaseRepository.owner}/${releaseRepository.repo}.git`;
     const sourceRemoteUrl = context.mainSourceRemoteUrl ?? defaultSourceRemoteUrl;
     const sourceRef = context.mainSourceRef ?? 'refs/heads/main';

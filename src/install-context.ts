@@ -4,7 +4,6 @@ export interface InstallContext {
   installToken: string
   installSubmoduleToken?: string
   targetBranch: string
-  releaseRepository: string
   mainSourceRemoteUrl?: string
   mainSourceRef?: string
   mainSourceBranch?: string
@@ -19,13 +18,11 @@ export function resolveInstallContext(options: {
   token: string
   submoduleToken?: string
   targetBranch: string
-  releaseRepository: string
 }): InstallContext {
   return {
     installToken: options.token,
     installSubmoduleToken: normalizeOptionalEnv(options.submoduleToken),
     targetBranch: options.targetBranch,
-    releaseRepository: options.releaseRepository,
     mainSourceRemoteUrl: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_REMOTE_URL),
     mainSourceRef: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_REF),
     mainSourceBranch: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_BRANCH),

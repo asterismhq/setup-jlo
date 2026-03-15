@@ -15,7 +15,6 @@ async function run(): Promise<void> {
   const submoduleToken = getOptionalInput('submodule_token')
   const repository = getOptionalInput('repository') ?? process.env.GITHUB_REPOSITORY
   const targetBranch = getOptionalInput('target_branch') ?? process.env.JLO_TARGET_BRANCH
-  const releaseRepository = 'asterismhq/jlo'
 
   if (!repository) {
     throw new Error('Input or environment for repository is required.')
@@ -44,8 +43,7 @@ async function run(): Promise<void> {
   const installContext = resolveInstallContext({
     token,
     submoduleToken,
-    targetBranch,
-    releaseRepository
+    targetBranch
   })
 
   if (parsedVersion.kind === 'release') {

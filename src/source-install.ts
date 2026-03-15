@@ -20,6 +20,7 @@ import {
   runGitWithOptionalAuth
 } from './git-process'
 import { parseRepositorySlug } from './github-client'
+import { JLO_RELEASE_REPOSITORY } from './jlo-release-source'
 import { detectPlatformTuple } from './platform'
 
 export async function installMainSource(context: InstallContext): Promise<void> {
@@ -32,7 +33,7 @@ export async function installMainSource(context: InstallContext): Promise<void> 
     throw new Error('main-head install requires git on PATH.')
   }
 
-  const releaseRepository = parseRepositorySlug(context.releaseRepository)
+  const releaseRepository = parseRepositorySlug(JLO_RELEASE_REPOSITORY)
   const defaultSourceRemoteUrl = `https://github.com/${releaseRepository.owner}/${releaseRepository.repo}.git`
   const sourceRemoteUrl = context.mainSourceRemoteUrl ?? defaultSourceRemoteUrl
   const sourceRef = context.mainSourceRef ?? 'refs/heads/main'
