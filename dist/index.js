@@ -29982,6 +29982,224 @@ function getOptionalInput(name) {
 
 /***/ }),
 
+/***/ 3392:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.resolvePlatformCacheDirectory = resolvePlatformCacheDirectory;
+exports.ensureInstallDirectory = ensureInstallDirectory;
+exports.installBinaryOnPath = installBinaryOnPath;
+exports.pruneSiblingInstallDirectories = pruneSiblingInstallDirectories;
+exports.isCachedBinaryForVersion = isCachedBinaryForVersion;
+exports.detectBinaryVersion = detectBinaryVersion;
+exports.copyExecutableBinary = copyExecutableBinary;
+exports.ensureExecutablePermissions = ensureExecutablePermissions;
+exports.extractFirstSemverTriplet = extractFirstSemverTriplet;
+const node_fs_1 = __nccwpck_require__(3024);
+const node_path_1 = __nccwpck_require__(6760);
+const node_child_process_1 = __nccwpck_require__(1421);
+const core = __importStar(__nccwpck_require__(7484));
+function resolvePlatformCacheDirectory(cacheRoot, platform) {
+    return (0, node_path_1.join)(cacheRoot, `${platform.os}-${platform.arch}`);
+}
+function ensureInstallDirectory(platformDir, installKey) {
+    (0, node_fs_1.mkdirSync)(platformDir, { recursive: true });
+    const installDir = (0, node_path_1.join)(platformDir, installKey);
+    (0, node_fs_1.mkdirSync)(installDir, { recursive: true });
+    return installDir;
+}
+function installBinaryOnPath(installDir) {
+    core.addPath(installDir);
+}
+function pruneSiblingInstallDirectories(platformDir, keepName) {
+    if (!(0, node_fs_1.existsSync)(platformDir)) {
+        return;
+    }
+    for (const entry of (0, node_fs_1.readdirSync)(platformDir, { withFileTypes: true })) {
+        if (!entry.isDirectory() || entry.name === keepName) {
+            continue;
+        }
+        (0, node_fs_1.rmSync)((0, node_path_1.join)(platformDir, entry.name), { recursive: true, force: true });
+    }
+}
+function isCachedBinaryForVersion(binaryPath, expectedVersion) {
+    if (!(0, node_fs_1.existsSync)(binaryPath)) {
+        return false;
+    }
+    const result = (0, node_child_process_1.spawnSync)(binaryPath, ['--version'], { encoding: 'utf8' });
+    if (result.status !== 0) {
+        return false;
+    }
+    return extractFirstSemverTriplet(result.stdout) === expectedVersion;
+}
+function detectBinaryVersion(binaryPath) {
+    const result = (0, node_child_process_1.spawnSync)(binaryPath, ['--version'], { encoding: 'utf8' });
+    if (result.status !== 0) {
+        return 'version unknown';
+    }
+    const rendered = result.stdout.trim();
+    return rendered.length > 0 ? rendered : 'version unknown';
+}
+function copyExecutableBinary(sourcePath, targetPath) {
+    (0, node_fs_1.copyFileSync)(sourcePath, targetPath);
+    ensureExecutablePermissions(targetPath);
+}
+function ensureExecutablePermissions(path) {
+    (0, node_fs_1.chmodSync)(path, 0o755);
+}
+function extractFirstSemverTriplet(value) {
+    for (const token of value.split(/\s+/)) {
+        const normalized = token.replace(/^v/, '');
+        if (/^\d+\.\d+\.\d+$/.test(normalized)) {
+            return normalized;
+        }
+    }
+    return undefined;
+}
+
+
+/***/ }),
+
+/***/ 187:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.commandExists = commandExists;
+exports.runGitWithOptionalAuth = runGitWithOptionalAuth;
+exports.basicAuthHeader = basicAuthHeader;
+exports.isFullGitSha = isFullGitSha;
+exports.normalizeSubmoduleUrlToHttps = normalizeSubmoduleUrlToHttps;
+exports.rewriteGitmodulesToHttps = rewriteGitmodulesToHttps;
+const node_buffer_1 = __nccwpck_require__(4573);
+const node_child_process_1 = __nccwpck_require__(1421);
+function commandExists(program) {
+    const result = (0, node_child_process_1.spawnSync)(program, ['--version'], {
+        stdio: ['ignore', 'ignore', 'ignore']
+    });
+    return result.status === 0;
+}
+function runGitWithOptionalAuth(options) {
+    const gitArgs = [
+        '-c',
+        'credential.helper=',
+        '-c',
+        'http.connectTimeout=15',
+        '-c',
+        'http.lowSpeedLimit=1024',
+        '-c',
+        'http.lowSpeedTime=30'
+    ];
+    if (options.authHeader) {
+        gitArgs.push('-c', `http.extraheader=${options.authHeader}`);
+    }
+    gitArgs.push(...options.args);
+    const result = (0, node_child_process_1.spawnSync)('git', gitArgs, {
+        cwd: options.cwd,
+        encoding: 'utf8',
+        env: {
+            ...process.env,
+            GIT_TERMINAL_PROMPT: '0'
+        }
+    });
+    if (result.status === 0) {
+        return result.stdout;
+    }
+    const stderr = result.stderr.trim();
+    if (stderr.length > 0) {
+        throw new Error(`Failed to ${options.operation}: ${stderr}`);
+    }
+    throw new Error(`Failed to ${options.operation}: ${result.stdout.trim()}`);
+}
+function basicAuthHeader(token) {
+    const payload = node_buffer_1.Buffer.from(`x-access-token:${token}`, 'utf8').toString('base64');
+    return `Authorization: Basic ${payload}`;
+}
+function isFullGitSha(value) {
+    return /^[0-9a-fA-F]{40}$/.test(value);
+}
+function normalizeSubmoduleUrlToHttps(submoduleUrl) {
+    if (submoduleUrl.startsWith('git@github.com:')) {
+        return `https://github.com/${submoduleUrl.slice('git@github.com:'.length)}`;
+    }
+    if (submoduleUrl.startsWith('ssh://git@github.com/')) {
+        return `https://github.com/${submoduleUrl.slice('ssh://git@github.com/'.length)}`;
+    }
+    return submoduleUrl;
+}
+function rewriteGitmodulesToHttps(clonePath, authHeader) {
+    const keyList = runGitWithOptionalAuth({
+        cwd: clonePath,
+        authHeader,
+        args: [
+            'config',
+            '--file',
+            '.gitmodules',
+            '--name-only',
+            '--get-regexp',
+            '^submodule\\..*\\.url$'
+        ],
+        operation: 'enumerate submodule URLs from .gitmodules'
+    });
+    for (const key of keyList.split('\n').map((line) => line.trim()).filter(Boolean)) {
+        const submoduleUrl = runGitWithOptionalAuth({
+            cwd: clonePath,
+            authHeader,
+            args: ['config', '--file', '.gitmodules', '--get', key],
+            operation: 'read submodule URL from .gitmodules'
+        }).trim();
+        const normalized = normalizeSubmoduleUrlToHttps(submoduleUrl);
+        if (normalized === submoduleUrl) {
+            continue;
+        }
+        runGitWithOptionalAuth({
+            cwd: clonePath,
+            authHeader,
+            args: ['config', '--file', '.gitmodules', key, normalized],
+            operation: 'normalize submodule URL to HTTPS for source build'
+        });
+    }
+}
+
+
+/***/ }),
+
 /***/ 7890:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -30057,104 +30275,15 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.resolveInstallMode = resolveInstallMode;
-const node_fs_1 = __nccwpck_require__(3024);
-const node_os_1 = __nccwpck_require__(8161);
-const node_path_1 = __nccwpck_require__(6760);
-const node_child_process_1 = __nccwpck_require__(1421);
 const core = __importStar(__nccwpck_require__(7484));
 const action_inputs_1 = __nccwpck_require__(8683);
 const github_client_1 = __nccwpck_require__(7890);
+const install_context_1 = __nccwpck_require__(9566);
+const release_install_1 = __nccwpck_require__(2448);
+const source_install_1 = __nccwpck_require__(6228);
 const version_token_1 = __nccwpck_require__(2311);
 function resolveInstallMode(token) {
     return (0, version_token_1.parseVersionToken)(token).kind === 'release' ? 'release-tag' : 'main';
-}
-function detectInstallerPlatform() {
-    const nodePlatform = process.platform;
-    const nodeArch = process.arch;
-    let os;
-    if (nodePlatform === 'linux') {
-        os = 'linux';
-    }
-    else if (nodePlatform === 'darwin') {
-        os = 'darwin';
-    }
-    else {
-        throw new Error(`Unsupported OS for installer bootstrap: ${nodePlatform}`);
-    }
-    let arch;
-    if (nodeArch === 'x64') {
-        arch = 'x86_64';
-    }
-    else if (nodeArch === 'arm64') {
-        arch = 'aarch64';
-    }
-    else {
-        throw new Error(`Unsupported architecture for installer bootstrap: ${nodeArch}`);
-    }
-    return { os, arch };
-}
-function buildInstallerAssetCandidates(os, arch) {
-    if (arch === 'x86_64') {
-        return [`jlo-installer-${os}-x86_64`, `jlo-installer-${os}-amd64`];
-    }
-    return [`jlo-installer-${os}-aarch64`, `jlo-installer-${os}-arm64`];
-}
-async function fetchInstallerAsset(options) {
-    const { token, releaseRepository, installerReleaseTag, candidates } = options;
-    const { owner, repo } = (0, github_client_1.parseRepositorySlug)(releaseRepository);
-    const headers = {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github+json',
-        'User-Agent': 'setup-jlo'
-    };
-    const releaseUrl = installerReleaseTag
-        ? `https://api.github.com/repos/${owner}/${repo}/releases/tags/${installerReleaseTag}`
-        : `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
-    const releaseResponse = await fetch(releaseUrl, { headers });
-    if (!releaseResponse.ok) {
-        throw new Error(`Failed to query installer release metadata from '${releaseRepository}' (HTTP ${releaseResponse.status}).`);
-    }
-    const releaseJson = (await releaseResponse.json());
-    const assets = releaseJson.assets ?? [];
-    const matched = candidates
-        .map((candidate) => assets.find((asset) => asset.name === candidate))
-        .find((asset) => asset !== undefined);
-    if (!matched) {
-        throw new Error(`No matching installer asset for ${candidates.join(', ')} in '${releaseRepository}'.`);
-    }
-    const downloadResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/assets/${matched.id}`, {
-        headers: {
-            ...headers,
-            Accept: 'application/octet-stream'
-        }
-    });
-    if (!downloadResponse.ok) {
-        throw new Error(`Failed to download installer asset '${matched.name}' (HTTP ${downloadResponse.status}).`);
-    }
-    const arrayBuffer = await downloadResponse.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-}
-async function resolveInstallerBinary(options) {
-    const bootstrapPath = process.env.JLO_INSTALLER_BOOTSTRAP_BIN;
-    if (bootstrapPath && bootstrapPath.trim().length > 0) {
-        return { path: bootstrapPath, cleanup: () => undefined };
-    }
-    const platform = detectInstallerPlatform();
-    const candidates = buildInstallerAssetCandidates(platform.os, platform.arch);
-    const installerBinary = await fetchInstallerAsset({
-        token: options.token,
-        releaseRepository: options.releaseRepository,
-        installerReleaseTag: options.installerReleaseTag,
-        candidates
-    });
-    const directory = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)((0, node_os_1.tmpdir)(), 'jlo-installer-'));
-    const binaryPath = (0, node_path_1.join)(directory, 'jlo-installer');
-    (0, node_fs_1.writeFileSync)(binaryPath, installerBinary);
-    (0, node_fs_1.chmodSync)(binaryPath, 0o755);
-    return {
-        path: binaryPath,
-        cleanup: () => (0, node_fs_1.rmSync)(directory, { recursive: true, force: true })
-    };
 }
 async function run() {
     const token = (0, action_inputs_1.getRequiredInput)('token');
@@ -30176,33 +30305,21 @@ async function run() {
     });
     const versionToken = versionFile.trim();
     const installMode = resolveInstallMode(versionToken);
+    const parsedVersion = (0, version_token_1.parseVersionToken)(versionToken);
     core.info(`Resolved .jlo/.jlo-version='${versionToken}' from ${repository}@${targetBranch} (${installMode}).`);
     core.setOutput('version-token', versionToken);
     core.setOutput('install-mode', installMode);
-    const installer = await resolveInstallerBinary({
+    const installContext = (0, install_context_1.resolveInstallContext)({
         token,
-        releaseRepository,
-        installerReleaseTag: process.env.JLO_INSTALLER_RELEASE_TAG
+        submoduleToken,
+        targetBranch,
+        releaseRepository
     });
-    try {
-        const result = (0, node_child_process_1.spawnSync)(installer.path, ['install'], {
-            stdio: 'inherit',
-            env: {
-                ...process.env,
-                INSTALL_JLO_TOKEN: token,
-                INSTALL_JLO_SUBMODULE_TOKEN: submoduleToken ?? ''
-            }
-        });
-        if (typeof result.status === 'number' && result.status !== 0) {
-            throw new Error(`Installer failed with exit code ${result.status}.`);
-        }
-        if (result.error) {
-            throw result.error;
-        }
+    if (parsedVersion.kind === 'release') {
+        await (0, release_install_1.installReleaseVersion)(installContext, parsedVersion);
+        return;
     }
-    finally {
-        installer.cleanup();
-    }
+    await (0, source_install_1.installMainSource)(installContext);
 }
 if (require.main === require.cache[eval('__filename')]) {
     run().catch((error) => {
@@ -30212,6 +30329,461 @@ if (require.main === require.cache[eval('__filename')]) {
         }
         core.setFailed(String(error));
     });
+}
+
+
+/***/ }),
+
+/***/ 9566:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.resolveInstallContext = resolveInstallContext;
+exports.resolveCacheRoot = resolveCacheRoot;
+const node_path_1 = __nccwpck_require__(6760);
+function resolveInstallContext(options) {
+    return {
+        installToken: options.token,
+        installSubmoduleToken: options.submoduleToken && options.submoduleToken.trim().length > 0
+            ? options.submoduleToken.trim()
+            : undefined,
+        targetBranch: options.targetBranch,
+        releaseRepository: options.releaseRepository,
+        mainSourceRemoteUrl: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_REMOTE_URL),
+        mainSourceRef: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_REF),
+        mainSourceBranch: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_BRANCH),
+        allowDarwinX8664Fallback: parseBooleanEnv(process.env.JLO_ALLOW_DARWIN_X86_64_FALLBACK),
+        cacheRootOverride: normalizeOptionalEnv(process.env.JLO_CACHE_ROOT),
+        runnerEnvironment: normalizeOptionalEnv(process.env.RUNNER_ENVIRONMENT),
+        runnerTemp: normalizeOptionalEnv(process.env.RUNNER_TEMP),
+        runnerToolCache: normalizeOptionalEnv(process.env.RUNNER_TOOL_CACHE)
+    };
+}
+function resolveCacheRoot(context) {
+    if (context.cacheRootOverride) {
+        return context.cacheRootOverride;
+    }
+    if (context.runnerEnvironment === 'github-hosted') {
+        return (0, node_path_1.resolve)(context.runnerTemp ?? '/tmp', 'jlo-bin-cache');
+    }
+    const homeDirectory = normalizeOptionalEnv(process.env.HOME);
+    const base = context.runnerToolCache ??
+        (homeDirectory ? (0, node_path_1.resolve)(homeDirectory, '.cache') : '/tmp');
+    return (0, node_path_1.resolve)(base, 'jlo-bin-cache');
+}
+function normalizeOptionalEnv(value) {
+    if (!value) {
+        return undefined;
+    }
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : undefined;
+}
+function parseBooleanEnv(value) {
+    if (!value) {
+        return false;
+    }
+    switch (value.trim().toLowerCase()) {
+        case '1':
+        case 'true':
+        case 'yes':
+        case 'on':
+            return true;
+        default:
+            return false;
+    }
+}
+
+
+/***/ }),
+
+/***/ 3728:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.detectPlatformTuple = detectPlatformTuple;
+exports.buildReleaseAssetCandidates = buildReleaseAssetCandidates;
+const node_child_process_1 = __nccwpck_require__(1421);
+function detectPlatformTuple() {
+    const os = normalizeOs(process.platform);
+    const arch = normalizeArch(process.arch);
+    if (os === 'darwin' && arch === 'x86_64' && detectRosettaArm64()) {
+        return { os, arch: 'aarch64' };
+    }
+    return { os, arch };
+}
+function buildReleaseAssetCandidates(platform, allowDarwinX8664Fallback) {
+    if (platform.arch === 'x86_64') {
+        return [`jlo-${platform.os}-x86_64`, `jlo-${platform.os}-amd64`];
+    }
+    const candidates = [`jlo-${platform.os}-aarch64`, `jlo-${platform.os}-arm64`];
+    if (platform.os === 'darwin' && allowDarwinX8664Fallback) {
+        candidates.push(`jlo-${platform.os}-x86_64`);
+    }
+    return candidates;
+}
+function normalizeOs(raw) {
+    switch (raw) {
+        case 'linux':
+            return 'linux';
+        case 'darwin':
+            return 'darwin';
+        default:
+            throw new Error(`Unsupported OS for installer bootstrap: ${raw}`);
+    }
+}
+function normalizeArch(raw) {
+    switch (raw) {
+        case 'x64':
+            return 'x86_64';
+        case 'arm64':
+            return 'aarch64';
+        default:
+            throw new Error(`Unsupported architecture for installer bootstrap: ${raw}`);
+    }
+}
+function detectRosettaArm64() {
+    try {
+        const output = (0, node_child_process_1.execFileSync)('sysctl', ['-n', 'hw.optional.arm64'], {
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'ignore']
+        });
+        return output.trim() === '1';
+    }
+    catch {
+        return false;
+    }
+}
+
+
+/***/ }),
+
+/***/ 2448:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.installReleaseVersion = installReleaseVersion;
+const node_fs_1 = __nccwpck_require__(3024);
+const node_os_1 = __nccwpck_require__(8161);
+const node_path_1 = __nccwpck_require__(6760);
+const core = __importStar(__nccwpck_require__(7484));
+const install_context_1 = __nccwpck_require__(9566);
+const cache_paths_1 = __nccwpck_require__(3392);
+const github_client_1 = __nccwpck_require__(7890);
+const platform_1 = __nccwpck_require__(3728);
+async function installReleaseVersion(context, versionToken) {
+    const platform = (0, platform_1.detectPlatformTuple)();
+    const cacheRoot = (0, install_context_1.resolveCacheRoot)(context);
+    const platformDir = (0, cache_paths_1.resolvePlatformCacheDirectory)(cacheRoot, platform);
+    const installDir = (0, cache_paths_1.ensureInstallDirectory)(platformDir, versionToken.tag);
+    const binaryPath = (0, node_path_1.join)(installDir, 'jlo');
+    if ((0, cache_paths_1.isCachedBinaryForVersion)(binaryPath, versionToken.version)) {
+        core.info(`jlo ${versionToken.version} already cached; skipping download.`);
+        (0, cache_paths_1.pruneSiblingInstallDirectories)(platformDir, versionToken.tag);
+        (0, cache_paths_1.installBinaryOnPath)(installDir);
+        core.info(`jlo installed: ${(0, cache_paths_1.detectBinaryVersion)(binaryPath)}`);
+        return;
+    }
+    const candidates = (0, platform_1.buildReleaseAssetCandidates)(platform, context.allowDarwinX8664Fallback);
+    const releaseAsset = await fetchReleaseAsset({
+        token: context.installToken,
+        releaseRepository: context.releaseRepository,
+        tagVersion: versionToken.tag,
+        candidates
+    });
+    const tempDirectory = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)(context.runnerTemp ?? (0, node_os_1.tmpdir)(), 'setup-jlo-release-'));
+    const downloadPath = (0, node_path_1.join)(tempDirectory, releaseAsset.name);
+    try {
+        (0, node_fs_1.writeFileSync)(downloadPath, releaseAsset.contents);
+        if ((0, node_fs_1.statSync)(downloadPath).size === 0) {
+            throw new Error(`Downloaded release asset '${releaseAsset.name}' is missing or empty in '${context.releaseRepository}' (${versionToken.tag}).`);
+        }
+        (0, cache_paths_1.ensureExecutablePermissions)(downloadPath);
+        (0, node_fs_1.renameSync)(downloadPath, binaryPath);
+    }
+    finally {
+        (0, node_fs_1.rmSync)(tempDirectory, { recursive: true, force: true });
+    }
+    (0, cache_paths_1.pruneSiblingInstallDirectories)(platformDir, versionToken.tag);
+    (0, cache_paths_1.installBinaryOnPath)(installDir);
+    core.info(`jlo installed: ${(0, cache_paths_1.detectBinaryVersion)(binaryPath)}`);
+}
+async function fetchReleaseAsset(options) {
+    const { owner, repo } = (0, github_client_1.parseRepositorySlug)(options.releaseRepository);
+    const headers = {
+        Authorization: `Bearer ${options.token}`,
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'setup-jlo'
+    };
+    const metadataResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/tags/${options.tagVersion}`, { headers });
+    if (metadataResponse.status === 401 || metadataResponse.status === 403) {
+        throw new Error(`JLO_RELEASE_PAT cannot access release metadata in '${options.releaseRepository}'. Ensure contents:read and organization SSO authorization.`);
+    }
+    if (metadataResponse.status === 404) {
+        throw new Error(`Release '${options.tagVersion}' was not found (or is inaccessible) in '${options.releaseRepository}'.`);
+    }
+    if (!metadataResponse.ok) {
+        throw new Error(`Failed to query release metadata for '${options.tagVersion}' in '${options.releaseRepository}' (HTTP ${metadataResponse.status}).`);
+    }
+    const metadata = (await metadataResponse.json());
+    const matchedAsset = options.candidates
+        .map((candidate) => metadata.assets?.find((asset) => asset.name === candidate))
+        .find((asset) => asset !== undefined);
+    if (!matchedAsset) {
+        throw new Error(`No matching release asset for ${options.candidates.join(', ')} in '${options.releaseRepository}'.`);
+    }
+    const downloadResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/assets/${matchedAsset.id}`, {
+        headers: {
+            ...headers,
+            Accept: 'application/octet-stream'
+        }
+    });
+    if (!downloadResponse.ok) {
+        throw new Error(`Failed to download release asset '${matchedAsset.name}' from '${options.releaseRepository}' (HTTP ${downloadResponse.status}).`);
+    }
+    return {
+        name: matchedAsset.name,
+        contents: Buffer.from(await downloadResponse.arrayBuffer())
+    };
+}
+
+
+/***/ }),
+
+/***/ 6228:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.installMainSource = installMainSource;
+const node_fs_1 = __nccwpck_require__(3024);
+const node_os_1 = __nccwpck_require__(8161);
+const node_path_1 = __nccwpck_require__(6760);
+const node_child_process_1 = __nccwpck_require__(1421);
+const core = __importStar(__nccwpck_require__(7484));
+const install_context_1 = __nccwpck_require__(9566);
+const cache_paths_1 = __nccwpck_require__(3392);
+const git_process_1 = __nccwpck_require__(187);
+const github_client_1 = __nccwpck_require__(7890);
+const platform_1 = __nccwpck_require__(3728);
+async function installMainSource(context) {
+    if (!(0, git_process_1.commandExists)('cargo')) {
+        throw new Error('main-head install requires cargo on PATH. Provision Rust toolchain on the runner.');
+    }
+    if (!(0, git_process_1.commandExists)('git')) {
+        throw new Error('main-head install requires git on PATH.');
+    }
+    const releaseRepository = (0, github_client_1.parseRepositorySlug)(context.releaseRepository);
+    const defaultSourceRemoteUrl = `https://github.com/${releaseRepository.owner}/${releaseRepository.repo}.git`;
+    const sourceRemoteUrl = context.mainSourceRemoteUrl ?? defaultSourceRemoteUrl;
+    const sourceRef = context.mainSourceRef ?? 'refs/heads/main';
+    const sourceBranch = context.mainSourceBranch ?? 'main';
+    if (sourceRemoteUrl.trim().length === 0) {
+        throw new Error('JLO_MAIN_SOURCE_REMOTE_URL must not be empty when provided.');
+    }
+    if (sourceRef.trim().length === 0) {
+        throw new Error('JLO_MAIN_SOURCE_REF must not be empty when provided.');
+    }
+    if (sourceBranch.trim().length === 0) {
+        throw new Error('JLO_MAIN_SOURCE_BRANCH must not be empty when provided.');
+    }
+    const sourceAuthHeader = isHttpRemote(sourceRemoteUrl)
+        ? (0, git_process_1.basicAuthHeader)(context.installToken)
+        : undefined;
+    const submoduleAuthHeader = context.installSubmoduleToken
+        ? (0, git_process_1.basicAuthHeader)(context.installSubmoduleToken)
+        : undefined;
+    const lsRemoteOutput = (0, git_process_1.runGitWithOptionalAuth)({
+        authHeader: sourceAuthHeader,
+        args: ['ls-remote', '--', sourceRemoteUrl, sourceRef],
+        operation: 'resolve source head SHA'
+    });
+    const sha = lsRemoteOutput.trim().split(/\s+/)[0] ?? '';
+    if (!(0, git_process_1.isFullGitSha)(sha)) {
+        throw new Error(`Failed to resolve source head SHA from '${sourceRemoteUrl}' ref '${sourceRef}'.`);
+    }
+    const platform = (0, platform_1.detectPlatformTuple)();
+    const shortSha = sha.slice(0, 12);
+    const installKey = `main-${shortSha}`;
+    const cacheRoot = (0, install_context_1.resolveCacheRoot)(context);
+    const platformDir = (0, cache_paths_1.resolvePlatformCacheDirectory)(cacheRoot, platform);
+    const installDir = (0, cache_paths_1.ensureInstallDirectory)(platformDir, installKey);
+    const binaryPath = (0, node_path_1.join)(installDir, 'jlo');
+    if ((0, node_fs_1.existsSync)(binaryPath)) {
+        core.info(`jlo main@${shortSha} already cached; skipping build.`);
+        (0, cache_paths_1.pruneSiblingInstallDirectories)(platformDir, installKey);
+        (0, cache_paths_1.installBinaryOnPath)(installDir);
+        core.info(`jlo installed: ${(0, cache_paths_1.detectBinaryVersion)(binaryPath)}`);
+        return;
+    }
+    const clonePath = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)(context.runnerTemp ?? (0, node_os_1.tmpdir)(), 'setup-jlo-main-'));
+    try {
+        (0, git_process_1.runGitWithOptionalAuth)({
+            authHeader: sourceAuthHeader,
+            args: [
+                'clone',
+                '--quiet',
+                '--depth=1',
+                '--branch',
+                sourceBranch,
+                '--',
+                sourceRemoteUrl,
+                clonePath
+            ],
+            operation: 'clone source branch for source build'
+        });
+        const gitmodulesPath = (0, node_path_1.join)(clonePath, '.gitmodules');
+        if ((0, node_fs_1.existsSync)(gitmodulesPath)) {
+            if (context.installSubmoduleToken) {
+                core.info('Using submodule_token for submodule fetch authentication.');
+            }
+            else {
+                core.info('submodule_token is empty; attempting anonymous submodule fetch.');
+            }
+            (0, git_process_1.runGitWithOptionalAuth)({
+                cwd: clonePath,
+                authHeader: submoduleAuthHeader,
+                args: [
+                    'config',
+                    '--local',
+                    'url.https://github.com/.insteadOf',
+                    'git@github.com:'
+                ],
+                operation: 'configure git submodule URL rewrite for source build'
+            });
+            (0, git_process_1.runGitWithOptionalAuth)({
+                cwd: clonePath,
+                authHeader: submoduleAuthHeader,
+                args: [
+                    'config',
+                    '--local',
+                    'url.https://github.com/.insteadOf',
+                    'ssh://git@github.com/'
+                ],
+                operation: 'configure git submodule URL rewrite for source build'
+            });
+            (0, git_process_1.rewriteGitmodulesToHttps)(clonePath, submoduleAuthHeader);
+            (0, git_process_1.runGitWithOptionalAuth)({
+                cwd: clonePath,
+                authHeader: submoduleAuthHeader,
+                args: ['submodule', 'sync', '--recursive'],
+                operation: 'sync git submodule configuration for source build'
+            });
+            try {
+                (0, git_process_1.runGitWithOptionalAuth)({
+                    cwd: clonePath,
+                    authHeader: submoduleAuthHeader,
+                    args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
+                    operation: 'fetch git submodules for source build'
+                });
+            }
+            catch (error) {
+                if (context.installSubmoduleToken) {
+                    throw new Error(`Failed to fetch git submodules for source build (verify submodule_token can read submodule repositories): ${error.message}`);
+                }
+                throw new Error(`Failed to fetch git submodules for source build without credentials. Configure setup-jlo submodule_token for private submodules: ${error.message}`);
+            }
+        }
+        const buildTargetDir = (0, node_path_1.join)(clonePath, 'target');
+        const manifestPath = (0, node_path_1.join)(clonePath, 'Cargo.toml');
+        const buildResult = (0, node_child_process_1.spawnSync)('cargo', ['build', '--release', '--manifest-path', manifestPath], {
+            cwd: clonePath,
+            encoding: 'utf8',
+            env: {
+                ...process.env,
+                CARGO_TARGET_DIR: buildTargetDir
+            }
+        });
+        if (buildResult.status !== 0) {
+            throw new Error(`Failed to build jlo from source branch '${sourceBranch}' in '${sourceRemoteUrl}': ${buildResult.stderr.trim()}`);
+        }
+        const builtBinary = (0, node_path_1.join)(buildTargetDir, 'release', 'jlo');
+        if (!(0, node_fs_1.existsSync)(builtBinary)) {
+            throw new Error(`Source build completed but binary not found at '${builtBinary}'.`);
+        }
+        (0, cache_paths_1.copyExecutableBinary)(builtBinary, binaryPath);
+    }
+    finally {
+        (0, node_fs_1.rmSync)(clonePath, { recursive: true, force: true });
+    }
+    (0, cache_paths_1.pruneSiblingInstallDirectories)(platformDir, installKey);
+    (0, cache_paths_1.installBinaryOnPath)(installDir);
+    core.info(`jlo installed: ${(0, cache_paths_1.detectBinaryVersion)(binaryPath)}`);
+}
+function isHttpRemote(remote) {
+    return remote.startsWith('http://') || remote.startsWith('https://');
 }
 
 
@@ -30227,11 +30799,12 @@ exports.parseVersionToken = parseVersionToken;
 const SEMVER_PATTERN = /^\d+\.\d+\.\d+$/;
 function parseVersionToken(token) {
     const normalized = token.trim();
+    const semverCore = normalized.replace(/^v/, '');
     if (normalized === 'main') {
         return { kind: 'main', token: 'main' };
     }
-    if (SEMVER_PATTERN.test(normalized)) {
-        return { kind: 'release', version: normalized, tag: `v${normalized}` };
+    if (SEMVER_PATTERN.test(semverCore)) {
+        return { kind: 'release', version: semverCore, tag: `v${semverCore}` };
     }
     throw new Error(`Invalid .jlo/.jlo-version token '${normalized}'. Expected semver or 'main'.`);
 }
@@ -30340,6 +30913,14 @@ module.exports = require("https");
 
 "use strict";
 module.exports = require("net");
+
+/***/ }),
+
+/***/ 4573:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:buffer");
 
 /***/ }),
 
