@@ -18,11 +18,11 @@ The action runtime executes this sequence:
 
 1. Read required and optional action inputs.
 2. Parse the `version` input as either a semver release or `main`.
-4. Resolve install context, cache root, and platform tuple.
-5. Execute one install path:
+3. Resolve install context, cache root, and platform tuple.
+4. Execute one install path:
    - semver: query release metadata, select the matching `jlo-*` asset, download it, and install it into the cache
    - `main`: resolve the source head SHA, clone the source repository, initialize submodules when present, build `jlo`, and install the resulting binary into the cache
-6. Add the resolved install directory to `GITHUB_PATH`.
+5. Add the resolved install directory to `GITHUB_PATH`.
 
 ## Ownership Split
 

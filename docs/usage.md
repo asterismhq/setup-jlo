@@ -9,7 +9,6 @@
   with:
     token: ${{ secrets.JLO_INSTALL_TOKEN }}
     version: 23.0.0
-    submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 ```
 
 This default form installs the semver-pinned runtime binary for `23.0.0`.

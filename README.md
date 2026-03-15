@@ -11,7 +11,6 @@ The repository packages one distributable action. The runtime contract is intent
   with:
     token: ${{ secrets.JLO_INSTALL_TOKEN }}
     version: 23.0.0
-    submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 ```
 
 ## Usage
