@@ -7,6 +7,14 @@ describe('setup-jlo version token behavior', () => {
     expect(resolveInstallMode('0.5.2')).toBe('release-tag')
   })
 
+  it('accepts v-prefixed semver token', () => {
+    expect(parseVersionToken('v0.5.2')).toEqual({
+      kind: 'release',
+      version: '0.5.2',
+      tag: 'v0.5.2'
+    })
+  })
+
   it('resolves main token to main mode', () => {
     expect(resolveInstallMode('main')).toBe('main')
   })

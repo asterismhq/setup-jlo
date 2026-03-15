@@ -17,7 +17,7 @@ GitHub Action for setting up the `jlo` CLI after resolving `.jlo/.jlo-version` f
 - `submodule_token` (optional): token for private submodule fetch in `main` mode builds
 - `target_branch` (optional): branch containing `.jlo/.jlo-version`, defaults to `JLO_TARGET_BRANCH`
 - `repository` (optional): repository containing `.jlo/.jlo-version`, defaults to `GITHUB_REPOSITORY`
-- `release_repository` (optional): installer release source, defaults to `asterismhq/jlo`
+- `release_repository` (optional): `jlo` runtime release source, defaults to `asterismhq/jlo`
 
 ## Outputs
 
@@ -27,14 +27,14 @@ GitHub Action for setting up the `jlo` CLI after resolving `.jlo/.jlo-version` f
 ## Required permissions
 
 - repository contents read for control-plane version resolution
-- repository contents read for installer release asset download
+- repository contents read for `jlo` runtime release asset download
 
 ## Failure modes
 
 - missing `.jlo/.jlo-version` on target branch
 - invalid token format, must be semver or `main`
 - unsupported runner OS or architecture for installer bootstrap
-- installer asset download failure or installer execution failure
+- release asset download failure or source-build execution failure
 
 ## Repository commands
 
