@@ -1,0 +1,16 @@
+# Documentation
+
+This directory is the central documentation index for `setup-jlo`.
+
+## Usage
+
+- [Usage](usage.md): workflow examples, install modes, outputs, and local verification entrypoints
+
+## Architecture
+
+- [Architecture](architecture.md): repository boundaries, runtime execution flow, cache layout, and failure invariants
+
+## Configuration
+
+- [Action Inputs](configuration/inputs.md): action inputs, defaults, and output values
+- [Access Model](configuration/access.md): token scopes, private action access, and runtime environment overrides
