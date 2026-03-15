@@ -29,4 +29,4 @@ See [docs/architecture.md](docs/architecture.md) for ownership boundaries, runti
 
 Configuration consists of action inputs, runtime environment variables, token scopes, and private-action access settings. The action reads `.jlo/.jlo-version` from a target repository and reads release assets from the configured release repository.
 
-See [docs/README.md](docs/README.md) and [docs/configuration/](docs/configuration/) for inputs, environment overrides, and access requirements.
+See [docs/README.md](docs/README.md) for inputs, environment overrides, and access requirements.
