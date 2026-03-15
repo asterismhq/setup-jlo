@@ -26,7 +26,7 @@ The repository verification surface is:
 ## Release Model
 
 The repository versions one action. Consumer-facing tags follow `vX.Y.Z`, and the moving major tag for workflows is `v1`.
-The release workflow runs on semver tag pushes, publishes the matching GitHub Release, and then moves the corresponding major tag to the released commit.
+When a semver tag is pushed, the release workflow publishes the matching GitHub Release and then moves the corresponding major tag to the released commit.
 
 ## Documentation
 
