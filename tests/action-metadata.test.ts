@@ -23,5 +23,6 @@ describe('action metadata contracts', () => {
     expect(action.runs.using).toBe('node20')
     expect(action.runs.main).toBe('dist/index.js')
     expect(action.inputs.token.required).toBe(true)
+    expect(action.inputs.version.required).toBe(true)
   })
 })

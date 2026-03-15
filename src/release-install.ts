@@ -91,7 +91,7 @@ async function fetchReleaseAsset(options: {
 
   if (metadataResponse.status === 401 || metadataResponse.status === 403) {
     throw new Error(
-      `JLO_RELEASE_PAT cannot access release metadata in '${options.releaseRepository}'. Ensure contents:read and organization SSO authorization.`
+      `token cannot access release metadata in '${options.releaseRepository}'. Ensure contents:read and organization SSO authorization.`
     )
   }
   if (metadataResponse.status === 404) {

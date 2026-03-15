@@ -12,7 +12,6 @@ The runtime `token` input is separate from the token GitHub Actions uses interna
 
 The `token` input requires read access to:
 
-- the repository that contains `.jlo/.jlo-version`
 - `asterismhq/jlo`
 
 `asterismhq/jlo` serves as both the runtime release repository and the default `main` source repository, so the same token covers source resolution and clone access.
@@ -29,7 +28,6 @@ The action runtime reads these environment variables when present:
 
 | Variable | Meaning |
 |----------|---------|
-| `JLO_TARGET_BRANCH` | Default branch used when `target_branch` input is omitted |
 | `JLO_MAIN_SOURCE_REMOTE_URL` | Override for the `main` source repository URL |
 | `JLO_MAIN_SOURCE_REF` | Override for the ref resolved by `git ls-remote` in `main` mode |
 | `JLO_MAIN_SOURCE_BRANCH` | Override for the branch cloned in `main` mode |

@@ -3,7 +3,6 @@ import { resolve } from 'node:path'
 export interface InstallContext {
   installToken: string
   installSubmoduleToken?: string
-  targetBranch: string
   mainSourceRemoteUrl?: string
   mainSourceRef?: string
   mainSourceBranch?: string
@@ -17,12 +16,10 @@ export interface InstallContext {
 export function resolveInstallContext(options: {
   token: string
   submoduleToken?: string
-  targetBranch: string
 }): InstallContext {
   return {
     installToken: options.token,
     installSubmoduleToken: normalizeOptionalEnv(options.submoduleToken),
-    targetBranch: options.targetBranch,
     mainSourceRemoteUrl: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_REMOTE_URL),
     mainSourceRef: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_REF),
     mainSourceBranch: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_BRANCH),

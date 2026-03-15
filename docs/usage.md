@@ -1,41 +1,41 @@
 # Usage
 
-`setup-jlo` installs `jlo` by reading `.jlo/.jlo-version` from the configured target branch.
+`setup-jlo` installs `jlo` for the version token passed by the workflow.
 
 ## Standard Workflow Usage
 
 ```yaml
 - uses: asterismhq/setup-jlo@v1
   with:
-    token: ${{ secrets.JLO_RELEASE_PAT }}
-    submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
+    token: ${{ secrets.JLO_INSTALL_TOKEN }}
+    version: 23.0.0
 ```
 
-This default form reads `.jlo/.jlo-version` from `${{ github.repository }}` on `JLO_TARGET_BRANCH`.
+This default form installs the semver-pinned runtime binary for `23.0.0`.
 
 ## Install Modes
 
-`.jlo/.jlo-version` accepts two token classes:
+The `version` input accepts two token classes:
 
 - semver such as `22.0.1`: downloads the matching `jlo-*` runtime release asset from `asterismhq/jlo`
 - `main`: clones the configured source repository, resolves the upstream `main` head, initializes submodules when present, and builds `jlo` with `cargo`
 
 The action exposes:
 
-- `version-token`: the raw token read from `.jlo/.jlo-version`
+- `version-token`: the raw token passed to the `version` input
 - `install-mode`: `release-tag` or `main`
 
-## Non-default Repository Or Branch
+## Main-mode Example
 
 ```yaml
 - uses: asterismhq/setup-jlo@v1
   with:
-    token: ${{ secrets.JLO_RELEASE_PAT }}
-    repository: asterismhq/example-control-plane
-    target_branch: release-control
+    token: ${{ secrets.JLO_INSTALL_TOKEN }}
+    version: main
+    submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 ```
 
-This form reads the version pin from a different control-plane repository or branch while still downloading runtime assets from `asterismhq/jlo`.
+This form builds `jlo` from the upstream `main` branch instead of downloading a release asset.
 
 ## Main-mode Requirements
 
