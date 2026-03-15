@@ -20,6 +20,8 @@ describe('setup-jlo version token behavior', () => {
   })
 
   it('rejects invalid token values', () => {
-    expect(() => parseVersionToken('latest')).toThrow(/Invalid/)
+    expect(() => parseVersionToken('latest')).toThrow(
+      "Invalid version input 'latest'. Expected semver or 'main'."
+    )
   })
 })

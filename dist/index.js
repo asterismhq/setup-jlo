@@ -26448,7 +26448,7 @@ function parseVersionToken(token) {
     if (SEMVER_PATTERN.test(semverCore)) {
         return { kind: 'release', version: semverCore, tag: `v${semverCore}` };
     }
-    throw new Error(`Invalid .jlo/.jlo-version token '${normalized}'. Expected semver or 'main'.`);
+    throw new Error(`Invalid version input '${normalized}'. Expected semver or 'main'.`);
 }
 
 

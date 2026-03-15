@@ -17,6 +17,6 @@ export function parseVersionToken(token: string): ParsedVersionToken {
   }
 
   throw new Error(
-    `Invalid .jlo/.jlo-version token '${normalized}'. Expected semver or 'main'.`
+    `Invalid version input '${normalized}'. Expected semver or 'main'.`
   )
 }

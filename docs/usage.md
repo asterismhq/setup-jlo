@@ -23,7 +23,6 @@ The `version` input accepts two token classes:
 
 The action exposes:
 
-- `version-token`: the raw token read from `.jlo/.jlo-version`
 - `version-token`: the raw token passed to the `version` input
 - `install-mode`: `release-tag` or `main`
 
