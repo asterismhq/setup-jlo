@@ -15,7 +15,7 @@ The repository packages one distributable action. The runtime contract is intent
 
 ## Usage
 
-Usage centers on two install modes: semver tokens download `jlo` runtime release assets and the `main` token builds `jlo` from source on the runner. The action also supports non-default target repositories, target branches, and release repositories.
+Usage centers on two install modes: semver tokens download `jlo` runtime release assets from `asterismhq/jlo` and the `main` token builds `jlo` from source on the runner. The action also supports non-default target repositories and target branches.
 
 See [docs/usage.md](docs/usage.md) for the input surface, install modes, and workflow examples.
 
@@ -27,6 +27,6 @@ See [docs/architecture.md](docs/architecture.md) for ownership boundaries, runti
 
 ## Configuration
 
-Configuration consists of action inputs, runtime environment variables, token scopes, and private-action access settings. The action reads `.jlo/.jlo-version` from a target repository and reads release assets from the configured release repository.
+Configuration consists of action inputs, runtime environment variables, token scopes, and private-action access settings. The action reads `.jlo/.jlo-version` from a target repository and reads runtime release assets from `asterismhq/jlo`.
 
 See [docs/README.md](docs/README.md) for inputs, environment overrides, and access requirements.

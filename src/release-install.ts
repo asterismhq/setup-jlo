@@ -14,6 +14,7 @@ import {
   resolvePlatformCacheDirectory
 } from './cache-paths'
 import { parseRepositorySlug } from './github-client'
+import { JLO_RELEASE_REPOSITORY } from './jlo-release-source'
 import { buildReleaseAssetCandidates, detectPlatformTuple } from './platform'
 import type { ParsedVersionToken } from './version-token'
 
@@ -41,7 +42,7 @@ export async function installReleaseVersion(
   )
   const releaseAsset = await fetchReleaseAsset({
     token: context.installToken,
-    releaseRepository: context.releaseRepository,
+    releaseRepository: JLO_RELEASE_REPOSITORY,
     tagVersion: versionToken.tag,
     candidates
   })
@@ -55,7 +56,7 @@ export async function installReleaseVersion(
     writeFileSync(downloadPath, releaseAsset.contents)
     if (statSync(downloadPath).size === 0) {
       throw new Error(
-        `Downloaded release asset '${releaseAsset.name}' is missing or empty in '${context.releaseRepository}' (${versionToken.tag}).`
+        `Downloaded release asset '${releaseAsset.name}' is missing or empty in '${JLO_RELEASE_REPOSITORY}' (${versionToken.tag}).`
       )
     }
 

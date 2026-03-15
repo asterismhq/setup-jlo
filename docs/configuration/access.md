@@ -13,9 +13,9 @@ The runtime `token` input is separate from the token GitHub Actions uses interna
 The `token` input requires read access to:
 
 - the repository that contains `.jlo/.jlo-version`
-- the configured `release_repository`
+- `asterismhq/jlo`
 
-When `release_repository` also serves as the `main` source repository, the same token covers source resolution and clone access.
+`asterismhq/jlo` serves as both the runtime release repository and the default `main` source repository, so the same token covers source resolution and clone access.
 
 ## Submodule Access
 
