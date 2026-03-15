@@ -1,21 +1,18 @@
 name: setup-jlo
-description: Set up the jlo CLI based on .jlo/.jlo-version resolved from the target branch control plane
+description: Set up the jlo CLI for a specified jlo version token
 inputs:
   token:
-    description: GitHub token with read access to target and release repositories
+    description: GitHub token with read access to asterismhq/jlo release assets and source
+    required: true
+  version:
+    description: jlo version token to install, such as 23.0.0 or main
     required: true
   submodule_token:
     description: Optional token for authenticated submodule fetch in main mode
     required: false
-  target_branch:
-    description: Control-plane branch to read .jlo/.jlo-version from
-    required: false
-  repository:
-    description: Repository containing .jlo/.jlo-version
-    required: false
 outputs:
   version-token:
-    description: Raw token read from .jlo/.jlo-version
+    description: Raw token passed to the version input
   install-mode:
     description: Resolved installation mode (release-tag or main)
 runs:
