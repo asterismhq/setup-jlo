@@ -41,7 +41,7 @@ function normalizeOs(raw: string): InstallerOs {
     case 'darwin':
       return 'darwin'
     default:
-      throw new Error(`Unsupported OS for installer bootstrap: ${raw}`)
+      throw new Error(`Unsupported OS for setup-jlo: ${raw}`)
   }
 }
 
@@ -52,7 +52,7 @@ function normalizeArch(raw: string): InstallerArch {
     case 'arm64':
       return 'aarch64'
     default:
-      throw new Error(`Unsupported architecture for installer bootstrap: ${raw}`)
+      throw new Error(`Unsupported architecture for setup-jlo: ${raw}`)
   }
 }
 

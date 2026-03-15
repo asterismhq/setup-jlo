@@ -33,7 +33,7 @@ GitHub Action for setting up the `jlo` CLI after resolving `.jlo/.jlo-version` f
 
 - missing `.jlo/.jlo-version` on target branch
 - invalid token format, must be semver or `main`
-- unsupported runner OS or architecture for installer bootstrap
+- unsupported runner OS or architecture for setup-jlo
 - release asset download failure or source-build execution failure
 
 ## Repository commands

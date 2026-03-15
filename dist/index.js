@@ -30105,8 +30105,6 @@ exports.commandExists = commandExists;
 exports.runGitWithOptionalAuth = runGitWithOptionalAuth;
 exports.basicAuthHeader = basicAuthHeader;
 exports.isFullGitSha = isFullGitSha;
-exports.normalizeSubmoduleUrlToHttps = normalizeSubmoduleUrlToHttps;
-exports.rewriteGitmodulesToHttps = rewriteGitmodulesToHttps;
 const node_buffer_1 = __nccwpck_require__(4573);
 const node_child_process_1 = __nccwpck_require__(1421);
 function commandExists(program) {
@@ -30153,48 +30151,6 @@ function basicAuthHeader(token) {
 }
 function isFullGitSha(value) {
     return /^[0-9a-fA-F]{40}$/.test(value);
-}
-function normalizeSubmoduleUrlToHttps(submoduleUrl) {
-    if (submoduleUrl.startsWith('git@github.com:')) {
-        return `https://github.com/${submoduleUrl.slice('git@github.com:'.length)}`;
-    }
-    if (submoduleUrl.startsWith('ssh://git@github.com/')) {
-        return `https://github.com/${submoduleUrl.slice('ssh://git@github.com/'.length)}`;
-    }
-    return submoduleUrl;
-}
-function rewriteGitmodulesToHttps(clonePath, authHeader) {
-    const keyList = runGitWithOptionalAuth({
-        cwd: clonePath,
-        authHeader,
-        args: [
-            'config',
-            '--file',
-            '.gitmodules',
-            '--name-only',
-            '--get-regexp',
-            '^submodule\\..*\\.url$'
-        ],
-        operation: 'enumerate submodule URLs from .gitmodules'
-    });
-    for (const key of keyList.split('\n').map((line) => line.trim()).filter(Boolean)) {
-        const submoduleUrl = runGitWithOptionalAuth({
-            cwd: clonePath,
-            authHeader,
-            args: ['config', '--file', '.gitmodules', '--get', key],
-            operation: 'read submodule URL from .gitmodules'
-        }).trim();
-        const normalized = normalizeSubmoduleUrlToHttps(submoduleUrl);
-        if (normalized === submoduleUrl) {
-            continue;
-        }
-        runGitWithOptionalAuth({
-            cwd: clonePath,
-            authHeader,
-            args: ['config', '--file', '.gitmodules', key, normalized],
-            operation: 'normalize submodule URL to HTTPS for source build'
-        });
-    }
 }
 
 
@@ -30304,8 +30260,8 @@ async function run() {
         path: '.jlo/.jlo-version'
     });
     const versionToken = versionFile.trim();
-    const installMode = resolveInstallMode(versionToken);
     const parsedVersion = (0, version_token_1.parseVersionToken)(versionToken);
+    const installMode = parsedVersion.kind === 'release' ? 'release-tag' : 'main';
     core.info(`Resolved .jlo/.jlo-version='${versionToken}' from ${repository}@${targetBranch} (${installMode}).`);
     core.setOutput('version-token', versionToken);
     core.setOutput('install-mode', installMode);
@@ -30346,9 +30302,7 @@ const node_path_1 = __nccwpck_require__(6760);
 function resolveInstallContext(options) {
     return {
         installToken: options.token,
-        installSubmoduleToken: options.submoduleToken && options.submoduleToken.trim().length > 0
-            ? options.submoduleToken.trim()
-            : undefined,
+        installSubmoduleToken: normalizeOptionalEnv(options.submoduleToken),
         targetBranch: options.targetBranch,
         releaseRepository: options.releaseRepository,
         mainSourceRemoteUrl: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_REMOTE_URL),
@@ -30432,7 +30386,7 @@ function normalizeOs(raw) {
         case 'darwin':
             return 'darwin';
         default:
-            throw new Error(`Unsupported OS for installer bootstrap: ${raw}`);
+            throw new Error(`Unsupported OS for setup-jlo: ${raw}`);
     }
 }
 function normalizeArch(raw) {
@@ -30442,7 +30396,7 @@ function normalizeArch(raw) {
         case 'arm64':
             return 'aarch64';
         default:
-            throw new Error(`Unsupported architecture for installer bootstrap: ${raw}`);
+            throw new Error(`Unsupported architecture for setup-jlo: ${raw}`);
     }
 }
 function detectRosettaArm64() {
@@ -30650,15 +30604,6 @@ async function installMainSource(context) {
     const sourceRemoteUrl = context.mainSourceRemoteUrl ?? defaultSourceRemoteUrl;
     const sourceRef = context.mainSourceRef ?? 'refs/heads/main';
     const sourceBranch = context.mainSourceBranch ?? 'main';
-    if (sourceRemoteUrl.trim().length === 0) {
-        throw new Error('JLO_MAIN_SOURCE_REMOTE_URL must not be empty when provided.');
-    }
-    if (sourceRef.trim().length === 0) {
-        throw new Error('JLO_MAIN_SOURCE_REF must not be empty when provided.');
-    }
-    if (sourceBranch.trim().length === 0) {
-        throw new Error('JLO_MAIN_SOURCE_BRANCH must not be empty when provided.');
-    }
     const sourceAuthHeader = isHttpRemote(sourceRemoteUrl)
         ? (0, git_process_1.basicAuthHeader)(context.installToken)
         : undefined;
@@ -30734,7 +30679,6 @@ async function installMainSource(context) {
                 ],
                 operation: 'configure git submodule URL rewrite for source build'
             });
-            (0, git_process_1.rewriteGitmodulesToHttps)(clonePath, submoduleAuthHeader);
             (0, git_process_1.runGitWithOptionalAuth)({
                 cwd: clonePath,
                 authHeader: submoduleAuthHeader,
