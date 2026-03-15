@@ -17,7 +17,6 @@ import {
   basicAuthHeader,
   commandExists,
   isFullGitSha,
-  rewriteGitmodulesToHttps,
   runGitWithOptionalAuth
 } from './git-process'
 import { parseRepositorySlug } from './github-client'
@@ -38,16 +37,6 @@ export async function installMainSource(context: InstallContext): Promise<void> 
   const sourceRemoteUrl = context.mainSourceRemoteUrl ?? defaultSourceRemoteUrl
   const sourceRef = context.mainSourceRef ?? 'refs/heads/main'
   const sourceBranch = context.mainSourceBranch ?? 'main'
-
-  if (sourceRemoteUrl.trim().length === 0) {
-    throw new Error('JLO_MAIN_SOURCE_REMOTE_URL must not be empty when provided.')
-  }
-  if (sourceRef.trim().length === 0) {
-    throw new Error('JLO_MAIN_SOURCE_REF must not be empty when provided.')
-  }
-  if (sourceBranch.trim().length === 0) {
-    throw new Error('JLO_MAIN_SOURCE_BRANCH must not be empty when provided.')
-  }
 
   const sourceAuthHeader = isHttpRemote(sourceRemoteUrl)
     ? basicAuthHeader(context.installToken)
@@ -133,8 +122,6 @@ export async function installMainSource(context: InstallContext): Promise<void> 
         ],
         operation: 'configure git submodule URL rewrite for source build'
       })
-
-      rewriteGitmodulesToHttps(clonePath, submoduleAuthHeader)
 
       runGitWithOptionalAuth({
         cwd: clonePath,

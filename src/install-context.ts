@@ -23,10 +23,7 @@ export function resolveInstallContext(options: {
 }): InstallContext {
   return {
     installToken: options.token,
-    installSubmoduleToken:
-      options.submoduleToken && options.submoduleToken.trim().length > 0
-        ? options.submoduleToken.trim()
-        : undefined,
+    installSubmoduleToken: normalizeOptionalEnv(options.submoduleToken),
     targetBranch: options.targetBranch,
     releaseRepository: options.releaseRepository,
     mainSourceRemoteUrl: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_REMOTE_URL),

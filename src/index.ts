@@ -31,8 +31,8 @@ async function run(): Promise<void> {
     path: '.jlo/.jlo-version'
   })
   const versionToken = versionFile.trim()
-  const installMode = resolveInstallMode(versionToken)
   const parsedVersion = parseVersionToken(versionToken)
+  const installMode = parsedVersion.kind === 'release' ? 'release-tag' : 'main'
 
   core.info(
     `Resolved .jlo/.jlo-version='${versionToken}' from ${repository}@${targetBranch} (${installMode}).`
