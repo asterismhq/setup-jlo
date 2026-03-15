@@ -13,9 +13,6 @@ inputs:
   repository:
     description: Repository containing .jlo/.jlo-version
     required: false
-  release_repository:
-    description: Repository hosting jlo runtime release assets
-    required: false
 outputs:
   version-token:
     description: Raw token read from .jlo/.jlo-version

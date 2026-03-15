@@ -30246,7 +30246,7 @@ async function run() {
     const submoduleToken = (0, action_inputs_1.getOptionalInput)('submodule_token');
     const repository = (0, action_inputs_1.getOptionalInput)('repository') ?? process.env.GITHUB_REPOSITORY;
     const targetBranch = (0, action_inputs_1.getOptionalInput)('target_branch') ?? process.env.JLO_TARGET_BRANCH;
-    const releaseRepository = (0, action_inputs_1.getOptionalInput)('release_repository') ?? 'asterismhq/jlo';
+    const releaseRepository = 'asterismhq/jlo';
     if (!repository) {
         throw new Error('Input or environment for repository is required.');
     }

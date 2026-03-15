@@ -17,7 +17,7 @@ This default form reads `.jlo/.jlo-version` from `${{ github.repository }}` on `
 
 `.jlo/.jlo-version` accepts two token classes:
 
-- semver such as `22.0.1`: downloads the matching `jlo-*` runtime release asset from the configured release repository
+- semver such as `22.0.1`: downloads the matching `jlo-*` runtime release asset from `asterismhq/jlo`
 - `main`: clones the configured source repository, resolves the upstream `main` head, initializes submodules when present, and builds `jlo` with `cargo`
 
 The action exposes:
@@ -33,10 +33,9 @@ The action exposes:
     token: ${{ secrets.JLO_RELEASE_PAT }}
     repository: asterismhq/example-control-plane
     target_branch: release-control
-    release_repository: asterismhq/jlo
 ```
 
-This form reads the version pin from a different control-plane repository or branch while still downloading runtime assets from the configured release repository.
+This form reads the version pin from a different control-plane repository or branch while still downloading runtime assets from `asterismhq/jlo`.
 
 ## Main-mode Requirements
 
