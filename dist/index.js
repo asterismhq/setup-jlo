@@ -26061,8 +26061,17 @@ function isFullGitSha(value) {
     return /^[0-9a-fA-F]{40}$/.test(value);
 }
 function credentialHelperScript(token) {
+    const username = normalizeGitHttpUsername(process.env.GITHUB_ACTOR);
     const escapedToken = token.replaceAll("'", "'\"'\"'");
-    return `!f() { test "$1" = get || exit 0; echo "username=x-access-token"; echo 'password=${escapedToken}'; }; f`;
+    const escapedUsername = username.replaceAll("'", "'\"'\"'");
+    return `!f() { test "$1" = get || exit 0; echo 'username=${escapedUsername}'; echo 'password=${escapedToken}'; }; f`;
+}
+function normalizeGitHttpUsername(value) {
+    if (!value) {
+        return 'git';
+    }
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : 'git';
 }
 
 

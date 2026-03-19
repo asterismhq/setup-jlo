@@ -60,6 +60,17 @@ export function isFullGitSha(value: string): boolean {
 }
 
 function credentialHelperScript(token: string): string {
+  const username = normalizeGitHttpUsername(process.env.GITHUB_ACTOR)
   const escapedToken = token.replaceAll("'", "'\"'\"'")
-  return `!f() { test "$1" = get || exit 0; echo "username=x-access-token"; echo 'password=${escapedToken}'; }; f`
+  const escapedUsername = username.replaceAll("'", "'\"'\"'")
+  return `!f() { test "$1" = get || exit 0; echo 'username=${escapedUsername}'; echo 'password=${escapedToken}'; }; f`
+}
+
+function normalizeGitHttpUsername(value: string | undefined): string {
+  if (!value) {
+    return 'git'
+  }
+
+  const normalized = value.trim()
+  return normalized.length > 0 ? normalized : 'git'
 }
