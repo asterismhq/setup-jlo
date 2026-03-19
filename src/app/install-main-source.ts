@@ -12,6 +12,7 @@ import {
   resolveCacheRoot,
   resolvePlatformCacheDirectory,
 } from '../adapters/cache/binary-install-cache'
+import { resolveGitHubHttpUsername } from '../adapters/github/github-git-http-username'
 import { buildCargoRelease } from '../adapters/process/cargo-build'
 import {
   cloneGitHubBranch,
@@ -39,10 +40,18 @@ export async function installMainSource(
     throw new Error('main install requires submodule_token.')
   }
 
+  const sourceAuthUsername = await resolveGitHubHttpUsername(
+    request.installToken,
+  )
+  const submoduleAuthUsername = await resolveGitHubHttpUsername(
+    request.installSubmoduleToken,
+  )
+
   const sha = resolveGitHubBranchHeadSha({
     repository: JLO_REPOSITORY,
     branch: sourceBranch,
     token: request.installToken,
+    username: sourceAuthUsername,
   })
 
   const platform = detectPlatformTuple()
@@ -73,6 +82,7 @@ export async function installMainSource(
       branch: sourceBranch,
       destination: clonePath,
       token: request.installToken,
+      username: sourceAuthUsername,
     })
 
     core.info('Using submodule_token for required submodule fetch.')
@@ -81,6 +91,7 @@ export async function installMainSource(
       updateGitHubSubmodules({
         cwd: clonePath,
         token: request.installSubmoduleToken,
+        username: submoduleAuthUsername,
       })
     } catch (error) {
       throw new Error(

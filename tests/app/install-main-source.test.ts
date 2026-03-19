@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const {
   info,
   existsSync,
+  resolveGitHubHttpUsername,
   commandExists,
   resolveGitHubBranchHeadSha,
   cloneGitHubBranch,
@@ -19,6 +20,7 @@ const {
 } = vi.hoisted(() => ({
   info: vi.fn(),
   existsSync: vi.fn(),
+  resolveGitHubHttpUsername: vi.fn(),
   commandExists: vi.fn(),
   resolveGitHubBranchHeadSha: vi.fn(),
   cloneGitHubBranch: vi.fn(),
@@ -45,6 +47,10 @@ vi.mock('node:fs', async () => {
     existsSync,
   }
 })
+
+vi.mock('../../src/adapters/github/github-git-http-username', () => ({
+  resolveGitHubHttpUsername,
+}))
 
 vi.mock('../../src/adapters/process/github-source-git', () => ({
   commandExists,
@@ -76,6 +82,7 @@ import { installMainSource } from '../../src/app/install-main-source'
 describe('app install main-source orchestration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resolveGitHubHttpUsername.mockResolvedValue('jlo-user')
     commandExists.mockReturnValue(true)
     resolveGitHubBranchHeadSha.mockReturnValue(
       '0123456789abcdef0123456789abcdef01234567',
@@ -101,6 +108,7 @@ describe('app install main-source orchestration', () => {
       repository: 'asterismhq/jlo',
       branch: 'main',
       token: 'token',
+      username: 'jlo-user',
     })
     expect(cloneGitHubBranch).not.toHaveBeenCalled()
     expect(updateGitHubSubmodules).not.toHaveBeenCalled()
@@ -131,10 +139,12 @@ describe('app install main-source orchestration', () => {
       branch: 'main',
       destination: expect.any(String),
       token: 'token',
+      username: 'jlo-user',
     })
     expect(updateGitHubSubmodules).toHaveBeenCalledWith({
       cwd: expect.any(String),
       token: 'submodule-token',
+      username: 'jlo-user',
     })
   })
 

@@ -1,7 +1,6 @@
 import { spawnSync } from 'node:child_process'
 
 const GITHUB_HTTPS_BASE = 'https://github.com/'
-const GITHUB_AUTH_USERNAME = 'x-access-token'
 
 export function commandExists(program: string): boolean {
   const result = spawnSync(program, ['--version'], {
@@ -14,9 +13,11 @@ export function resolveGitHubBranchHeadSha(options: {
   repository: string
   branch: string
   token: string
+  username: string
 }): string {
   const output = runGitHubCommand({
     token: options.token,
+    username: options.username,
     args: [
       'ls-remote',
       '--exit-code',
@@ -42,9 +43,11 @@ export function cloneGitHubBranch(options: {
   branch: string
   destination: string
   token: string
+  username: string
 }): void {
   runGitHubCommand({
     token: options.token,
+    username: options.username,
     args: [
       'clone',
       '--quiet',
@@ -62,10 +65,12 @@ export function cloneGitHubBranch(options: {
 export function updateGitHubSubmodules(options: {
   cwd: string
   token: string
+  username: string
 }): void {
   runGitHubCommand({
     cwd: options.cwd,
     token: options.token,
+    username: options.username,
     args: ['submodule', 'sync', '--recursive'],
     operation: 'sync git submodule configuration for source build',
   })
@@ -73,6 +78,7 @@ export function updateGitHubSubmodules(options: {
   runGitHubCommand({
     cwd: options.cwd,
     token: options.token,
+    username: options.username,
     args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
     operation: 'fetch git submodules for source build',
   })
@@ -81,6 +87,7 @@ export function updateGitHubSubmodules(options: {
 function runGitHubCommand(options: {
   cwd?: string
   token?: string
+  username?: string
   args: string[]
   operation: string
 }): string {
@@ -96,7 +103,10 @@ function runGitHubCommand(options: {
   ]
 
   if (options.token) {
-    const authenticatedBase = buildAuthenticatedGitHubBase(options.token)
+    const authenticatedBase = buildAuthenticatedGitHubBase({
+      username: options.username ?? 'x-access-token',
+      token: options.token,
+    })
     gitArgs.push(
       '-c',
       `url.${authenticatedBase}.insteadOf=${GITHUB_HTTPS_BASE}`,
@@ -134,9 +144,13 @@ function buildGitHubRepositoryUrl(repository: string): string {
   return `${GITHUB_HTTPS_BASE}${repository}.git`
 }
 
-function buildAuthenticatedGitHubBase(token: string): string {
-  const encodedToken = encodeURIComponent(token)
-  return `https://${GITHUB_AUTH_USERNAME}:${encodedToken}@github.com/`
+function buildAuthenticatedGitHubBase(options: {
+  username: string
+  token: string
+}): string {
+  const encodedUsername = encodeURIComponent(options.username)
+  const encodedToken = encodeURIComponent(options.token)
+  return `https://${encodedUsername}:${encodedToken}@github.com/`
 }
 
 function isFullGitSha(value: string): boolean {
