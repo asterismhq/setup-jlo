@@ -7,10 +7,10 @@
   "scripts": {
     "lint": "eslint .",
     "test": "vitest run",
-    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "package": "ncc build -s src/index.ts -o dist --license licenses.txt",
     "verify:dist": "node ./scripts/verify-dist.mjs",
-    "ci": "npm run lint && npm test && npm run build && npm run verify:dist"
+    "ci": "npm run lint && npm run typecheck && npm run test && npm run verify:dist"
   },
   "dependencies": {
     "@actions/core": "^1.11.1",

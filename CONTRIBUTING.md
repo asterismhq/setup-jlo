@@ -10,7 +10,7 @@ The repository verification surface is:
 
 - `npm run lint`
 - `npm test`
-- `npm run build`
+- `npm run typecheck`
 - `npm run package`
 - `npm run verify:dist`
 - `npm run ci`

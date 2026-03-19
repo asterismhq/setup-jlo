@@ -1,0 +1,30 @@
+# Verify Dist Workflow
+#
+# Verifies that the committed dist directory matches the source.
+
+name: Verify Dist
+
+on:
+  workflow_call:
+
+jobs:
+  verify-dist:
+    name: Verify Dist
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Verify Committed Dist
+        run: npm run verify:dist
+

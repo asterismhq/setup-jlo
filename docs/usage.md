@@ -47,17 +47,3 @@ This form builds `jlo` from the upstream `main` branch instead of downloading a 
 - `submodule_token` when the source tree contains private submodules
 
 `main` mode does not fall back to release installation.
-
-## Local Verification
-
-Repository-local verification is:
-
-- `npm run ci`
-
-Targeted commands remain available when only one surface is under active change:
-
-- `npm run lint`
-- `npm test`
-- `npm run build`
-- `npm run package`
-- `npm run verify:dist`
