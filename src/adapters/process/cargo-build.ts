@@ -6,8 +6,6 @@ export function buildCargoRelease(options: {
   cwd: string
   manifestPath: string
   buildTargetDir: string
-  sourceBranch: string
-  sourceRemoteUrl: string
 }): string {
   const buildResult = spawnSync(
     'cargo',
@@ -24,7 +22,7 @@ export function buildCargoRelease(options: {
 
   if (buildResult.status !== 0) {
     throw new Error(
-      `Failed to build jlo from source branch '${options.sourceBranch}' in '${options.sourceRemoteUrl}': ${buildResult.stderr.trim()}`,
+      `Failed to build jlo from source: ${buildResult.stderr.trim()}`,
     )
   }
 

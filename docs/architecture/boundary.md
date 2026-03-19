@@ -48,7 +48,7 @@ The action runtime executes this sequence:
 3. Normalize an install request from inputs and runtime environment.
 4. Execute one install path:
    - semver: query release metadata, select the matching `jlo-*` asset, download it, and install it into the cache
-   - `main`: resolve the source head SHA, clone the source repository, initialize submodules when present, build `jlo`, and install the resulting binary into the cache
+   - `main`: resolve the `main` head SHA, reuse a matching cached build when present, otherwise clone the source repository, fetch required submodules, build `jlo`, and install the resulting binary into the cache
 5. Add the resolved install directory to `GITHUB_PATH`.
 
 ## Ownership Split
@@ -98,6 +98,6 @@ The action fails explicitly when:
 - the runner platform is unsupported
 - release metadata or release asset access fails
 - `git` or `cargo` is missing for `main` mode
-- source resolution, clone, submodule fetch, or build fails
+- source SHA resolution, clone, submodule fetch, or build fails
 
 No install path silently falls back to another path.

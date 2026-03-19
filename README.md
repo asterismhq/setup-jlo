@@ -15,7 +15,7 @@ The repository packages one distributable action. The runtime contract is intent
 
 ## Usage
 
-Usage centers on two install modes: semver tokens download `jlo` runtime release assets from `asterismhq/jlo` and the `main` token builds `jlo` from source on the runner.
+Usage centers on two install modes: semver tokens download `jlo` runtime release assets from `asterismhq/jlo` and the `main` token resolves the current `main` head, reuses a matching cached build when present, or builds `jlo` from source on the runner.
 
 See [docs/usage.md](docs/usage.md) for the input surface, install modes, and workflow examples.
 
@@ -27,6 +27,6 @@ See [docs/architecture/boundary.md](docs/architecture/boundary.md) for ownership
 
 ## Configuration
 
-Configuration consists of action inputs, runtime environment variables, token scopes, and private-action access settings. The action installs the version token supplied by the workflow and reads runtime release assets from `asterismhq/jlo`.
+Configuration consists of action inputs, runtime environment variables, token scopes, and private-action access settings. The action installs the version token supplied by the workflow and reads release assets and `main`-mode source from `asterismhq/jlo`.
 
 See [docs/README.md](docs/README.md) for inputs, environment overrides, and access requirements.
