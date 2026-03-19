@@ -18,9 +18,7 @@ The `token` input requires read access to:
 
 ## Submodule Access
 
-`submodule_token` is required only when the `main` source tree contains private submodules. Public submodules or repositories without submodules do not require it.
-
-The action attempts anonymous submodule fetch when `submodule_token` is absent. Failure remains explicit.
+`submodule_token` is required for `main` mode. The `main` source build depends on repository submodules and does not attempt anonymous fallback.
 
 ## Runtime Environment Overrides
 

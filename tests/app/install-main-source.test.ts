@@ -6,6 +6,7 @@ const {
   commandExists,
   runGitWithOptionalAuth,
   isFullGitSha,
+  buildAuthenticatedGitHubBase,
   buildAuthenticatedGitHubRemoteUrl,
   normalizeGitHttpUsername,
   parseRepositorySlug,
@@ -25,6 +26,7 @@ const {
   commandExists: vi.fn(),
   runGitWithOptionalAuth: vi.fn(),
   isFullGitSha: vi.fn(),
+  buildAuthenticatedGitHubBase: vi.fn(),
   buildAuthenticatedGitHubRemoteUrl: vi.fn(),
   normalizeGitHttpUsername: vi.fn(),
   parseRepositorySlug: vi.fn(),
@@ -56,6 +58,7 @@ vi.mock('../../src/adapters/process/git-cli', () => ({
   commandExists,
   runGitWithOptionalAuth,
   isFullGitSha,
+  buildAuthenticatedGitHubBase,
   buildAuthenticatedGitHubRemoteUrl,
   normalizeGitHttpUsername,
 }))
@@ -93,6 +96,9 @@ describe('app install main-source orchestration', () => {
     vi.clearAllMocks()
     commandExists.mockReturnValue(true)
     resolveGitHttpUsername.mockResolvedValue('jlo-bot')
+    buildAuthenticatedGitHubBase.mockImplementation(
+      ({ username, token }) => `https://${username}:${token}@github.com/`,
+    )
     buildAuthenticatedGitHubRemoteUrl.mockImplementation(
       ({ remoteUrl, username, token }) =>
         remoteUrl.replace('https://', `https://${username}:${token}@`),
@@ -116,19 +122,27 @@ describe('app install main-source orchestration', () => {
   it('reuses cached main binary and skips clone/build', async () => {
     await installMainSource({
       installToken: 'token',
+      installSubmoduleToken: 'submodule-token',
       allowDarwinX8664Fallback: false,
     })
 
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith({
-      authUsername: 'jlo-bot',
-      authToken: 'token',
       args: [
-        'ls-remote',
+        'clone',
+        '--quiet',
+        '--depth=1',
+        '--branch',
+        'main',
         '--',
         'https://jlo-bot:token@github.com/asterismhq/jlo.git',
-        'refs/heads/main',
+        expect.any(String),
       ],
-      operation: 'resolve source head SHA',
+      operation: 'clone source branch for source build',
+    })
+    expect(runGitWithOptionalAuth).toHaveBeenCalledWith({
+      cwd: expect.any(String),
+      args: ['rev-parse', 'HEAD'],
+      operation: 'resolve cloned source head SHA',
     })
     expect(buildCargoRelease).not.toHaveBeenCalled()
     expect(copyExecutableBinary).not.toHaveBeenCalled()
@@ -162,49 +176,50 @@ describe('app install main-source orchestration', () => {
 
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
       expect.objectContaining({
-        authUsername: 'jlo-bot',
-        authToken: 'submodule-token',
         args: [
           'config',
           '--local',
           '--add',
-          'url.https://github.com/.insteadOf',
+          'url.https://jlo-bot:submodule-token@github.com/.insteadOf',
           'https://github.com/',
         ],
       }),
     )
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
       expect.objectContaining({
-        authUsername: 'jlo-bot',
-        authToken: 'submodule-token',
         args: [
           'config',
           '--local',
           '--add',
-          'url.https://github.com/.insteadOf',
+          'url.https://jlo-bot:submodule-token@github.com/.insteadOf',
           'git@github.com:',
         ],
       }),
     )
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
       expect.objectContaining({
-        authUsername: 'jlo-bot',
-        authToken: 'submodule-token',
         args: [
           'config',
           '--local',
           '--add',
-          'url.https://github.com/.insteadOf',
+          'url.https://jlo-bot:submodule-token@github.com/.insteadOf',
           'ssh://git@github.com/',
         ],
       }),
     )
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
       expect.objectContaining({
-        authUsername: 'jlo-bot',
-        authToken: 'submodule-token',
         args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
       }),
     )
+  })
+
+  it('fails when main install omits submodule token', async () => {
+    await expect(
+      installMainSource({
+        installToken: 'token',
+        allowDarwinX8664Fallback: false,
+      }),
+    ).rejects.toThrow('main install requires submodule_token.')
   })
 })

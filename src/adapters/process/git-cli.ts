@@ -61,6 +61,13 @@ export function isFullGitSha(value: string): boolean {
   return /^[0-9a-fA-F]{40}$/.test(value)
 }
 
+export function buildAuthenticatedGitHubBase(options: {
+  username: string
+  token: string
+}): string {
+  return authenticatedGitHubBase(options)
+}
+
 export function buildAuthenticatedGitHubRemoteUrl(options: {
   remoteUrl: string
   username: string

@@ -18,7 +18,7 @@ This default form installs the semver-pinned runtime binary for `23.0.0`.
 The `version` input accepts two token classes:
 
 - semver such as `22.0.1`: downloads the matching `jlo-*` runtime release asset from `asterismhq/jlo`
-- `main`: clones the configured source repository, resolves the upstream `main` head, initializes submodules when present, and builds `jlo` with `cargo`
+- `main`: clones the configured source repository, initializes required submodules, and builds `jlo` with `cargo`
 
 The action exposes:
 
@@ -44,7 +44,7 @@ This form builds `jlo` from the upstream `main` branch instead of downloading a 
 - `git` on `PATH`
 - `cargo` on `PATH`
 - access to the source repository
-- `submodule_token` when the source tree contains private submodules
+- `submodule_token`
 
 `main` mode does not fall back to release installation.
 

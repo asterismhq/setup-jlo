@@ -15,6 +15,7 @@ import {
 import { resolveGitHttpUsername } from '../adapters/github/github-git-http-username'
 import { buildCargoRelease } from '../adapters/process/cargo-build'
 import {
+  buildAuthenticatedGitHubBase,
   buildAuthenticatedGitHubRemoteUrl,
   commandExists,
   isFullGitSha,
@@ -39,25 +40,24 @@ export async function installMainSource(
 
   const releaseRepository = parseRepositorySlug(JLO_RELEASE_REPOSITORY)
   const sourceRemoteUrl = `https://github.com/${releaseRepository.owner}/${releaseRepository.repo}.git`
-  const sourceRef = 'refs/heads/main'
   const sourceBranch = 'main'
+  if (!request.installSubmoduleToken) {
+    throw new Error('main install requires submodule_token.')
+  }
+
   const sourceAuthUsername = isHttpRemote(sourceRemoteUrl)
     ? normalizeGitHttpUsername(
         await resolveGitHttpUsername(request.installToken),
       )
     : undefined
-  const submoduleAuthUsername = request.installSubmoduleToken
-    ? normalizeGitHttpUsername(
-        await resolveGitHttpUsername(request.installSubmoduleToken),
-      )
-    : undefined
+  const submoduleAuthUsername = normalizeGitHttpUsername(
+    await resolveGitHttpUsername(request.installSubmoduleToken),
+  )
 
   const sourceAuthToken = isHttpRemote(sourceRemoteUrl)
     ? request.installToken
     : undefined
   const submoduleAuthToken = request.installSubmoduleToken
-    ? request.installSubmoduleToken
-    : undefined
 
   const sourceFetchRemoteUrl =
     sourceAuthToken && sourceAuthUsername
@@ -67,56 +67,21 @@ export async function installMainSource(
           token: sourceAuthToken,
         })
       : sourceRemoteUrl
-
-  core.info(
-    `Resolving main source head from '${sourceRemoteUrl}' using git HTTP username '${sourceAuthUsername ?? 'anonymous'}'.`,
-  )
-
-  let lsRemoteOutput: string
-  try {
-    lsRemoteOutput = runGitWithOptionalAuth({
-      authUsername: sourceAuthUsername,
-      authToken: sourceAuthToken,
-      args: ['ls-remote', '--', sourceFetchRemoteUrl, sourceRef],
-      operation: 'resolve source head SHA',
-    })
-  } catch (error) {
-    throw new Error(
-      `Failed to resolve source head SHA from '${sourceRemoteUrl}' using git HTTP username '${sourceAuthUsername ?? 'anonymous'}'. Verify token can read source repository '${releaseRepository.owner}/${releaseRepository.repo}' and SSO authorization is active when required: ${(error as Error).message}`,
-    )
-  }
-  const sha = lsRemoteOutput.trim().split(/\s+/)[0] ?? ''
-
-  if (!isFullGitSha(sha)) {
-    throw new Error(
-      `Failed to resolve source head SHA from '${sourceRemoteUrl}' ref '${sourceRef}'.`,
-    )
-  }
-
-  const platform = detectPlatformTuple()
-  const shortSha = sha.slice(0, 12)
-  const installKey = `main-${shortSha}`
-  const cacheRoot = resolveCacheRoot(request)
-  const platformDir = resolvePlatformCacheDirectory(cacheRoot, platform)
-  const installDir = ensureInstallDirectory(platformDir, installKey)
-  const binaryPath = join(installDir, 'jlo')
-
-  if (existsSync(binaryPath)) {
-    core.info(`jlo main@${shortSha} already cached; skipping build.`)
-    pruneSiblingInstallDirectories(platformDir, installKey)
-    installBinaryOnPath(installDir)
-    core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
-    return
-  }
+  const submoduleAuthenticatedBase = buildAuthenticatedGitHubBase({
+    username: submoduleAuthUsername,
+    token: submoduleAuthToken,
+  })
 
   const clonePath = mkdtempSync(
     join(request.runnerTemp ?? tmpdir(), 'setup-jlo-main-'),
   )
 
   try {
+    core.info(
+      `Cloning main source from '${sourceRemoteUrl}' using git HTTP username '${sourceAuthUsername ?? 'anonymous'}'.`,
+    )
+
     runGitWithOptionalAuth({
-      authUsername: sourceAuthUsername,
-      authToken: sourceAuthToken,
       args: [
         'clone',
         '--quiet',
@@ -130,82 +95,93 @@ export async function installMainSource(
       operation: 'clone source branch for source build',
     })
 
+    const sha = runGitWithOptionalAuth({
+      cwd: clonePath,
+      args: ['rev-parse', 'HEAD'],
+      operation: 'resolve cloned source head SHA',
+    }).trim()
+
+    if (!isFullGitSha(sha)) {
+      throw new Error(
+        `Failed to resolve source head SHA from cloned branch '${sourceBranch}' in '${sourceRemoteUrl}'.`,
+      )
+    }
+
+    const platform = detectPlatformTuple()
+    const shortSha = sha.slice(0, 12)
+    const installKey = `main-${shortSha}`
+    const cacheRoot = resolveCacheRoot(request)
+    const platformDir = resolvePlatformCacheDirectory(cacheRoot, platform)
+    const installDir = ensureInstallDirectory(platformDir, installKey)
+    const binaryPath = join(installDir, 'jlo')
+
+    if (existsSync(binaryPath)) {
+      core.info(`jlo main@${shortSha} already cached; skipping build.`)
+      pruneSiblingInstallDirectories(platformDir, installKey)
+      installBinaryOnPath(installDir)
+      core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
+      return
+    }
+
     const gitmodulesPath = join(clonePath, '.gitmodules')
-    if (existsSync(gitmodulesPath)) {
-      if (request.installSubmoduleToken) {
-        core.info('Using submodule_token for submodule fetch authentication.')
-      } else {
-        core.info(
-          'submodule_token is empty; attempting anonymous submodule fetch.',
-        )
-      }
+    if (!existsSync(gitmodulesPath)) {
+      throw new Error(
+        `main source repository '${releaseRepository.owner}/${releaseRepository.repo}' is missing required .gitmodules.`,
+      )
+    }
 
-      runGitWithOptionalAuth({
-        cwd: clonePath,
-        authUsername: submoduleAuthUsername,
-        authToken: submoduleAuthToken,
-        args: [
-          'config',
-          '--local',
-          '--add',
-          'url.https://github.com/.insteadOf',
-          'https://github.com/',
-        ],
-        operation: 'configure git submodule URL rewrite for source build',
-      })
-      runGitWithOptionalAuth({
-        cwd: clonePath,
-        authUsername: submoduleAuthUsername,
-        authToken: submoduleAuthToken,
-        args: [
-          'config',
-          '--local',
-          '--add',
-          'url.https://github.com/.insteadOf',
-          'git@github.com:',
-        ],
-        operation: 'configure git submodule URL rewrite for source build',
-      })
-      runGitWithOptionalAuth({
-        cwd: clonePath,
-        authUsername: submoduleAuthUsername,
-        authToken: submoduleAuthToken,
-        args: [
-          'config',
-          '--local',
-          '--add',
-          'url.https://github.com/.insteadOf',
-          'ssh://git@github.com/',
-        ],
-        operation: 'configure git submodule URL rewrite for source build',
-      })
+    core.info('Using submodule_token for required submodule fetch.')
 
+    runGitWithOptionalAuth({
+      cwd: clonePath,
+      args: [
+        'config',
+        '--local',
+        '--add',
+        `url.${submoduleAuthenticatedBase}.insteadOf`,
+        'https://github.com/',
+      ],
+      operation: 'configure git submodule URL rewrite for source build',
+    })
+    runGitWithOptionalAuth({
+      cwd: clonePath,
+      args: [
+        'config',
+        '--local',
+        '--add',
+        `url.${submoduleAuthenticatedBase}.insteadOf`,
+        'git@github.com:',
+      ],
+      operation: 'configure git submodule URL rewrite for source build',
+    })
+    runGitWithOptionalAuth({
+      cwd: clonePath,
+      args: [
+        'config',
+        '--local',
+        '--add',
+        `url.${submoduleAuthenticatedBase}.insteadOf`,
+        'ssh://git@github.com/',
+      ],
+      operation: 'configure git submodule URL rewrite for source build',
+    })
+
+    runGitWithOptionalAuth({
+      cwd: clonePath,
+      args: ['submodule', 'sync', '--recursive'],
+      operation: 'sync git submodule configuration for source build',
+    })
+
+    try {
       runGitWithOptionalAuth({
         cwd: clonePath,
-        authUsername: submoduleAuthUsername,
-        authToken: submoduleAuthToken,
-        args: ['submodule', 'sync', '--recursive'],
-        operation: 'sync git submodule configuration for source build',
+        args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
+        operation: 'fetch git submodules for source build',
       })
-
-      try {
-        runGitWithOptionalAuth({
-          cwd: clonePath,
-          authUsername: submoduleAuthUsername,
-          authToken: submoduleAuthToken,
-          args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
-          operation: 'fetch git submodules for source build',
-        })
-      } catch (error) {
-        if (request.installSubmoduleToken) {
-          throw new Error(
-            `Failed to fetch git submodules for source build (verify submodule_token can read submodule repositories): ${(error as Error).message}`,
-          )
-        }
-        throw new Error(
-          `Failed to fetch git submodules for source build without credentials. Configure setup-jlo submodule_token for private submodules: ${(error as Error).message}`,
-        )
-      }
+    } catch (error) {
+      throw new Error(
+        `Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): ${(error as Error).message}`,
+      )
     }
 
     const buildTargetDir = join(clonePath, 'target')
@@ -219,13 +195,13 @@ export async function installMainSource(
     })
 
     copyExecutableBinary(builtBinary, binaryPath)
+
+    pruneSiblingInstallDirectories(platformDir, installKey)
+    installBinaryOnPath(installDir)
+    core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
   } finally {
     rmSync(clonePath, { recursive: true, force: true })
   }
-
-  pruneSiblingInstallDirectories(platformDir, installKey)
-  installBinaryOnPath(installDir)
-  core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
 }
 
 function isHttpRemote(remote: string): boolean {
