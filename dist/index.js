@@ -30453,12 +30453,19 @@ async function installMainSource(request) {
     const submoduleAuthToken = request.installSubmoduleToken
         ? request.installSubmoduleToken
         : undefined;
-    const lsRemoteOutput = (0, git_cli_1.runGitWithOptionalAuth)({
-        authUsername: sourceAuthUsername,
-        authToken: sourceAuthToken,
-        args: ['ls-remote', '--', sourceRemoteUrl, sourceRef],
-        operation: 'resolve source head SHA',
-    });
+    core.info(`Resolving main source head from '${sourceRemoteUrl}' using git HTTP username '${sourceAuthUsername ?? 'anonymous'}'.`);
+    let lsRemoteOutput;
+    try {
+        lsRemoteOutput = (0, git_cli_1.runGitWithOptionalAuth)({
+            authUsername: sourceAuthUsername,
+            authToken: sourceAuthToken,
+            args: ['ls-remote', '--', sourceRemoteUrl, sourceRef],
+            operation: 'resolve source head SHA',
+        });
+    }
+    catch (error) {
+        throw new Error(`Failed to resolve source head SHA from '${sourceRemoteUrl}' using git HTTP username '${sourceAuthUsername ?? 'anonymous'}'. Verify token can read source repository '${releaseRepository.owner}/${releaseRepository.repo}' and SSO authorization is active when required: ${error.message}`);
+    }
     const sha = lsRemoteOutput.trim().split(/\s+/)[0] ?? '';
     if (!(0, git_cli_1.isFullGitSha)(sha)) {
         throw new Error(`Failed to resolve source head SHA from '${sourceRemoteUrl}' ref '${sourceRef}'.`);
