@@ -1,0 +1,127 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const {
+  info,
+  existsSync,
+  commandExists,
+  basicAuthHeader,
+  runGitWithOptionalAuth,
+  isFullGitSha,
+  parseRepositorySlug,
+  detectPlatformTuple,
+  resolveCacheRoot,
+  resolvePlatformCacheDirectory,
+  ensureInstallDirectory,
+  installBinaryOnPath,
+  pruneSiblingInstallDirectories,
+  detectBinaryVersion,
+  buildCargoRelease,
+  copyExecutableBinary
+} = vi.hoisted(() => ({
+  info: vi.fn(),
+  existsSync: vi.fn(),
+  commandExists: vi.fn(),
+  basicAuthHeader: vi.fn(),
+  runGitWithOptionalAuth: vi.fn(),
+  isFullGitSha: vi.fn(),
+  parseRepositorySlug: vi.fn(),
+  detectPlatformTuple: vi.fn(),
+  resolveCacheRoot: vi.fn(),
+  resolvePlatformCacheDirectory: vi.fn(),
+  ensureInstallDirectory: vi.fn(),
+  installBinaryOnPath: vi.fn(),
+  pruneSiblingInstallDirectories: vi.fn(),
+  detectBinaryVersion: vi.fn(),
+  buildCargoRelease: vi.fn(),
+  copyExecutableBinary: vi.fn()
+}))
+
+vi.mock('@actions/core', () => ({
+  info
+}))
+
+vi.mock('node:fs', async () => {
+  const actual = await vi.importActual<typeof import('node:fs')>('node:fs')
+  return {
+    ...actual,
+    existsSync
+  }
+})
+
+vi.mock('../../src/adapters/process/git-cli', () => ({
+  commandExists,
+  basicAuthHeader,
+  runGitWithOptionalAuth,
+  isFullGitSha
+}))
+
+vi.mock('../../src/domain/repository-slug', () => ({
+  parseRepositorySlug
+}))
+
+vi.mock('../../src/domain/platform', () => ({
+  detectPlatformTuple
+}))
+
+vi.mock('../../src/adapters/cache/binary-install-cache', () => ({
+  resolveCacheRoot,
+  resolvePlatformCacheDirectory,
+  ensureInstallDirectory,
+  installBinaryOnPath,
+  pruneSiblingInstallDirectories,
+  detectBinaryVersion,
+  copyExecutableBinary
+}))
+
+vi.mock('../../src/adapters/process/cargo-build', () => ({
+  buildCargoRelease
+}))
+
+import { installMainSource } from '../../src/app/install-main-source'
+
+describe('app install main-source orchestration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    commandExists.mockReturnValue(true)
+    basicAuthHeader.mockReturnValue('Authorization: Basic token')
+    parseRepositorySlug.mockReturnValue({ owner: 'asterismhq', repo: 'jlo' })
+    runGitWithOptionalAuth.mockReturnValue(
+      '0123456789abcdef0123456789abcdef01234567\trefs/heads/main\n'
+    )
+    isFullGitSha.mockReturnValue(true)
+    detectPlatformTuple.mockReturnValue({ os: 'linux', arch: 'x86_64' })
+    resolveCacheRoot.mockReturnValue('/cache')
+    resolvePlatformCacheDirectory.mockReturnValue('/cache/linux-x86_64')
+    ensureInstallDirectory.mockReturnValue('/cache/linux-x86_64/main-0123456789ab')
+    existsSync.mockReturnValue(true)
+    detectBinaryVersion.mockReturnValue('jlo main')
+  })
+
+  it('reuses cached main binary and skips clone/build', async () => {
+    await installMainSource({
+      installToken: 'token',
+      allowDarwinX8664Fallback: false
+    })
+
+    expect(runGitWithOptionalAuth).toHaveBeenCalledWith({
+      authHeader: 'Authorization: Basic token',
+      args: [
+        'ls-remote',
+        '--',
+        'https://github.com/asterismhq/jlo.git',
+        'refs/heads/main'
+      ],
+      operation: 'resolve source head SHA'
+    })
+    expect(buildCargoRelease).not.toHaveBeenCalled()
+    expect(copyExecutableBinary).not.toHaveBeenCalled()
+    expect(pruneSiblingInstallDirectories).toHaveBeenCalledWith(
+      '/cache/linux-x86_64',
+      'main-0123456789ab'
+    )
+    expect(installBinaryOnPath).toHaveBeenCalledWith(
+      '/cache/linux-x86_64/main-0123456789ab'
+    )
+    expect(info).toHaveBeenCalledWith('jlo installed: jlo main')
+  })
+})

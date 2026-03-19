@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { resolveInstallMode } from '../src/index'
-import { parseVersionToken } from '../src/version-token'
+import { parseVersionToken } from '../../src/domain/version-token'
 
 describe('setup-jlo version token behavior', () => {
-  it('resolves semver token to release-tag mode', () => {
-    expect(resolveInstallMode('0.5.2')).toBe('release-tag')
+  it('parses semver token to release payload', () => {
+    expect(parseVersionToken('0.5.2')).toEqual({
+      kind: 'release',
+      version: '0.5.2',
+      tag: 'v0.5.2'
+    })
   })
 
   it('accepts v-prefixed semver token', () => {
@@ -15,8 +18,11 @@ describe('setup-jlo version token behavior', () => {
     })
   })
 
-  it('resolves main token to main mode', () => {
-    expect(resolveInstallMode('main')).toBe('main')
+  it('parses main token to main payload', () => {
+    expect(parseVersionToken('main')).toEqual({
+      kind: 'main',
+      token: 'main'
+    })
   })
 
   it('rejects invalid token values', () => {

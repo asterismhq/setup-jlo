@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildReleaseAssetCandidates } from '../src/platform'
+import { buildReleaseAssetCandidates } from '../../src/domain/platform'
 
 describe('setup-jlo release asset candidates', () => {
   it('builds linux x86_64 runtime asset candidates', () => {
