@@ -9,7 +9,7 @@ const ENV_KEYS = [
   'JLO_CACHE_ROOT',
   'RUNNER_ENVIRONMENT',
   'RUNNER_TEMP',
-  'RUNNER_TOOL_CACHE'
+  'RUNNER_TOOL_CACHE',
 ] as const
 
 afterEach(() => {
@@ -32,7 +32,7 @@ describe('action install request normalization', () => {
 
     const request = resolveInstallRequest({
       token: ' install-token ',
-      submoduleToken: ' submodule-token '
+      submoduleToken: ' submodule-token ',
     })
 
     expect(request).toEqual({
@@ -45,7 +45,7 @@ describe('action install request normalization', () => {
       cacheRootOverride: '/tmp/cache',
       runnerEnvironment: 'github-hosted',
       runnerTemp: '/tmp/runner',
-      runnerToolCache: '/opt/toolcache'
+      runnerToolCache: '/opt/toolcache',
     })
   })
 })

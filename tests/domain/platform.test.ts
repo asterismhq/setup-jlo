@@ -7,10 +7,10 @@ describe('setup-jlo release asset candidates', () => {
       buildReleaseAssetCandidates(
         {
           os: 'linux',
-          arch: 'x86_64'
+          arch: 'x86_64',
         },
-        false
-      )
+        false,
+      ),
     ).toEqual(['jlo-linux-x86_64', 'jlo-linux-amd64'])
   })
 
@@ -19,10 +19,10 @@ describe('setup-jlo release asset candidates', () => {
       buildReleaseAssetCandidates(
         {
           os: 'darwin',
-          arch: 'aarch64'
+          arch: 'aarch64',
         },
-        true
-      )
+        true,
+      ),
     ).toEqual(['jlo-darwin-aarch64', 'jlo-darwin-arm64', 'jlo-darwin-x86_64'])
   })
 })

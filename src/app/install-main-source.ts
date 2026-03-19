@@ -10,23 +10,25 @@ import {
   installBinaryOnPath,
   pruneSiblingInstallDirectories,
   resolveCacheRoot,
-  resolvePlatformCacheDirectory
+  resolvePlatformCacheDirectory,
 } from '../adapters/cache/binary-install-cache'
 import { buildCargoRelease } from '../adapters/process/cargo-build'
 import {
   basicAuthHeader,
   commandExists,
   isFullGitSha,
-  runGitWithOptionalAuth
+  runGitWithOptionalAuth,
 } from '../adapters/process/git-cli'
 import { JLO_RELEASE_REPOSITORY } from '../catalog/jlo'
 import { detectPlatformTuple } from '../domain/platform'
 import { parseRepositorySlug } from '../domain/repository-slug'
 
-export async function installMainSource(request: InstallRequest): Promise<void> {
+export async function installMainSource(
+  request: InstallRequest,
+): Promise<void> {
   if (!commandExists('cargo')) {
     throw new Error(
-      'main-head install requires cargo on PATH. Provision Rust toolchain on the runner.'
+      'main-head install requires cargo on PATH. Provision Rust toolchain on the runner.',
     )
   }
   if (!commandExists('git')) {
@@ -49,13 +51,13 @@ export async function installMainSource(request: InstallRequest): Promise<void> 
   const lsRemoteOutput = runGitWithOptionalAuth({
     authHeader: sourceAuthHeader,
     args: ['ls-remote', '--', sourceRemoteUrl, sourceRef],
-    operation: 'resolve source head SHA'
+    operation: 'resolve source head SHA',
   })
   const sha = lsRemoteOutput.trim().split(/\s+/)[0] ?? ''
 
   if (!isFullGitSha(sha)) {
     throw new Error(
-      `Failed to resolve source head SHA from '${sourceRemoteUrl}' ref '${sourceRef}'.`
+      `Failed to resolve source head SHA from '${sourceRemoteUrl}' ref '${sourceRef}'.`,
     )
   }
 
@@ -75,7 +77,9 @@ export async function installMainSource(request: InstallRequest): Promise<void> 
     return
   }
 
-  const clonePath = mkdtempSync(join(request.runnerTemp ?? tmpdir(), 'setup-jlo-main-'))
+  const clonePath = mkdtempSync(
+    join(request.runnerTemp ?? tmpdir(), 'setup-jlo-main-'),
+  )
 
   try {
     runGitWithOptionalAuth({
@@ -88,9 +92,9 @@ export async function installMainSource(request: InstallRequest): Promise<void> 
         sourceBranch,
         '--',
         sourceRemoteUrl,
-        clonePath
+        clonePath,
       ],
-      operation: 'clone source branch for source build'
+      operation: 'clone source branch for source build',
     })
 
     const gitmodulesPath = join(clonePath, '.gitmodules')
@@ -98,7 +102,9 @@ export async function installMainSource(request: InstallRequest): Promise<void> 
       if (request.installSubmoduleToken) {
         core.info('Using submodule_token for submodule fetch authentication.')
       } else {
-        core.info('submodule_token is empty; attempting anonymous submodule fetch.')
+        core.info(
+          'submodule_token is empty; attempting anonymous submodule fetch.',
+        )
       }
 
       runGitWithOptionalAuth({
@@ -108,9 +114,9 @@ export async function installMainSource(request: InstallRequest): Promise<void> 
           'config',
           '--local',
           'url.https://github.com/.insteadOf',
-          'git@github.com:'
+          'git@github.com:',
         ],
-        operation: 'configure git submodule URL rewrite for source build'
+        operation: 'configure git submodule URL rewrite for source build',
       })
       runGitWithOptionalAuth({
         cwd: clonePath,
@@ -119,16 +125,16 @@ export async function installMainSource(request: InstallRequest): Promise<void> 
           'config',
           '--local',
           'url.https://github.com/.insteadOf',
-          'ssh://git@github.com/'
+          'ssh://git@github.com/',
         ],
-        operation: 'configure git submodule URL rewrite for source build'
+        operation: 'configure git submodule URL rewrite for source build',
       })
 
       runGitWithOptionalAuth({
         cwd: clonePath,
         authHeader: submoduleAuthHeader,
         args: ['submodule', 'sync', '--recursive'],
-        operation: 'sync git submodule configuration for source build'
+        operation: 'sync git submodule configuration for source build',
       })
 
       try {
@@ -136,16 +142,16 @@ export async function installMainSource(request: InstallRequest): Promise<void> 
           cwd: clonePath,
           authHeader: submoduleAuthHeader,
           args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
-          operation: 'fetch git submodules for source build'
+          operation: 'fetch git submodules for source build',
         })
       } catch (error) {
         if (request.installSubmoduleToken) {
           throw new Error(
-            `Failed to fetch git submodules for source build (verify submodule_token can read submodule repositories): ${(error as Error).message}`
+            `Failed to fetch git submodules for source build (verify submodule_token can read submodule repositories): ${(error as Error).message}`,
           )
         }
         throw new Error(
-          `Failed to fetch git submodules for source build without credentials. Configure setup-jlo submodule_token for private submodules: ${(error as Error).message}`
+          `Failed to fetch git submodules for source build without credentials. Configure setup-jlo submodule_token for private submodules: ${(error as Error).message}`,
         )
       }
     }
@@ -157,7 +163,7 @@ export async function installMainSource(request: InstallRequest): Promise<void> 
       manifestPath,
       buildTargetDir,
       sourceBranch,
-      sourceRemoteUrl
+      sourceRemoteUrl,
     })
 
     copyExecutableBinary(builtBinary, binaryPath)

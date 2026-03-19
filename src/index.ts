@@ -24,7 +24,7 @@ async function run(): Promise<void> {
 
   const installRequest = resolveInstallRequest({
     token,
-    submoduleToken
+    submoduleToken,
   })
 
   if (parsedVersion.kind === 'release') {

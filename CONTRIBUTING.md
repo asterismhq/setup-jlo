@@ -6,16 +6,27 @@
 
 ## Local Verification
 
-The repository verification surface is:
+`just` is the canonical local entrypoint for repository tasks.
 
+The repository-owned verification and maintenance recipes are:
+
+- `just format`: runs `npm run format`
+- `just format-check`: runs `npm run format:check`
+- `just lint`: runs `npm run lint`
+- `just typecheck`: runs `npm run typecheck`
+- `just test`: runs `npm test`
+- `just package`: runs `npm run package`
+- `just verify-dist`: runs `npm run verify:dist`
+
+`package.json` retains the atomic npm scripts behind these recipes:
+
+- `npm run format`
+- `npm run format:check`
 - `npm run lint`
 - `npm test`
 - `npm run typecheck`
 - `npm run package`
 - `npm run verify:dist`
-- `npm run ci`
-
-`npm run ci` is the canonical local verification command because it runs the full repository-owned validation sequence.
 
 ## Distribution Boundary
 

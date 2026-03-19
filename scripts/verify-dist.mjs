@@ -1,4 +1,10 @@
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs'
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+} from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { createRequire } from 'node:module'
 import { dirname, join, relative, resolve } from 'node:path'
@@ -32,8 +38,16 @@ const nccPath = resolve(dirname(nccPkgPath), nccPkg.bin.ncc)
 try {
   const result = spawnSync(
     nccPath,
-    ['build', '-s', 'src/index.ts', '-o', generatedDist, '--license', 'licenses.txt'],
-    { cwd: repoRoot, stdio: 'inherit' }
+    [
+      'build',
+      '-s',
+      'src/index.ts',
+      '-o',
+      generatedDist,
+      '--license',
+      'licenses.txt',
+    ],
+    { cwd: repoRoot, stdio: 'inherit' },
   )
 
   if (result.status !== 0) {
@@ -44,10 +58,10 @@ try {
   }
 
   const committedFiles = listFiles(resolve(repoRoot, 'dist')).map((file) =>
-    relative(resolve(repoRoot, 'dist'), file)
+    relative(resolve(repoRoot, 'dist'), file),
   )
   const generatedFiles = listFiles(generatedDist).map((file) =>
-    relative(generatedDist, file)
+    relative(generatedDist, file),
   )
 
   if (JSON.stringify(committedFiles) !== JSON.stringify(generatedFiles)) {
@@ -58,7 +72,9 @@ try {
     const committed = readFileSync(resolve(repoRoot, 'dist', file))
     const generated = readFileSync(resolve(generatedDist, file))
     if (!committed.equals(generated)) {
-      throw new Error(`Committed dist file differs from generated output: ${file}`)
+      throw new Error(
+        `Committed dist file differs from generated output: ${file}`,
+      )
     }
   }
 } finally {

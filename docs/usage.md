@@ -47,3 +47,23 @@ This form builds `jlo` from the upstream `main` branch instead of downloading a 
 - `submodule_token` when the source tree contains private submodules
 
 `main` mode does not fall back to release installation.
+
+## Local Verification
+
+Repository-local verification commands are:
+
+- `just format-check`
+- `just lint`
+- `just typecheck`
+- `just test`
+- `just verify-dist`
+
+Targeted npm commands remain available behind the `just` recipes:
+
+- `npm run format`
+- `npm run format:check`
+- `npm run lint`
+- `npm test`
+- `npm run typecheck`
+- `npm run package`
+- `npm run verify:dist`

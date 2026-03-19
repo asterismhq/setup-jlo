@@ -25721,7 +25721,7 @@ function resolveInstallRequest(options) {
         cacheRootOverride: normalizeOptional(process.env.JLO_CACHE_ROOT),
         runnerEnvironment: normalizeOptional(process.env.RUNNER_ENVIRONMENT),
         runnerTemp: normalizeOptional(process.env.RUNNER_TEMP),
-        runnerToolCache: normalizeOptional(process.env.RUNNER_TOOL_CACHE)
+        runnerToolCache: normalizeOptional(process.env.RUNNER_TOOL_CACHE),
     };
 }
 function normalizeOptional(value) {
@@ -25943,7 +25943,7 @@ async function fetchReleaseAsset(options) {
     const headers = {
         Authorization: `Bearer ${options.token}`,
         Accept: 'application/vnd.github+json',
-        'User-Agent': 'setup-jlo'
+        'User-Agent': 'setup-jlo',
     };
     const metadataResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/tags/${options.tagVersion}`, { headers });
     if (metadataResponse.status === 401 || metadataResponse.status === 403) {
@@ -25965,15 +25965,15 @@ async function fetchReleaseAsset(options) {
     const downloadResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/assets/${matchedAsset.id}`, {
         headers: {
             ...headers,
-            Accept: 'application/octet-stream'
-        }
+            Accept: 'application/octet-stream',
+        },
     });
     if (!downloadResponse.ok) {
         throw new Error(`Failed to download release asset '${matchedAsset.name}' from '${options.releaseRepository}' (HTTP ${downloadResponse.status}).`);
     }
     return {
         name: matchedAsset.name,
-        contents: Buffer.from(await downloadResponse.arrayBuffer())
+        contents: Buffer.from(await downloadResponse.arrayBuffer()),
     };
 }
 
@@ -25996,8 +25996,8 @@ function buildCargoRelease(options) {
         encoding: 'utf8',
         env: {
             ...process.env,
-            CARGO_TARGET_DIR: options.buildTargetDir
-        }
+            CARGO_TARGET_DIR: options.buildTargetDir,
+        },
     });
     if (buildResult.status !== 0) {
         throw new Error(`Failed to build jlo from source branch '${options.sourceBranch}' in '${options.sourceRemoteUrl}': ${buildResult.stderr.trim()}`);
@@ -26026,7 +26026,7 @@ const node_buffer_1 = __nccwpck_require__(4573);
 const node_child_process_1 = __nccwpck_require__(1421);
 function commandExists(program) {
     const result = (0, node_child_process_1.spawnSync)(program, ['--version'], {
-        stdio: ['ignore', 'ignore', 'ignore']
+        stdio: ['ignore', 'ignore', 'ignore'],
     });
     return result.status === 0;
 }
@@ -26039,7 +26039,7 @@ function runGitWithOptionalAuth(options) {
         '-c',
         'http.lowSpeedLimit=1024',
         '-c',
-        'http.lowSpeedTime=30'
+        'http.lowSpeedTime=30',
     ];
     if (options.authHeader) {
         gitArgs.push('-c', `http.extraheader=${options.authHeader}`);
@@ -26050,8 +26050,8 @@ function runGitWithOptionalAuth(options) {
         encoding: 'utf8',
         env: {
             ...process.env,
-            GIT_TERMINAL_PROMPT: '0'
-        }
+            GIT_TERMINAL_PROMPT: '0',
+        },
     });
     if (result.status === 0) {
         return result.stdout;
@@ -26144,7 +26144,7 @@ async function installMainSource(request) {
     const lsRemoteOutput = (0, git_cli_1.runGitWithOptionalAuth)({
         authHeader: sourceAuthHeader,
         args: ['ls-remote', '--', sourceRemoteUrl, sourceRef],
-        operation: 'resolve source head SHA'
+        operation: 'resolve source head SHA',
     });
     const sha = lsRemoteOutput.trim().split(/\s+/)[0] ?? '';
     if (!(0, git_cli_1.isFullGitSha)(sha)) {
@@ -26176,9 +26176,9 @@ async function installMainSource(request) {
                 sourceBranch,
                 '--',
                 sourceRemoteUrl,
-                clonePath
+                clonePath,
             ],
-            operation: 'clone source branch for source build'
+            operation: 'clone source branch for source build',
         });
         const gitmodulesPath = (0, node_path_1.join)(clonePath, '.gitmodules');
         if ((0, node_fs_1.existsSync)(gitmodulesPath)) {
@@ -26195,9 +26195,9 @@ async function installMainSource(request) {
                     'config',
                     '--local',
                     'url.https://github.com/.insteadOf',
-                    'git@github.com:'
+                    'git@github.com:',
                 ],
-                operation: 'configure git submodule URL rewrite for source build'
+                operation: 'configure git submodule URL rewrite for source build',
             });
             (0, git_cli_1.runGitWithOptionalAuth)({
                 cwd: clonePath,
@@ -26206,22 +26206,22 @@ async function installMainSource(request) {
                     'config',
                     '--local',
                     'url.https://github.com/.insteadOf',
-                    'ssh://git@github.com/'
+                    'ssh://git@github.com/',
                 ],
-                operation: 'configure git submodule URL rewrite for source build'
+                operation: 'configure git submodule URL rewrite for source build',
             });
             (0, git_cli_1.runGitWithOptionalAuth)({
                 cwd: clonePath,
                 authHeader: submoduleAuthHeader,
                 args: ['submodule', 'sync', '--recursive'],
-                operation: 'sync git submodule configuration for source build'
+                operation: 'sync git submodule configuration for source build',
             });
             try {
                 (0, git_cli_1.runGitWithOptionalAuth)({
                     cwd: clonePath,
                     authHeader: submoduleAuthHeader,
                     args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
-                    operation: 'fetch git submodules for source build'
+                    operation: 'fetch git submodules for source build',
                 });
             }
             catch (error) {
@@ -26238,7 +26238,7 @@ async function installMainSource(request) {
             manifestPath,
             buildTargetDir,
             sourceBranch,
-            sourceRemoteUrl
+            sourceRemoteUrl,
         });
         (0, binary_install_cache_1.copyExecutableBinary)(builtBinary, binaryPath);
     }
@@ -26322,7 +26322,7 @@ async function installReleaseVersion(request, versionToken) {
         token: request.installToken,
         releaseRepository: jlo_1.JLO_RELEASE_REPOSITORY,
         tagVersion: versionToken.tag,
-        candidates
+        candidates,
     });
     const tempDirectory = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)(request.runnerTemp ?? (0, node_os_1.tmpdir)(), 'setup-jlo-release-'));
     const downloadPath = (0, node_path_1.join)(tempDirectory, releaseAsset.name);
@@ -26408,7 +26408,7 @@ function detectRosettaArm64() {
     try {
         const output = (0, node_child_process_1.execFileSync)('sysctl', ['-n', 'hw.optional.arm64'], {
             encoding: 'utf8',
-            stdio: ['ignore', 'pipe', 'ignore']
+            stdio: ['ignore', 'pipe', 'ignore'],
         });
         return output.trim() === '1';
     }
@@ -26521,7 +26521,7 @@ async function run() {
     (0, outputs_1.emitInstallOutputs)(versionToken, installMode);
     const installRequest = (0, install_request_1.resolveInstallRequest)({
         token,
-        submoduleToken
+        submoduleToken,
     });
     if (parsedVersion.kind === 'release') {
         await (0, install_release_1.installReleaseVersion)(installRequest, parsedVersion);

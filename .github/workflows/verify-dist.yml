@@ -16,15 +16,8 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v5
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
-      - name: Install Dependencies
-        run: npm ci
+      - name: Setup Development Environment
+        uses: ./.github/actions/setup
 
       - name: Verify Committed Dist
-        run: npm run verify:dist
-
+        run: just verify-dist

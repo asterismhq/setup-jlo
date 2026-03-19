@@ -21,7 +21,7 @@ export function detectPlatformTuple(): PlatformTuple {
 
 export function buildReleaseAssetCandidates(
   platform: PlatformTuple,
-  allowDarwinX8664Fallback: boolean
+  allowDarwinX8664Fallback: boolean,
 ): string[] {
   if (platform.arch === 'x86_64') {
     return [`jlo-${platform.os}-x86_64`, `jlo-${platform.os}-amd64`]
@@ -60,7 +60,7 @@ function detectRosettaArm64(): boolean {
   try {
     const output = execFileSync('sysctl', ['-n', 'hw.optional.arm64'], {
       encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore']
+      stdio: ['ignore', 'pipe', 'ignore'],
     })
     return output.trim() === '1'
   } catch {

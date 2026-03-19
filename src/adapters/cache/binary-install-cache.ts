@@ -1,4 +1,11 @@
-import { chmodSync, copyFileSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs'
+import {
+  chmodSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  rmSync,
+} from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { join, resolve } from 'node:path'
 import * as core from '@actions/core'
@@ -28,12 +35,15 @@ export function resolveCacheRoot(options: {
 
 export function resolvePlatformCacheDirectory(
   cacheRoot: string,
-  platform: PlatformTuple
+  platform: PlatformTuple,
 ): string {
   return join(cacheRoot, `${platform.os}-${platform.arch}`)
 }
 
-export function ensureInstallDirectory(platformDir: string, installKey: string): string {
+export function ensureInstallDirectory(
+  platformDir: string,
+  installKey: string,
+): string {
   mkdirSync(platformDir, { recursive: true })
   const installDir = join(platformDir, installKey)
   mkdirSync(installDir, { recursive: true })
@@ -46,7 +56,7 @@ export function installBinaryOnPath(installDir: string): void {
 
 export function pruneSiblingInstallDirectories(
   platformDir: string,
-  keepName: string
+  keepName: string,
 ): void {
   if (!existsSync(platformDir)) {
     return
@@ -62,7 +72,7 @@ export function pruneSiblingInstallDirectories(
 
 export function isCachedBinaryForVersion(
   binaryPath: string,
-  expectedVersion: string
+  expectedVersion: string,
 ): boolean {
   if (!existsSync(binaryPath)) {
     return false
@@ -85,7 +95,10 @@ export function detectBinaryVersion(binaryPath: string): string {
   return rendered.length > 0 ? rendered : 'version unknown'
 }
 
-export function copyExecutableBinary(sourcePath: string, targetPath: string): void {
+export function copyExecutableBinary(
+  sourcePath: string,
+  targetPath: string,
+): void {
   copyFileSync(sourcePath, targetPath)
   ensureExecutablePermissions(targetPath)
 }

@@ -1,6 +1,6 @@
 # Lint and Typecheck Workflow
 #
-# Runs ESLint and TypeScript typecheck.
+# Runs Biome formatting checks, Biome lint, and TypeScript typecheck.
 
 name: Run Linters
 
@@ -16,18 +16,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v5
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
+      - name: Setup Development Environment
+        uses: ./.github/actions/setup
 
-      - name: Install Dependencies
-        run: npm ci
+      - name: Check Biome Formatting
+        run: just format-check
 
-      - name: Run ESLint
-        run: npm run lint
+      - name: Run Biome Lint
+        run: just lint
 
       - name: Run TypeScript Typecheck
-        run: npm run typecheck
-
+        run: just typecheck
