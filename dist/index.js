@@ -25937,6 +25937,7 @@ exports.resolveGitHubHttpUsername = resolveGitHubHttpUsername;
 const GITHUB_API_USER_URL = 'https://api.github.com/user';
 const GITHUB_APP_INSTALLATION_TOKEN_PREFIX = 'ghs_';
 async function resolveGitHubHttpUsername(token) {
+    // GitHub App installation tokens authenticate git over HTTPS as x-access-token.
     if (token.startsWith(GITHUB_APP_INSTALLATION_TOKEN_PREFIX)) {
         return 'x-access-token';
     }
@@ -25954,6 +25955,7 @@ async function resolveGitHubHttpUsername(token) {
         throw new Error(`Failed to resolve GitHub identity for HTTPS git authentication (HTTP ${response.status}).`);
     }
     const user = (await response.json());
+    // Bot-owned tokens also require x-access-token rather than the reported login.
     if (user.type === 'Bot') {
         return 'x-access-token';
     }
@@ -26235,6 +26237,8 @@ async function installMainSource(request) {
     const submoduleAuthUsername = await (0, github_git_http_username_1.resolveGitHubHttpUsername)(request.installSubmoduleToken);
     const clonePath = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)(request.runnerTemp ?? (0, node_os_1.tmpdir)(), 'setup-jlo-main-'));
     try {
+        // Keep source acquisition on the same authenticated clone path used by builds.
+        // A separate ls-remote path previously broke main-mode auth in CI.
         core.info(`Cloning ${jlo_1.JLO_REPOSITORY}@${sourceBranch} for source build.`);
         (0, github_source_git_1.cloneGitHubBranch)({
             repository: jlo_1.JLO_REPOSITORY,

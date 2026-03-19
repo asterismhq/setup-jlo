@@ -4,6 +4,7 @@ const GITHUB_APP_INSTALLATION_TOKEN_PREFIX = 'ghs_'
 export async function resolveGitHubHttpUsername(
   token: string,
 ): Promise<string> {
+  // GitHub App installation tokens authenticate git over HTTPS as x-access-token.
   if (token.startsWith(GITHUB_APP_INSTALLATION_TOKEN_PREFIX)) {
     return 'x-access-token'
   }
@@ -29,6 +30,7 @@ export async function resolveGitHubHttpUsername(
   }
 
   const user = (await response.json()) as { login?: string; type?: string }
+  // Bot-owned tokens also require x-access-token rather than the reported login.
   if (user.type === 'Bot') {
     return 'x-access-token'
   }
