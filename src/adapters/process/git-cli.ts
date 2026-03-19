@@ -52,12 +52,22 @@ export function runGitWithOptionalAuth(options: {
 }
 
 export function basicAuthHeader(token: string): string {
-  const payload = Buffer.from(`x-access-token:${token}`, 'utf8').toString(
-    'base64',
-  )
+  const username = normalizeGitHttpUsername(process.env.GITHUB_ACTOR)
+  const payload = Buffer.from(`${username}:${token}`, 'utf8').toString('base64')
   return `Authorization: Basic ${payload}`
 }
 
 export function isFullGitSha(value: string): boolean {
   return /^[0-9a-fA-F]{40}$/.test(value)
+}
+
+function normalizeGitHttpUsername(
+  value: string | undefined,
+): string {
+  if (!value) {
+    return 'git'
+  }
+
+  const normalized = value.trim()
+  return normalized.length > 0 ? normalized : 'git'
 }

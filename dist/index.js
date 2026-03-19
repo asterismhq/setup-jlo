@@ -26063,11 +26063,19 @@ function runGitWithOptionalAuth(options) {
     throw new Error(`Failed to ${options.operation}: ${result.stdout.trim()}`);
 }
 function basicAuthHeader(token) {
-    const payload = node_buffer_1.Buffer.from(`x-access-token:${token}`, 'utf8').toString('base64');
+    const username = normalizeGitHttpUsername(process.env.GITHUB_ACTOR);
+    const payload = node_buffer_1.Buffer.from(`${username}:${token}`, 'utf8').toString('base64');
     return `Authorization: Basic ${payload}`;
 }
 function isFullGitSha(value) {
     return /^[0-9a-fA-F]{40}$/.test(value);
+}
+function normalizeGitHttpUsername(value) {
+    if (!value) {
+        return 'git';
+    }
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : 'git';
 }
 
 
