@@ -5,8 +5,8 @@ const {
   existsSync,
   resolveGitHubHttpUsername,
   commandExists,
-  resolveGitHubBranchHeadSha,
   cloneGitHubBranch,
+  resolveGitWorktreeHeadSha,
   updateGitHubSubmodules,
   detectPlatformTuple,
   resolveCacheRoot,
@@ -22,8 +22,8 @@ const {
   existsSync: vi.fn(),
   resolveGitHubHttpUsername: vi.fn(),
   commandExists: vi.fn(),
-  resolveGitHubBranchHeadSha: vi.fn(),
   cloneGitHubBranch: vi.fn(),
+  resolveGitWorktreeHeadSha: vi.fn(),
   updateGitHubSubmodules: vi.fn(),
   detectPlatformTuple: vi.fn(),
   resolveCacheRoot: vi.fn(),
@@ -54,8 +54,8 @@ vi.mock('../../src/adapters/github/github-git-http-username', () => ({
 
 vi.mock('../../src/adapters/process/github-source-git', () => ({
   commandExists,
-  resolveGitHubBranchHeadSha,
   cloneGitHubBranch,
+  resolveGitWorktreeHeadSha,
   updateGitHubSubmodules,
 }))
 
@@ -84,7 +84,7 @@ describe('app install main-source orchestration', () => {
     vi.clearAllMocks()
     resolveGitHubHttpUsername.mockResolvedValue('jlo-user')
     commandExists.mockReturnValue(true)
-    resolveGitHubBranchHeadSha.mockReturnValue(
+    resolveGitWorktreeHeadSha.mockReturnValue(
       '0123456789abcdef0123456789abcdef01234567',
     )
     detectPlatformTuple.mockReturnValue({ os: 'linux', arch: 'x86_64' })
@@ -97,20 +97,23 @@ describe('app install main-source orchestration', () => {
     detectBinaryVersion.mockReturnValue('jlo main')
   })
 
-  it('reuses cached main binary and skips clone/build', async () => {
+  it('reuses cached main binary and skips build', async () => {
     await installMainSource({
       installToken: 'token',
       installSubmoduleToken: 'submodule-token',
       allowDarwinX8664Fallback: false,
     })
 
-    expect(resolveGitHubBranchHeadSha).toHaveBeenCalledWith({
+    expect(cloneGitHubBranch).toHaveBeenCalledWith({
       repository: 'asterismhq/jlo',
       branch: 'main',
+      destination: expect.any(String),
       token: 'token',
       username: 'jlo-user',
     })
-    expect(cloneGitHubBranch).not.toHaveBeenCalled()
+    expect(resolveGitWorktreeHeadSha).toHaveBeenCalledWith({
+      cwd: expect.any(String),
+    })
     expect(updateGitHubSubmodules).not.toHaveBeenCalled()
     expect(buildCargoRelease).not.toHaveBeenCalled()
     expect(copyExecutableBinary).not.toHaveBeenCalled()

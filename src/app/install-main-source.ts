@@ -17,7 +17,7 @@ import { buildCargoRelease } from '../adapters/process/cargo-build'
 import {
   cloneGitHubBranch,
   commandExists,
-  resolveGitHubBranchHeadSha,
+  resolveGitWorktreeHeadSha,
   updateGitHubSubmodules,
 } from '../adapters/process/github-source-git'
 import { JLO_REPOSITORY } from '../catalog/jlo'
@@ -47,29 +47,6 @@ export async function installMainSource(
     request.installSubmoduleToken,
   )
 
-  const sha = resolveGitHubBranchHeadSha({
-    repository: JLO_REPOSITORY,
-    branch: sourceBranch,
-    token: request.installToken,
-    username: sourceAuthUsername,
-  })
-
-  const platform = detectPlatformTuple()
-  const shortSha = sha.slice(0, 12)
-  const installKey = `main-${shortSha}`
-  const cacheRoot = resolveCacheRoot(request)
-  const platformDir = resolvePlatformCacheDirectory(cacheRoot, platform)
-  const installDir = ensureInstallDirectory(platformDir, installKey)
-  const binaryPath = join(installDir, 'jlo')
-
-  if (existsSync(binaryPath)) {
-    core.info(`jlo main@${shortSha} already cached; skipping build.`)
-    pruneSiblingInstallDirectories(platformDir, installKey)
-    installBinaryOnPath(installDir)
-    core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
-    return
-  }
-
   const clonePath = mkdtempSync(
     join(request.runnerTemp ?? tmpdir(), 'setup-jlo-main-'),
   )
@@ -84,6 +61,23 @@ export async function installMainSource(
       token: request.installToken,
       username: sourceAuthUsername,
     })
+
+    const sha = resolveGitWorktreeHeadSha({ cwd: clonePath })
+    const platform = detectPlatformTuple()
+    const shortSha = sha.slice(0, 12)
+    const installKey = `main-${shortSha}`
+    const cacheRoot = resolveCacheRoot(request)
+    const platformDir = resolvePlatformCacheDirectory(cacheRoot, platform)
+    const installDir = ensureInstallDirectory(platformDir, installKey)
+    const binaryPath = join(installDir, 'jlo')
+
+    if (existsSync(binaryPath)) {
+      core.info(`jlo main@${shortSha} already cached; skipping build.`)
+      pruneSiblingInstallDirectories(platformDir, installKey)
+      installBinaryOnPath(installDir)
+      core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
+      return
+    }
 
     core.info('Using submodule_token for required submodule fetch.')
 

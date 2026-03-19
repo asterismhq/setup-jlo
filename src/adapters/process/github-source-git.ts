@@ -9,37 +9,6 @@ export function commandExists(program: string): boolean {
   return result.status === 0
 }
 
-export function resolveGitHubBranchHeadSha(options: {
-  repository: string
-  branch: string
-  token: string
-  username: string
-}): string {
-  const output = runGitHubCommand({
-    args: [
-      'ls-remote',
-      '--exit-code',
-      '--heads',
-      buildAuthenticatedGitHubRepositoryUrl({
-        repository: options.repository,
-        username: options.username,
-        token: options.token,
-      }),
-      options.branch,
-    ],
-    operation: `resolve ${options.repository}@${options.branch} head SHA`,
-  }).trim()
-
-  const sha = output.split(/\s+/)[0] ?? ''
-  if (!isFullGitSha(sha)) {
-    throw new Error(
-      `Failed to resolve ${options.repository}@${options.branch} head SHA.`,
-    )
-  }
-
-  return sha
-}
-
 export function cloneGitHubBranch(options: {
   repository: string
   branch: string
@@ -64,6 +33,20 @@ export function cloneGitHubBranch(options: {
     ],
     operation: `clone ${options.repository}@${options.branch}`,
   })
+}
+
+export function resolveGitWorktreeHeadSha(options: { cwd: string }): string {
+  const output = runGitHubCommand({
+    cwd: options.cwd,
+    args: ['rev-parse', 'HEAD'],
+    operation: 'resolve cloned source head SHA',
+  }).trim()
+
+  if (!isFullGitSha(output)) {
+    throw new Error('Failed to resolve cloned source head SHA.')
+  }
+
+  return output
 }
 
 export function updateGitHubSubmodules(options: {

@@ -26056,8 +26056,8 @@ function buildCargoRelease(options) {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.commandExists = commandExists;
-exports.resolveGitHubBranchHeadSha = resolveGitHubBranchHeadSha;
 exports.cloneGitHubBranch = cloneGitHubBranch;
+exports.resolveGitWorktreeHeadSha = resolveGitWorktreeHeadSha;
 exports.updateGitHubSubmodules = updateGitHubSubmodules;
 const node_child_process_1 = __nccwpck_require__(1421);
 const GITHUB_HTTPS_BASE = 'https://github.com/';
@@ -26066,27 +26066,6 @@ function commandExists(program) {
         stdio: ['ignore', 'ignore', 'ignore'],
     });
     return result.status === 0;
-}
-function resolveGitHubBranchHeadSha(options) {
-    const output = runGitHubCommand({
-        args: [
-            'ls-remote',
-            '--exit-code',
-            '--heads',
-            buildAuthenticatedGitHubRepositoryUrl({
-                repository: options.repository,
-                username: options.username,
-                token: options.token,
-            }),
-            options.branch,
-        ],
-        operation: `resolve ${options.repository}@${options.branch} head SHA`,
-    }).trim();
-    const sha = output.split(/\s+/)[0] ?? '';
-    if (!isFullGitSha(sha)) {
-        throw new Error(`Failed to resolve ${options.repository}@${options.branch} head SHA.`);
-    }
-    return sha;
 }
 function cloneGitHubBranch(options) {
     runGitHubCommand({
@@ -26106,6 +26085,17 @@ function cloneGitHubBranch(options) {
         ],
         operation: `clone ${options.repository}@${options.branch}`,
     });
+}
+function resolveGitWorktreeHeadSha(options) {
+    const output = runGitHubCommand({
+        cwd: options.cwd,
+        args: ['rev-parse', 'HEAD'],
+        operation: 'resolve cloned source head SHA',
+    }).trim();
+    if (!isFullGitSha(output)) {
+        throw new Error('Failed to resolve cloned source head SHA.');
+    }
+    return output;
 }
 function updateGitHubSubmodules(options) {
     runGitHubCommand({
@@ -26243,26 +26233,6 @@ async function installMainSource(request) {
     }
     const sourceAuthUsername = await (0, github_git_http_username_1.resolveGitHubHttpUsername)(request.installToken);
     const submoduleAuthUsername = await (0, github_git_http_username_1.resolveGitHubHttpUsername)(request.installSubmoduleToken);
-    const sha = (0, github_source_git_1.resolveGitHubBranchHeadSha)({
-        repository: jlo_1.JLO_REPOSITORY,
-        branch: sourceBranch,
-        token: request.installToken,
-        username: sourceAuthUsername,
-    });
-    const platform = (0, platform_1.detectPlatformTuple)();
-    const shortSha = sha.slice(0, 12);
-    const installKey = `main-${shortSha}`;
-    const cacheRoot = (0, binary_install_cache_1.resolveCacheRoot)(request);
-    const platformDir = (0, binary_install_cache_1.resolvePlatformCacheDirectory)(cacheRoot, platform);
-    const installDir = (0, binary_install_cache_1.ensureInstallDirectory)(platformDir, installKey);
-    const binaryPath = (0, node_path_1.join)(installDir, 'jlo');
-    if ((0, node_fs_1.existsSync)(binaryPath)) {
-        core.info(`jlo main@${shortSha} already cached; skipping build.`);
-        (0, binary_install_cache_1.pruneSiblingInstallDirectories)(platformDir, installKey);
-        (0, binary_install_cache_1.installBinaryOnPath)(installDir);
-        core.info(`jlo installed: ${(0, binary_install_cache_1.detectBinaryVersion)(binaryPath)}`);
-        return;
-    }
     const clonePath = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)(request.runnerTemp ?? (0, node_os_1.tmpdir)(), 'setup-jlo-main-'));
     try {
         core.info(`Cloning ${jlo_1.JLO_REPOSITORY}@${sourceBranch} for source build.`);
@@ -26273,6 +26243,21 @@ async function installMainSource(request) {
             token: request.installToken,
             username: sourceAuthUsername,
         });
+        const sha = (0, github_source_git_1.resolveGitWorktreeHeadSha)({ cwd: clonePath });
+        const platform = (0, platform_1.detectPlatformTuple)();
+        const shortSha = sha.slice(0, 12);
+        const installKey = `main-${shortSha}`;
+        const cacheRoot = (0, binary_install_cache_1.resolveCacheRoot)(request);
+        const platformDir = (0, binary_install_cache_1.resolvePlatformCacheDirectory)(cacheRoot, platform);
+        const installDir = (0, binary_install_cache_1.ensureInstallDirectory)(platformDir, installKey);
+        const binaryPath = (0, node_path_1.join)(installDir, 'jlo');
+        if ((0, node_fs_1.existsSync)(binaryPath)) {
+            core.info(`jlo main@${shortSha} already cached; skipping build.`);
+            (0, binary_install_cache_1.pruneSiblingInstallDirectories)(platformDir, installKey);
+            (0, binary_install_cache_1.installBinaryOnPath)(installDir);
+            core.info(`jlo installed: ${(0, binary_install_cache_1.detectBinaryVersion)(binaryPath)}`);
+            return;
+        }
         core.info('Using submodule_token for required submodule fetch.');
         try {
             (0, github_source_git_1.updateGitHubSubmodules)({
