@@ -8,16 +8,18 @@ help:
     @echo "Development tasks for setup-jlo:"
     @just --list | tail -n +2 | awk '{printf "  \033[36m%-20s\033[0m %s\n", $1, substr($0, index($0, $2))}'
 
-# Apply formatter and safe lint fixes
+# Apply formatter, safe lint fixes, and refresh committed dist
 fix:
     npm run format
     npm run lint:fix
+    npm run package
 
-# Run formatting checks, lint, and typecheck
+# Run formatting checks, lint, typecheck, and dist verification
 check:
     npm run format:check
     npm run lint
     npm run typecheck
+    npm run verify:dist
 
 # Run test suite
 test:

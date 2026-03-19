@@ -1,15 +1,15 @@
-# Lint and Typecheck Workflow
+# Static Checks Workflow
 #
-# Runs formatting checks, Biome lint, and TypeScript typecheck.
+# Runs formatting checks, Biome lint, TypeScript typecheck, and dist verification.
 
-name: Run Linters
+name: Run Static Checks
 
 on:
   workflow_call:
 
 jobs:
-  run-linters:
-    name: Run Linters
+  run-static-checks:
+    name: Run Static Checks
     runs-on: ubuntu-latest
 
     steps:
@@ -19,5 +19,5 @@ jobs:
       - name: Setup Development Environment
         uses: ./.github/actions/setup
 
-      - name: Run Static Checks
+      - name: Run Repository Checks
         run: just check

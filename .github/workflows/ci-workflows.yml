@@ -16,14 +16,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: Lint and Typecheck
-    uses: ./.github/workflows/run-linters.yml
+  static-checks:
+    name: Static Checks
+    uses: ./.github/workflows/run-static-checks.yml
 
   test:
     name: Test
     uses: ./.github/workflows/run-tests.yml
-
-  verify-dist:
-    name: Verify Dist
-    uses: ./.github/workflows/verify-dist.yml
