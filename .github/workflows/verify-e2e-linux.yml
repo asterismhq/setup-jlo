@@ -67,10 +67,11 @@ jobs:
 
       - name: Verify Source Repository Access With JLO_RELEASE_PAT
         env:
+          GH_TOKEN: ${{ secrets.JLO_RELEASE_PAT }}
           JLO_RELEASE_PAT: ${{ secrets.JLO_RELEASE_PAT }}
         run: |
-          login="$(gh api /user --hostname github.com --jq .login --header "Authorization: Bearer ${JLO_RELEASE_PAT}")"
-          account_type="$(gh api /user --hostname github.com --jq .type --header "Authorization: Bearer ${JLO_RELEASE_PAT}")"
+          login="$(gh api /user --hostname github.com --jq .login)"
+          account_type="$(gh api /user --hostname github.com --jq .type)"
           git_username="${login}"
           if [ "${account_type}" = "Bot" ]; then
             git_username="x-access-token"
@@ -79,8 +80,7 @@ jobs:
           echo "Resolved git HTTP username: ${git_username}"
           GIT_TERMINAL_PROMPT=0 \
             git \
-            -c credential.helper="!f() { test \"$1\" = get || exit 0; echo \"username=${git_username}\"; echo \"password=${JLO_RELEASE_PAT}\"; }; f" \
-            -c credential.useHttpPath=true \
+            -c "url.https://${git_username}:${JLO_RELEASE_PAT}@github.com/.insteadOf=https://github.com/" \
             ls-remote -- https://github.com/asterismhq/jlo.git refs/heads/main >/dev/null
 
       - name: Run setup-jlo in Main Mode

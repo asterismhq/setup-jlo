@@ -30337,10 +30337,10 @@ function runGitWithOptionalAuth(options) {
         'http.lowSpeedTime=30',
     ];
     if (options.authToken) {
-        gitArgs.push('-c', `credential.helper=${credentialHelperScript({
+        gitArgs.push('-c', `url.${authenticatedGitHubBase({
             username: options.authUsername ?? 'git',
             token: options.authToken,
-        })}`, '-c', 'credential.useHttpPath=true');
+        })}.insteadOf=https://github.com/`);
     }
     gitArgs.push(...options.args);
     const result = (0, node_child_process_1.spawnSync)('git', gitArgs, {
@@ -30363,10 +30363,10 @@ function runGitWithOptionalAuth(options) {
 function isFullGitSha(value) {
     return /^[0-9a-fA-F]{40}$/.test(value);
 }
-function credentialHelperScript(options) {
-    const escapedToken = options.token.replaceAll("'", "'\"'\"'");
-    const escapedUsername = options.username.replaceAll("'", "'\"'\"'");
-    return `!f() { test "$1" = get || exit 0; echo 'username=${escapedUsername}'; echo 'password=${escapedToken}'; }; f`;
+function authenticatedGitHubBase(options) {
+    const encodedUsername = encodeURIComponent(options.username);
+    const encodedToken = encodeURIComponent(options.token);
+    return `https://${encodedUsername}:${encodedToken}@github.com/`;
 }
 function normalizeGitHttpUsername(value) {
     const normalized = value.trim();

@@ -28,12 +28,10 @@ export function runGitWithOptionalAuth(options: {
   if (options.authToken) {
     gitArgs.push(
       '-c',
-      `credential.helper=${credentialHelperScript({
+      `url.${authenticatedGitHubBase({
         username: options.authUsername ?? 'git',
         token: options.authToken,
-      })}`,
-      '-c',
-      'credential.useHttpPath=true',
+      })}.insteadOf=https://github.com/`,
     )
   }
 
@@ -63,13 +61,13 @@ export function isFullGitSha(value: string): boolean {
   return /^[0-9a-fA-F]{40}$/.test(value)
 }
 
-function credentialHelperScript(options: {
+function authenticatedGitHubBase(options: {
   username: string
   token: string
 }): string {
-  const escapedToken = options.token.replaceAll("'", "'\"'\"'")
-  const escapedUsername = options.username.replaceAll("'", "'\"'\"'")
-  return `!f() { test "$1" = get || exit 0; echo 'username=${escapedUsername}'; echo 'password=${escapedToken}'; }; f`
+  const encodedUsername = encodeURIComponent(options.username)
+  const encodedToken = encodeURIComponent(options.token)
+  return `https://${encodedUsername}:${encodedToken}@github.com/`
 }
 
 export function normalizeGitHttpUsername(value: string): string {
