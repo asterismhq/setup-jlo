@@ -9,6 +9,7 @@ export function commandExists(program: string): boolean {
 
 export function runGitWithOptionalAuth(options: {
   cwd?: string
+  authUsername?: string
   authToken?: string
   args: string[]
   operation: string
@@ -27,7 +28,10 @@ export function runGitWithOptionalAuth(options: {
   if (options.authToken) {
     gitArgs.push(
       '-c',
-      `credential.helper=${credentialHelperScript(options.authToken)}`,
+      `credential.helper=${credentialHelperScript({
+        username: options.authUsername ?? 'git',
+        token: options.authToken,
+      })}`,
       '-c',
       'credential.useHttpPath=true',
     )
@@ -59,18 +63,20 @@ export function isFullGitSha(value: string): boolean {
   return /^[0-9a-fA-F]{40}$/.test(value)
 }
 
-function credentialHelperScript(token: string): string {
-  const username = normalizeGitHttpUsername(process.env.GITHUB_ACTOR)
-  const escapedToken = token.replaceAll("'", "'\"'\"'")
-  const escapedUsername = username.replaceAll("'", "'\"'\"'")
+function credentialHelperScript(options: {
+  username: string
+  token: string
+}): string {
+  const escapedToken = options.token.replaceAll("'", "'\"'\"'")
+  const escapedUsername = options.username.replaceAll("'", "'\"'\"'")
   return `!f() { test "$1" = get || exit 0; echo 'username=${escapedUsername}'; echo 'password=${escapedToken}'; }; f`
 }
 
-function normalizeGitHttpUsername(value: string | undefined): string {
-  if (!value) {
-    return 'git'
+export function normalizeGitHttpUsername(value: string): string {
+  const normalized = value.trim()
+  if (normalized.length === 0) {
+    throw new Error('Git HTTP username must not be empty.')
   }
 
-  const normalized = value.trim()
-  return normalized.length > 0 ? normalized : 'git'
+  return normalized
 }

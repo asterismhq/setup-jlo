@@ -12,10 +12,12 @@ import {
   resolveCacheRoot,
   resolvePlatformCacheDirectory,
 } from '../adapters/cache/binary-install-cache'
+import { resolveGitHubAccountLogin } from '../adapters/github/github-account-login'
 import { buildCargoRelease } from '../adapters/process/cargo-build'
 import {
   commandExists,
   isFullGitSha,
+  normalizeGitHttpUsername,
   runGitWithOptionalAuth,
 } from '../adapters/process/git-cli'
 import { JLO_RELEASE_REPOSITORY } from '../catalog/jlo'
@@ -38,6 +40,16 @@ export async function installMainSource(
   const sourceRemoteUrl = `https://github.com/${releaseRepository.owner}/${releaseRepository.repo}.git`
   const sourceRef = 'refs/heads/main'
   const sourceBranch = 'main'
+  const sourceAuthUsername = isHttpRemote(sourceRemoteUrl)
+    ? normalizeGitHttpUsername(
+        await resolveGitHubAccountLogin(request.installToken),
+      )
+    : undefined
+  const submoduleAuthUsername = request.installSubmoduleToken
+    ? normalizeGitHttpUsername(
+        await resolveGitHubAccountLogin(request.installSubmoduleToken),
+      )
+    : undefined
 
   const sourceAuthToken = isHttpRemote(sourceRemoteUrl)
     ? request.installToken
@@ -47,6 +59,7 @@ export async function installMainSource(
     : undefined
 
   const lsRemoteOutput = runGitWithOptionalAuth({
+    authUsername: sourceAuthUsername,
     authToken: sourceAuthToken,
     args: ['ls-remote', '--', sourceRemoteUrl, sourceRef],
     operation: 'resolve source head SHA',
@@ -81,6 +94,7 @@ export async function installMainSource(
 
   try {
     runGitWithOptionalAuth({
+      authUsername: sourceAuthUsername,
       authToken: sourceAuthToken,
       args: [
         'clone',
@@ -107,6 +121,7 @@ export async function installMainSource(
 
       runGitWithOptionalAuth({
         cwd: clonePath,
+        authUsername: submoduleAuthUsername,
         authToken: submoduleAuthToken,
         args: [
           'config',
@@ -119,6 +134,7 @@ export async function installMainSource(
       })
       runGitWithOptionalAuth({
         cwd: clonePath,
+        authUsername: submoduleAuthUsername,
         authToken: submoduleAuthToken,
         args: [
           'config',
@@ -132,6 +148,7 @@ export async function installMainSource(
 
       runGitWithOptionalAuth({
         cwd: clonePath,
+        authUsername: submoduleAuthUsername,
         authToken: submoduleAuthToken,
         args: ['submodule', 'sync', '--recursive'],
         operation: 'sync git submodule configuration for source build',
@@ -140,6 +157,7 @@ export async function installMainSource(
       try {
         runGitWithOptionalAuth({
           cwd: clonePath,
+          authUsername: submoduleAuthUsername,
           authToken: submoduleAuthToken,
           args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
           operation: 'fetch git submodules for source build',

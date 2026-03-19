@@ -6,6 +6,7 @@ const {
   commandExists,
   runGitWithOptionalAuth,
   isFullGitSha,
+  normalizeGitHttpUsername,
   parseRepositorySlug,
   detectPlatformTuple,
   resolveCacheRoot,
@@ -16,12 +17,14 @@ const {
   detectBinaryVersion,
   buildCargoRelease,
   copyExecutableBinary,
+  resolveGitHubAccountLogin,
 } = vi.hoisted(() => ({
   info: vi.fn(),
   existsSync: vi.fn(),
   commandExists: vi.fn(),
   runGitWithOptionalAuth: vi.fn(),
   isFullGitSha: vi.fn(),
+  normalizeGitHttpUsername: vi.fn(),
   parseRepositorySlug: vi.fn(),
   detectPlatformTuple: vi.fn(),
   resolveCacheRoot: vi.fn(),
@@ -32,6 +35,7 @@ const {
   detectBinaryVersion: vi.fn(),
   buildCargoRelease: vi.fn(),
   copyExecutableBinary: vi.fn(),
+  resolveGitHubAccountLogin: vi.fn(),
 }))
 
 vi.mock('@actions/core', () => ({
@@ -50,6 +54,11 @@ vi.mock('../../src/adapters/process/git-cli', () => ({
   commandExists,
   runGitWithOptionalAuth,
   isFullGitSha,
+  normalizeGitHttpUsername,
+}))
+
+vi.mock('../../src/adapters/github/github-account-login', () => ({
+  resolveGitHubAccountLogin,
 }))
 
 vi.mock('../../src/domain/repository-slug', () => ({
@@ -80,6 +89,8 @@ describe('app install main-source orchestration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     commandExists.mockReturnValue(true)
+    resolveGitHubAccountLogin.mockResolvedValue('jlo-bot')
+    normalizeGitHttpUsername.mockImplementation((value: string) => value)
     parseRepositorySlug.mockReturnValue({ owner: 'asterismhq', repo: 'jlo' })
     runGitWithOptionalAuth.mockReturnValue(
       '0123456789abcdef0123456789abcdef01234567\trefs/heads/main\n',
@@ -102,6 +113,7 @@ describe('app install main-source orchestration', () => {
     })
 
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith({
+      authUsername: 'jlo-bot',
       authToken: 'token',
       args: [
         'ls-remote',
@@ -143,6 +155,7 @@ describe('app install main-source orchestration', () => {
 
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
       expect.objectContaining({
+        authUsername: 'jlo-bot',
         authToken: 'submodule-token',
         args: [
           'config',
@@ -155,6 +168,7 @@ describe('app install main-source orchestration', () => {
     )
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
       expect.objectContaining({
+        authUsername: 'jlo-bot',
         authToken: 'submodule-token',
         args: [
           'config',
@@ -167,6 +181,7 @@ describe('app install main-source orchestration', () => {
     )
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
       expect.objectContaining({
+        authUsername: 'jlo-bot',
         authToken: 'submodule-token',
         args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
       }),
