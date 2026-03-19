@@ -25643,7 +25643,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 8683:
+/***/ 1729:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -25682,17 +25682,17 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getRequiredInput = getRequiredInput;
-exports.getOptionalInput = getOptionalInput;
+exports.readRequiredInput = readRequiredInput;
+exports.readOptionalInput = readOptionalInput;
 const core = __importStar(__nccwpck_require__(7484));
-function getRequiredInput(name) {
+function readRequiredInput(name) {
     const value = core.getInput(name);
     if (!value || value.trim().length === 0) {
         throw new Error(`Input '${name}' is required.`);
     }
     return value.trim();
 }
-function getOptionalInput(name) {
+function readOptionalInput(name) {
     const value = core.getInput(name);
     if (!value || value.trim().length === 0) {
         return undefined;
@@ -25703,7 +25703,53 @@ function getOptionalInput(name) {
 
 /***/ }),
 
-/***/ 3392:
+/***/ 1345:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.resolveInstallRequest = resolveInstallRequest;
+function resolveInstallRequest(options) {
+    return {
+        installToken: options.token,
+        installSubmoduleToken: normalizeOptional(options.submoduleToken),
+        mainSourceRemoteUrl: normalizeOptional(process.env.JLO_MAIN_SOURCE_REMOTE_URL),
+        mainSourceRef: normalizeOptional(process.env.JLO_MAIN_SOURCE_REF),
+        mainSourceBranch: normalizeOptional(process.env.JLO_MAIN_SOURCE_BRANCH),
+        allowDarwinX8664Fallback: parseBooleanEnv(process.env.JLO_ALLOW_DARWIN_X86_64_FALLBACK),
+        cacheRootOverride: normalizeOptional(process.env.JLO_CACHE_ROOT),
+        runnerEnvironment: normalizeOptional(process.env.RUNNER_ENVIRONMENT),
+        runnerTemp: normalizeOptional(process.env.RUNNER_TEMP),
+        runnerToolCache: normalizeOptional(process.env.RUNNER_TOOL_CACHE)
+    };
+}
+function normalizeOptional(value) {
+    if (!value) {
+        return undefined;
+    }
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : undefined;
+}
+function parseBooleanEnv(value) {
+    if (!value) {
+        return false;
+    }
+    switch (value.trim().toLowerCase()) {
+        case '1':
+        case 'true':
+        case 'yes':
+        case 'on':
+            return true;
+        default:
+            return false;
+    }
+}
+
+
+/***/ }),
+
+/***/ 8948:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -25742,6 +25788,56 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.emitInstallOutputs = emitInstallOutputs;
+const core = __importStar(__nccwpck_require__(7484));
+function emitInstallOutputs(versionToken, installMode) {
+    core.setOutput('version-token', versionToken);
+    core.setOutput('install-mode', installMode);
+}
+
+
+/***/ }),
+
+/***/ 3889:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.resolveCacheRoot = resolveCacheRoot;
 exports.resolvePlatformCacheDirectory = resolvePlatformCacheDirectory;
 exports.ensureInstallDirectory = ensureInstallDirectory;
 exports.installBinaryOnPath = installBinaryOnPath;
@@ -25750,11 +25846,22 @@ exports.isCachedBinaryForVersion = isCachedBinaryForVersion;
 exports.detectBinaryVersion = detectBinaryVersion;
 exports.copyExecutableBinary = copyExecutableBinary;
 exports.ensureExecutablePermissions = ensureExecutablePermissions;
-exports.extractFirstSemverTriplet = extractFirstSemverTriplet;
 const node_fs_1 = __nccwpck_require__(3024);
-const node_path_1 = __nccwpck_require__(6760);
 const node_child_process_1 = __nccwpck_require__(1421);
+const node_path_1 = __nccwpck_require__(6760);
 const core = __importStar(__nccwpck_require__(7484));
+function resolveCacheRoot(options) {
+    if (options.cacheRootOverride) {
+        return options.cacheRootOverride;
+    }
+    if (options.runnerEnvironment === 'github-hosted') {
+        return (0, node_path_1.resolve)(options.runnerTemp ?? '/tmp', 'jlo-bin-cache');
+    }
+    const homeDirectory = normalizeOptional(process.env.HOME);
+    const base = options.runnerToolCache ??
+        (homeDirectory ? (0, node_path_1.resolve)(homeDirectory, '.cache') : '/tmp');
+    return (0, node_path_1.resolve)(base, 'jlo-bin-cache');
+}
 function resolvePlatformCacheDirectory(cacheRoot, platform) {
     return (0, node_path_1.join)(cacheRoot, `${platform.os}-${platform.arch}`);
 }
@@ -25812,11 +25919,100 @@ function extractFirstSemverTriplet(value) {
     }
     return undefined;
 }
+function normalizeOptional(value) {
+    if (!value) {
+        return undefined;
+    }
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : undefined;
+}
 
 
 /***/ }),
 
-/***/ 187:
+/***/ 9995:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.fetchReleaseAsset = fetchReleaseAsset;
+const repository_slug_1 = __nccwpck_require__(339);
+async function fetchReleaseAsset(options) {
+    const { owner, repo } = (0, repository_slug_1.parseRepositorySlug)(options.releaseRepository);
+    const headers = {
+        Authorization: `Bearer ${options.token}`,
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'setup-jlo'
+    };
+    const metadataResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/tags/${options.tagVersion}`, { headers });
+    if (metadataResponse.status === 401 || metadataResponse.status === 403) {
+        throw new Error(`token cannot access release metadata in '${options.releaseRepository}'. Ensure contents:read and organization SSO authorization.`);
+    }
+    if (metadataResponse.status === 404) {
+        throw new Error(`Release '${options.tagVersion}' was not found (or is inaccessible) in '${options.releaseRepository}'.`);
+    }
+    if (!metadataResponse.ok) {
+        throw new Error(`Failed to query release metadata for '${options.tagVersion}' in '${options.releaseRepository}' (HTTP ${metadataResponse.status}).`);
+    }
+    const metadata = (await metadataResponse.json());
+    const matchedAsset = options.candidates
+        .map((candidate) => metadata.assets?.find((asset) => asset.name === candidate))
+        .find((asset) => asset !== undefined);
+    if (!matchedAsset) {
+        throw new Error(`No matching release asset for ${options.candidates.join(', ')} in '${options.releaseRepository}'.`);
+    }
+    const downloadResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/assets/${matchedAsset.id}`, {
+        headers: {
+            ...headers,
+            Accept: 'application/octet-stream'
+        }
+    });
+    if (!downloadResponse.ok) {
+        throw new Error(`Failed to download release asset '${matchedAsset.name}' from '${options.releaseRepository}' (HTTP ${downloadResponse.status}).`);
+    }
+    return {
+        name: matchedAsset.name,
+        contents: Buffer.from(await downloadResponse.arrayBuffer())
+    };
+}
+
+
+/***/ }),
+
+/***/ 199:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.buildCargoRelease = buildCargoRelease;
+const node_fs_1 = __nccwpck_require__(3024);
+const node_child_process_1 = __nccwpck_require__(1421);
+const node_path_1 = __nccwpck_require__(6760);
+function buildCargoRelease(options) {
+    const buildResult = (0, node_child_process_1.spawnSync)('cargo', ['build', '--release', '--manifest-path', options.manifestPath], {
+        cwd: options.cwd,
+        encoding: 'utf8',
+        env: {
+            ...process.env,
+            CARGO_TARGET_DIR: options.buildTargetDir
+        }
+    });
+    if (buildResult.status !== 0) {
+        throw new Error(`Failed to build jlo from source branch '${options.sourceBranch}' in '${options.sourceRemoteUrl}': ${buildResult.stderr.trim()}`);
+    }
+    const builtBinary = (0, node_path_1.join)(options.buildTargetDir, 'release', 'jlo');
+    if (!(0, node_fs_1.existsSync)(builtBinary)) {
+        throw new Error(`Source build completed but binary not found at '${builtBinary}'.`);
+    }
+    return builtBinary;
+}
+
+
+/***/ }),
+
+/***/ 3605:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -25877,25 +26073,7 @@ function isFullGitSha(value) {
 
 /***/ }),
 
-/***/ 7890:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.parseRepositorySlug = parseRepositorySlug;
-function parseRepositorySlug(slug) {
-    const [owner, repo] = slug.split('/');
-    if (!owner || !repo) {
-        throw new Error(`Invalid repository '${slug}'. Expected '<owner>/<repo>' format.`);
-    }
-    return { owner, repo };
-}
-
-
-/***/ }),
-
-/***/ 9407:
+/***/ 4432:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -25934,109 +26112,240 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.resolveInstallMode = resolveInstallMode;
+exports.installMainSource = installMainSource;
+const node_fs_1 = __nccwpck_require__(3024);
+const node_os_1 = __nccwpck_require__(8161);
+const node_path_1 = __nccwpck_require__(6760);
 const core = __importStar(__nccwpck_require__(7484));
-const action_inputs_1 = __nccwpck_require__(8683);
-const install_context_1 = __nccwpck_require__(9566);
-const release_install_1 = __nccwpck_require__(2448);
-const source_install_1 = __nccwpck_require__(6228);
-const version_token_1 = __nccwpck_require__(2311);
-function resolveInstallMode(token) {
-    return (0, version_token_1.parseVersionToken)(token).kind === 'release' ? 'release-tag' : 'main';
-}
-async function run() {
-    const token = (0, action_inputs_1.getRequiredInput)('token');
-    const versionToken = (0, action_inputs_1.getRequiredInput)('version');
-    const submoduleToken = (0, action_inputs_1.getOptionalInput)('submodule_token');
-    const parsedVersion = (0, version_token_1.parseVersionToken)(versionToken);
-    const installMode = parsedVersion.kind === 'release' ? 'release-tag' : 'main';
-    core.info(`Resolved version='${versionToken}' (${installMode}).`);
-    core.setOutput('version-token', versionToken);
-    core.setOutput('install-mode', installMode);
-    const installContext = (0, install_context_1.resolveInstallContext)({
-        token,
-        submoduleToken
+const binary_install_cache_1 = __nccwpck_require__(3889);
+const cargo_build_1 = __nccwpck_require__(199);
+const git_cli_1 = __nccwpck_require__(3605);
+const jlo_1 = __nccwpck_require__(9416);
+const platform_1 = __nccwpck_require__(3013);
+const repository_slug_1 = __nccwpck_require__(339);
+async function installMainSource(request) {
+    if (!(0, git_cli_1.commandExists)('cargo')) {
+        throw new Error('main-head install requires cargo on PATH. Provision Rust toolchain on the runner.');
+    }
+    if (!(0, git_cli_1.commandExists)('git')) {
+        throw new Error('main-head install requires git on PATH.');
+    }
+    const releaseRepository = (0, repository_slug_1.parseRepositorySlug)(jlo_1.JLO_RELEASE_REPOSITORY);
+    const defaultSourceRemoteUrl = `https://github.com/${releaseRepository.owner}/${releaseRepository.repo}.git`;
+    const sourceRemoteUrl = request.mainSourceRemoteUrl ?? defaultSourceRemoteUrl;
+    const sourceRef = request.mainSourceRef ?? 'refs/heads/main';
+    const sourceBranch = request.mainSourceBranch ?? 'main';
+    const sourceAuthHeader = isHttpRemote(sourceRemoteUrl)
+        ? (0, git_cli_1.basicAuthHeader)(request.installToken)
+        : undefined;
+    const submoduleAuthHeader = request.installSubmoduleToken
+        ? (0, git_cli_1.basicAuthHeader)(request.installSubmoduleToken)
+        : undefined;
+    const lsRemoteOutput = (0, git_cli_1.runGitWithOptionalAuth)({
+        authHeader: sourceAuthHeader,
+        args: ['ls-remote', '--', sourceRemoteUrl, sourceRef],
+        operation: 'resolve source head SHA'
     });
-    if (parsedVersion.kind === 'release') {
-        await (0, release_install_1.installReleaseVersion)(installContext, parsedVersion);
+    const sha = lsRemoteOutput.trim().split(/\s+/)[0] ?? '';
+    if (!(0, git_cli_1.isFullGitSha)(sha)) {
+        throw new Error(`Failed to resolve source head SHA from '${sourceRemoteUrl}' ref '${sourceRef}'.`);
+    }
+    const platform = (0, platform_1.detectPlatformTuple)();
+    const shortSha = sha.slice(0, 12);
+    const installKey = `main-${shortSha}`;
+    const cacheRoot = (0, binary_install_cache_1.resolveCacheRoot)(request);
+    const platformDir = (0, binary_install_cache_1.resolvePlatformCacheDirectory)(cacheRoot, platform);
+    const installDir = (0, binary_install_cache_1.ensureInstallDirectory)(platformDir, installKey);
+    const binaryPath = (0, node_path_1.join)(installDir, 'jlo');
+    if ((0, node_fs_1.existsSync)(binaryPath)) {
+        core.info(`jlo main@${shortSha} already cached; skipping build.`);
+        (0, binary_install_cache_1.pruneSiblingInstallDirectories)(platformDir, installKey);
+        (0, binary_install_cache_1.installBinaryOnPath)(installDir);
+        core.info(`jlo installed: ${(0, binary_install_cache_1.detectBinaryVersion)(binaryPath)}`);
         return;
     }
-    await (0, source_install_1.installMainSource)(installContext);
-}
-if (require.main === require.cache[eval('__filename')]) {
-    run().catch((error) => {
-        if (error instanceof Error) {
-            core.setFailed(error.message);
-            return;
+    const clonePath = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)(request.runnerTemp ?? (0, node_os_1.tmpdir)(), 'setup-jlo-main-'));
+    try {
+        (0, git_cli_1.runGitWithOptionalAuth)({
+            authHeader: sourceAuthHeader,
+            args: [
+                'clone',
+                '--quiet',
+                '--depth=1',
+                '--branch',
+                sourceBranch,
+                '--',
+                sourceRemoteUrl,
+                clonePath
+            ],
+            operation: 'clone source branch for source build'
+        });
+        const gitmodulesPath = (0, node_path_1.join)(clonePath, '.gitmodules');
+        if ((0, node_fs_1.existsSync)(gitmodulesPath)) {
+            if (request.installSubmoduleToken) {
+                core.info('Using submodule_token for submodule fetch authentication.');
+            }
+            else {
+                core.info('submodule_token is empty; attempting anonymous submodule fetch.');
+            }
+            (0, git_cli_1.runGitWithOptionalAuth)({
+                cwd: clonePath,
+                authHeader: submoduleAuthHeader,
+                args: [
+                    'config',
+                    '--local',
+                    'url.https://github.com/.insteadOf',
+                    'git@github.com:'
+                ],
+                operation: 'configure git submodule URL rewrite for source build'
+            });
+            (0, git_cli_1.runGitWithOptionalAuth)({
+                cwd: clonePath,
+                authHeader: submoduleAuthHeader,
+                args: [
+                    'config',
+                    '--local',
+                    'url.https://github.com/.insteadOf',
+                    'ssh://git@github.com/'
+                ],
+                operation: 'configure git submodule URL rewrite for source build'
+            });
+            (0, git_cli_1.runGitWithOptionalAuth)({
+                cwd: clonePath,
+                authHeader: submoduleAuthHeader,
+                args: ['submodule', 'sync', '--recursive'],
+                operation: 'sync git submodule configuration for source build'
+            });
+            try {
+                (0, git_cli_1.runGitWithOptionalAuth)({
+                    cwd: clonePath,
+                    authHeader: submoduleAuthHeader,
+                    args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
+                    operation: 'fetch git submodules for source build'
+                });
+            }
+            catch (error) {
+                if (request.installSubmoduleToken) {
+                    throw new Error(`Failed to fetch git submodules for source build (verify submodule_token can read submodule repositories): ${error.message}`);
+                }
+                throw new Error(`Failed to fetch git submodules for source build without credentials. Configure setup-jlo submodule_token for private submodules: ${error.message}`);
+            }
         }
-        core.setFailed(String(error));
-    });
+        const buildTargetDir = (0, node_path_1.join)(clonePath, 'target');
+        const manifestPath = (0, node_path_1.join)(clonePath, 'Cargo.toml');
+        const builtBinary = (0, cargo_build_1.buildCargoRelease)({
+            cwd: clonePath,
+            manifestPath,
+            buildTargetDir,
+            sourceBranch,
+            sourceRemoteUrl
+        });
+        (0, binary_install_cache_1.copyExecutableBinary)(builtBinary, binaryPath);
+    }
+    finally {
+        (0, node_fs_1.rmSync)(clonePath, { recursive: true, force: true });
+    }
+    (0, binary_install_cache_1.pruneSiblingInstallDirectories)(platformDir, installKey);
+    (0, binary_install_cache_1.installBinaryOnPath)(installDir);
+    core.info(`jlo installed: ${(0, binary_install_cache_1.detectBinaryVersion)(binaryPath)}`);
+}
+function isHttpRemote(remote) {
+    return remote.startsWith('http://') || remote.startsWith('https://');
 }
 
 
 /***/ }),
 
-/***/ 9566:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+/***/ 4472:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.resolveInstallContext = resolveInstallContext;
-exports.resolveCacheRoot = resolveCacheRoot;
-const node_path_1 = __nccwpck_require__(6760);
-function resolveInstallContext(options) {
-    return {
-        installToken: options.token,
-        installSubmoduleToken: normalizeOptionalEnv(options.submoduleToken),
-        mainSourceRemoteUrl: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_REMOTE_URL),
-        mainSourceRef: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_REF),
-        mainSourceBranch: normalizeOptionalEnv(process.env.JLO_MAIN_SOURCE_BRANCH),
-        allowDarwinX8664Fallback: parseBooleanEnv(process.env.JLO_ALLOW_DARWIN_X86_64_FALLBACK),
-        cacheRootOverride: normalizeOptionalEnv(process.env.JLO_CACHE_ROOT),
-        runnerEnvironment: normalizeOptionalEnv(process.env.RUNNER_ENVIRONMENT),
-        runnerTemp: normalizeOptionalEnv(process.env.RUNNER_TEMP),
-        runnerToolCache: normalizeOptionalEnv(process.env.RUNNER_TOOL_CACHE)
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
     };
-}
-function resolveCacheRoot(context) {
-    if (context.cacheRootOverride) {
-        return context.cacheRootOverride;
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.installReleaseVersion = installReleaseVersion;
+const node_fs_1 = __nccwpck_require__(3024);
+const node_os_1 = __nccwpck_require__(8161);
+const node_path_1 = __nccwpck_require__(6760);
+const core = __importStar(__nccwpck_require__(7484));
+const binary_install_cache_1 = __nccwpck_require__(3889);
+const release_asset_api_1 = __nccwpck_require__(9995);
+const jlo_1 = __nccwpck_require__(9416);
+const platform_1 = __nccwpck_require__(3013);
+async function installReleaseVersion(request, versionToken) {
+    const platform = (0, platform_1.detectPlatformTuple)();
+    const cacheRoot = (0, binary_install_cache_1.resolveCacheRoot)(request);
+    const platformDir = (0, binary_install_cache_1.resolvePlatformCacheDirectory)(cacheRoot, platform);
+    const installDir = (0, binary_install_cache_1.ensureInstallDirectory)(platformDir, versionToken.tag);
+    const binaryPath = (0, node_path_1.join)(installDir, 'jlo');
+    if ((0, binary_install_cache_1.isCachedBinaryForVersion)(binaryPath, versionToken.version)) {
+        core.info(`jlo ${versionToken.version} already cached; skipping download.`);
+        (0, binary_install_cache_1.pruneSiblingInstallDirectories)(platformDir, versionToken.tag);
+        (0, binary_install_cache_1.installBinaryOnPath)(installDir);
+        core.info(`jlo installed: ${(0, binary_install_cache_1.detectBinaryVersion)(binaryPath)}`);
+        return;
     }
-    if (context.runnerEnvironment === 'github-hosted') {
-        return (0, node_path_1.resolve)(context.runnerTemp ?? '/tmp', 'jlo-bin-cache');
+    const candidates = (0, platform_1.buildReleaseAssetCandidates)(platform, request.allowDarwinX8664Fallback);
+    const releaseAsset = await (0, release_asset_api_1.fetchReleaseAsset)({
+        token: request.installToken,
+        releaseRepository: jlo_1.JLO_RELEASE_REPOSITORY,
+        tagVersion: versionToken.tag,
+        candidates
+    });
+    const tempDirectory = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)(request.runnerTemp ?? (0, node_os_1.tmpdir)(), 'setup-jlo-release-'));
+    const downloadPath = (0, node_path_1.join)(tempDirectory, releaseAsset.name);
+    try {
+        (0, node_fs_1.writeFileSync)(downloadPath, releaseAsset.contents);
+        if ((0, node_fs_1.statSync)(downloadPath).size === 0) {
+            throw new Error(`Downloaded release asset '${releaseAsset.name}' is missing or empty in '${jlo_1.JLO_RELEASE_REPOSITORY}' (${versionToken.tag}).`);
+        }
+        (0, binary_install_cache_1.ensureExecutablePermissions)(downloadPath);
+        (0, node_fs_1.renameSync)(downloadPath, binaryPath);
     }
-    const homeDirectory = normalizeOptionalEnv(process.env.HOME);
-    const base = context.runnerToolCache ??
-        (homeDirectory ? (0, node_path_1.resolve)(homeDirectory, '.cache') : '/tmp');
-    return (0, node_path_1.resolve)(base, 'jlo-bin-cache');
-}
-function normalizeOptionalEnv(value) {
-    if (!value) {
-        return undefined;
+    finally {
+        (0, node_fs_1.rmSync)(tempDirectory, { recursive: true, force: true });
     }
-    const normalized = value.trim();
-    return normalized.length > 0 ? normalized : undefined;
-}
-function parseBooleanEnv(value) {
-    if (!value) {
-        return false;
-    }
-    switch (value.trim().toLowerCase()) {
-        case '1':
-        case 'true':
-        case 'yes':
-        case 'on':
-            return true;
-        default:
-            return false;
-    }
+    (0, binary_install_cache_1.pruneSiblingInstallDirectories)(platformDir, versionToken.tag);
+    (0, binary_install_cache_1.installBinaryOnPath)(installDir);
+    core.info(`jlo installed: ${(0, binary_install_cache_1.detectBinaryVersion)(binaryPath)}`);
 }
 
 
 /***/ }),
 
-/***/ 6587:
+/***/ 9416:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -26048,7 +26357,7 @@ exports.JLO_RELEASE_REPOSITORY = 'asterismhq/jlo';
 
 /***/ }),
 
-/***/ 3728:
+/***/ 3013:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -26111,327 +26420,25 @@ function detectRosettaArm64() {
 
 /***/ }),
 
-/***/ 2448:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ 339:
+/***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.installReleaseVersion = installReleaseVersion;
-const node_fs_1 = __nccwpck_require__(3024);
-const node_os_1 = __nccwpck_require__(8161);
-const node_path_1 = __nccwpck_require__(6760);
-const core = __importStar(__nccwpck_require__(7484));
-const install_context_1 = __nccwpck_require__(9566);
-const cache_paths_1 = __nccwpck_require__(3392);
-const github_client_1 = __nccwpck_require__(7890);
-const jlo_release_source_1 = __nccwpck_require__(6587);
-const platform_1 = __nccwpck_require__(3728);
-async function installReleaseVersion(context, versionToken) {
-    const platform = (0, platform_1.detectPlatformTuple)();
-    const cacheRoot = (0, install_context_1.resolveCacheRoot)(context);
-    const platformDir = (0, cache_paths_1.resolvePlatformCacheDirectory)(cacheRoot, platform);
-    const installDir = (0, cache_paths_1.ensureInstallDirectory)(platformDir, versionToken.tag);
-    const binaryPath = (0, node_path_1.join)(installDir, 'jlo');
-    if ((0, cache_paths_1.isCachedBinaryForVersion)(binaryPath, versionToken.version)) {
-        core.info(`jlo ${versionToken.version} already cached; skipping download.`);
-        (0, cache_paths_1.pruneSiblingInstallDirectories)(platformDir, versionToken.tag);
-        (0, cache_paths_1.installBinaryOnPath)(installDir);
-        core.info(`jlo installed: ${(0, cache_paths_1.detectBinaryVersion)(binaryPath)}`);
-        return;
+exports.parseRepositorySlug = parseRepositorySlug;
+function parseRepositorySlug(slug) {
+    const [owner, repo] = slug.split('/');
+    if (!owner || !repo) {
+        throw new Error(`Invalid repository '${slug}'. Expected '<owner>/<repo>' format.`);
     }
-    const candidates = (0, platform_1.buildReleaseAssetCandidates)(platform, context.allowDarwinX8664Fallback);
-    const releaseAsset = await fetchReleaseAsset({
-        token: context.installToken,
-        releaseRepository: jlo_release_source_1.JLO_RELEASE_REPOSITORY,
-        tagVersion: versionToken.tag,
-        candidates
-    });
-    const tempDirectory = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)(context.runnerTemp ?? (0, node_os_1.tmpdir)(), 'setup-jlo-release-'));
-    const downloadPath = (0, node_path_1.join)(tempDirectory, releaseAsset.name);
-    try {
-        (0, node_fs_1.writeFileSync)(downloadPath, releaseAsset.contents);
-        if ((0, node_fs_1.statSync)(downloadPath).size === 0) {
-            throw new Error(`Downloaded release asset '${releaseAsset.name}' is missing or empty in '${jlo_release_source_1.JLO_RELEASE_REPOSITORY}' (${versionToken.tag}).`);
-        }
-        (0, cache_paths_1.ensureExecutablePermissions)(downloadPath);
-        (0, node_fs_1.renameSync)(downloadPath, binaryPath);
-    }
-    finally {
-        (0, node_fs_1.rmSync)(tempDirectory, { recursive: true, force: true });
-    }
-    (0, cache_paths_1.pruneSiblingInstallDirectories)(platformDir, versionToken.tag);
-    (0, cache_paths_1.installBinaryOnPath)(installDir);
-    core.info(`jlo installed: ${(0, cache_paths_1.detectBinaryVersion)(binaryPath)}`);
-}
-async function fetchReleaseAsset(options) {
-    const { owner, repo } = (0, github_client_1.parseRepositorySlug)(options.releaseRepository);
-    const headers = {
-        Authorization: `Bearer ${options.token}`,
-        Accept: 'application/vnd.github+json',
-        'User-Agent': 'setup-jlo'
-    };
-    const metadataResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/tags/${options.tagVersion}`, { headers });
-    if (metadataResponse.status === 401 || metadataResponse.status === 403) {
-        throw new Error(`token cannot access release metadata in '${options.releaseRepository}'. Ensure contents:read and organization SSO authorization.`);
-    }
-    if (metadataResponse.status === 404) {
-        throw new Error(`Release '${options.tagVersion}' was not found (or is inaccessible) in '${options.releaseRepository}'.`);
-    }
-    if (!metadataResponse.ok) {
-        throw new Error(`Failed to query release metadata for '${options.tagVersion}' in '${options.releaseRepository}' (HTTP ${metadataResponse.status}).`);
-    }
-    const metadata = (await metadataResponse.json());
-    const matchedAsset = options.candidates
-        .map((candidate) => metadata.assets?.find((asset) => asset.name === candidate))
-        .find((asset) => asset !== undefined);
-    if (!matchedAsset) {
-        throw new Error(`No matching release asset for ${options.candidates.join(', ')} in '${options.releaseRepository}'.`);
-    }
-    const downloadResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/assets/${matchedAsset.id}`, {
-        headers: {
-            ...headers,
-            Accept: 'application/octet-stream'
-        }
-    });
-    if (!downloadResponse.ok) {
-        throw new Error(`Failed to download release asset '${matchedAsset.name}' from '${options.releaseRepository}' (HTTP ${downloadResponse.status}).`);
-    }
-    return {
-        name: matchedAsset.name,
-        contents: Buffer.from(await downloadResponse.arrayBuffer())
-    };
+    return { owner, repo };
 }
 
 
 /***/ }),
 
-/***/ 6228:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.installMainSource = installMainSource;
-const node_fs_1 = __nccwpck_require__(3024);
-const node_os_1 = __nccwpck_require__(8161);
-const node_path_1 = __nccwpck_require__(6760);
-const node_child_process_1 = __nccwpck_require__(1421);
-const core = __importStar(__nccwpck_require__(7484));
-const install_context_1 = __nccwpck_require__(9566);
-const cache_paths_1 = __nccwpck_require__(3392);
-const git_process_1 = __nccwpck_require__(187);
-const github_client_1 = __nccwpck_require__(7890);
-const jlo_release_source_1 = __nccwpck_require__(6587);
-const platform_1 = __nccwpck_require__(3728);
-async function installMainSource(context) {
-    if (!(0, git_process_1.commandExists)('cargo')) {
-        throw new Error('main-head install requires cargo on PATH. Provision Rust toolchain on the runner.');
-    }
-    if (!(0, git_process_1.commandExists)('git')) {
-        throw new Error('main-head install requires git on PATH.');
-    }
-    const releaseRepository = (0, github_client_1.parseRepositorySlug)(jlo_release_source_1.JLO_RELEASE_REPOSITORY);
-    const defaultSourceRemoteUrl = `https://github.com/${releaseRepository.owner}/${releaseRepository.repo}.git`;
-    const sourceRemoteUrl = context.mainSourceRemoteUrl ?? defaultSourceRemoteUrl;
-    const sourceRef = context.mainSourceRef ?? 'refs/heads/main';
-    const sourceBranch = context.mainSourceBranch ?? 'main';
-    const sourceAuthHeader = isHttpRemote(sourceRemoteUrl)
-        ? (0, git_process_1.basicAuthHeader)(context.installToken)
-        : undefined;
-    const submoduleAuthHeader = context.installSubmoduleToken
-        ? (0, git_process_1.basicAuthHeader)(context.installSubmoduleToken)
-        : undefined;
-    const lsRemoteOutput = (0, git_process_1.runGitWithOptionalAuth)({
-        authHeader: sourceAuthHeader,
-        args: ['ls-remote', '--', sourceRemoteUrl, sourceRef],
-        operation: 'resolve source head SHA'
-    });
-    const sha = lsRemoteOutput.trim().split(/\s+/)[0] ?? '';
-    if (!(0, git_process_1.isFullGitSha)(sha)) {
-        throw new Error(`Failed to resolve source head SHA from '${sourceRemoteUrl}' ref '${sourceRef}'.`);
-    }
-    const platform = (0, platform_1.detectPlatformTuple)();
-    const shortSha = sha.slice(0, 12);
-    const installKey = `main-${shortSha}`;
-    const cacheRoot = (0, install_context_1.resolveCacheRoot)(context);
-    const platformDir = (0, cache_paths_1.resolvePlatformCacheDirectory)(cacheRoot, platform);
-    const installDir = (0, cache_paths_1.ensureInstallDirectory)(platformDir, installKey);
-    const binaryPath = (0, node_path_1.join)(installDir, 'jlo');
-    if ((0, node_fs_1.existsSync)(binaryPath)) {
-        core.info(`jlo main@${shortSha} already cached; skipping build.`);
-        (0, cache_paths_1.pruneSiblingInstallDirectories)(platformDir, installKey);
-        (0, cache_paths_1.installBinaryOnPath)(installDir);
-        core.info(`jlo installed: ${(0, cache_paths_1.detectBinaryVersion)(binaryPath)}`);
-        return;
-    }
-    const clonePath = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)(context.runnerTemp ?? (0, node_os_1.tmpdir)(), 'setup-jlo-main-'));
-    try {
-        (0, git_process_1.runGitWithOptionalAuth)({
-            authHeader: sourceAuthHeader,
-            args: [
-                'clone',
-                '--quiet',
-                '--depth=1',
-                '--branch',
-                sourceBranch,
-                '--',
-                sourceRemoteUrl,
-                clonePath
-            ],
-            operation: 'clone source branch for source build'
-        });
-        const gitmodulesPath = (0, node_path_1.join)(clonePath, '.gitmodules');
-        if ((0, node_fs_1.existsSync)(gitmodulesPath)) {
-            if (context.installSubmoduleToken) {
-                core.info('Using submodule_token for submodule fetch authentication.');
-            }
-            else {
-                core.info('submodule_token is empty; attempting anonymous submodule fetch.');
-            }
-            (0, git_process_1.runGitWithOptionalAuth)({
-                cwd: clonePath,
-                authHeader: submoduleAuthHeader,
-                args: [
-                    'config',
-                    '--local',
-                    'url.https://github.com/.insteadOf',
-                    'git@github.com:'
-                ],
-                operation: 'configure git submodule URL rewrite for source build'
-            });
-            (0, git_process_1.runGitWithOptionalAuth)({
-                cwd: clonePath,
-                authHeader: submoduleAuthHeader,
-                args: [
-                    'config',
-                    '--local',
-                    'url.https://github.com/.insteadOf',
-                    'ssh://git@github.com/'
-                ],
-                operation: 'configure git submodule URL rewrite for source build'
-            });
-            (0, git_process_1.runGitWithOptionalAuth)({
-                cwd: clonePath,
-                authHeader: submoduleAuthHeader,
-                args: ['submodule', 'sync', '--recursive'],
-                operation: 'sync git submodule configuration for source build'
-            });
-            try {
-                (0, git_process_1.runGitWithOptionalAuth)({
-                    cwd: clonePath,
-                    authHeader: submoduleAuthHeader,
-                    args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
-                    operation: 'fetch git submodules for source build'
-                });
-            }
-            catch (error) {
-                if (context.installSubmoduleToken) {
-                    throw new Error(`Failed to fetch git submodules for source build (verify submodule_token can read submodule repositories): ${error.message}`);
-                }
-                throw new Error(`Failed to fetch git submodules for source build without credentials. Configure setup-jlo submodule_token for private submodules: ${error.message}`);
-            }
-        }
-        const buildTargetDir = (0, node_path_1.join)(clonePath, 'target');
-        const manifestPath = (0, node_path_1.join)(clonePath, 'Cargo.toml');
-        const buildResult = (0, node_child_process_1.spawnSync)('cargo', ['build', '--release', '--manifest-path', manifestPath], {
-            cwd: clonePath,
-            encoding: 'utf8',
-            env: {
-                ...process.env,
-                CARGO_TARGET_DIR: buildTargetDir
-            }
-        });
-        if (buildResult.status !== 0) {
-            throw new Error(`Failed to build jlo from source branch '${sourceBranch}' in '${sourceRemoteUrl}': ${buildResult.stderr.trim()}`);
-        }
-        const builtBinary = (0, node_path_1.join)(buildTargetDir, 'release', 'jlo');
-        if (!(0, node_fs_1.existsSync)(builtBinary)) {
-            throw new Error(`Source build completed but binary not found at '${builtBinary}'.`);
-        }
-        (0, cache_paths_1.copyExecutableBinary)(builtBinary, binaryPath);
-    }
-    finally {
-        (0, node_fs_1.rmSync)(clonePath, { recursive: true, force: true });
-    }
-    (0, cache_paths_1.pruneSiblingInstallDirectories)(platformDir, installKey);
-    (0, cache_paths_1.installBinaryOnPath)(installDir);
-    core.info(`jlo installed: ${(0, cache_paths_1.detectBinaryVersion)(binaryPath)}`);
-}
-function isHttpRemote(remote) {
-    return remote.startsWith('http://') || remote.startsWith('https://');
-}
-
-
-/***/ }),
-
-/***/ 2311:
+/***/ 6948:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -26449,6 +26456,87 @@ function parseVersionToken(token) {
         return { kind: 'release', version: semverCore, tag: `v${semverCore}` };
     }
     throw new Error(`Invalid version input '${normalized}'. Expected semver or 'main'.`);
+}
+
+
+/***/ }),
+
+/***/ 9407:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.resolveInstallMode = resolveInstallMode;
+const core = __importStar(__nccwpck_require__(7484));
+const inputs_1 = __nccwpck_require__(1729);
+const install_request_1 = __nccwpck_require__(1345);
+const outputs_1 = __nccwpck_require__(8948);
+const install_main_source_1 = __nccwpck_require__(4432);
+const install_release_1 = __nccwpck_require__(4472);
+const version_token_1 = __nccwpck_require__(6948);
+function resolveInstallMode(token) {
+    return (0, version_token_1.parseVersionToken)(token).kind === 'release' ? 'release-tag' : 'main';
+}
+async function run() {
+    const token = (0, inputs_1.readRequiredInput)('token');
+    const versionToken = (0, inputs_1.readRequiredInput)('version');
+    const submoduleToken = (0, inputs_1.readOptionalInput)('submodule_token');
+    const parsedVersion = (0, version_token_1.parseVersionToken)(versionToken);
+    const installMode = parsedVersion.kind === 'release' ? 'release-tag' : 'main';
+    core.info(`Resolved version='${versionToken}' (${installMode}).`);
+    (0, outputs_1.emitInstallOutputs)(versionToken, installMode);
+    const installRequest = (0, install_request_1.resolveInstallRequest)({
+        token,
+        submoduleToken
+    });
+    if (parsedVersion.kind === 'release') {
+        await (0, install_release_1.installReleaseVersion)(installRequest, parsedVersion);
+        return;
+    }
+    await (0, install_main_source_1.installMainSource)(installRequest);
+}
+if (require.main === require.cache[eval('__filename')]) {
+    run().catch((error) => {
+        if (error instanceof Error) {
+            core.setFailed(error.message);
+            return;
+        }
+        core.setFailed(String(error));
+    });
 }
 
 

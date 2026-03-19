@@ -21,9 +21,9 @@ See [docs/usage.md](docs/usage.md) for the input surface, install modes, and wor
 
 ## Architecture
 
-The repository contains one action runtime under `src/`, one committed distribution under `dist/`, and one verification path that compares committed `dist/` output with fresh `ncc` packaging. Version-token parsing stays aligned with the `jlo` install contract while GitHub Actions execution remains local to this repository.
+The repository contains one action runtime under `src/` with explicit ownership boundaries (`action`, `app`, `domain`, `adapters`, and `catalog`), one committed distribution under `dist/`, and one verification path that compares committed `dist/` output with fresh `ncc` packaging.
 
-See [docs/architecture.md](docs/architecture.md) for ownership boundaries, runtime flow, caching, and failure invariants.
+See [docs/architecture/boundary.md](docs/architecture/boundary.md) for ownership boundaries, dependency direction, runtime flow, and failure invariants.
 
 ## Configuration
 

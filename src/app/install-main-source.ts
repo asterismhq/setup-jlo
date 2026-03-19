@@ -1,29 +1,29 @@
 import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { spawnSync } from 'node:child_process'
 import * as core from '@actions/core'
-import type { InstallContext } from './install-context'
-import { resolveCacheRoot } from './install-context'
+import type { InstallRequest } from '../action/install-request'
 import {
   copyExecutableBinary,
   detectBinaryVersion,
   ensureInstallDirectory,
   installBinaryOnPath,
   pruneSiblingInstallDirectories,
+  resolveCacheRoot,
   resolvePlatformCacheDirectory
-} from './cache-paths'
+} from '../adapters/cache/binary-install-cache'
+import { buildCargoRelease } from '../adapters/process/cargo-build'
 import {
   basicAuthHeader,
   commandExists,
   isFullGitSha,
   runGitWithOptionalAuth
-} from './git-process'
-import { parseRepositorySlug } from './github-client'
-import { JLO_RELEASE_REPOSITORY } from './jlo-release-source'
-import { detectPlatformTuple } from './platform'
+} from '../adapters/process/git-cli'
+import { JLO_RELEASE_REPOSITORY } from '../catalog/jlo'
+import { detectPlatformTuple } from '../domain/platform'
+import { parseRepositorySlug } from '../domain/repository-slug'
 
-export async function installMainSource(context: InstallContext): Promise<void> {
+export async function installMainSource(request: InstallRequest): Promise<void> {
   if (!commandExists('cargo')) {
     throw new Error(
       'main-head install requires cargo on PATH. Provision Rust toolchain on the runner.'
@@ -35,15 +35,15 @@ export async function installMainSource(context: InstallContext): Promise<void> 
 
   const releaseRepository = parseRepositorySlug(JLO_RELEASE_REPOSITORY)
   const defaultSourceRemoteUrl = `https://github.com/${releaseRepository.owner}/${releaseRepository.repo}.git`
-  const sourceRemoteUrl = context.mainSourceRemoteUrl ?? defaultSourceRemoteUrl
-  const sourceRef = context.mainSourceRef ?? 'refs/heads/main'
-  const sourceBranch = context.mainSourceBranch ?? 'main'
+  const sourceRemoteUrl = request.mainSourceRemoteUrl ?? defaultSourceRemoteUrl
+  const sourceRef = request.mainSourceRef ?? 'refs/heads/main'
+  const sourceBranch = request.mainSourceBranch ?? 'main'
 
   const sourceAuthHeader = isHttpRemote(sourceRemoteUrl)
-    ? basicAuthHeader(context.installToken)
+    ? basicAuthHeader(request.installToken)
     : undefined
-  const submoduleAuthHeader = context.installSubmoduleToken
-    ? basicAuthHeader(context.installSubmoduleToken)
+  const submoduleAuthHeader = request.installSubmoduleToken
+    ? basicAuthHeader(request.installSubmoduleToken)
     : undefined
 
   const lsRemoteOutput = runGitWithOptionalAuth({
@@ -62,7 +62,7 @@ export async function installMainSource(context: InstallContext): Promise<void> 
   const platform = detectPlatformTuple()
   const shortSha = sha.slice(0, 12)
   const installKey = `main-${shortSha}`
-  const cacheRoot = resolveCacheRoot(context)
+  const cacheRoot = resolveCacheRoot(request)
   const platformDir = resolvePlatformCacheDirectory(cacheRoot, platform)
   const installDir = ensureInstallDirectory(platformDir, installKey)
   const binaryPath = join(installDir, 'jlo')
@@ -75,7 +75,7 @@ export async function installMainSource(context: InstallContext): Promise<void> 
     return
   }
 
-  const clonePath = mkdtempSync(join(context.runnerTemp ?? tmpdir(), 'setup-jlo-main-'))
+  const clonePath = mkdtempSync(join(request.runnerTemp ?? tmpdir(), 'setup-jlo-main-'))
 
   try {
     runGitWithOptionalAuth({
@@ -95,7 +95,7 @@ export async function installMainSource(context: InstallContext): Promise<void> 
 
     const gitmodulesPath = join(clonePath, '.gitmodules')
     if (existsSync(gitmodulesPath)) {
-      if (context.installSubmoduleToken) {
+      if (request.installSubmoduleToken) {
         core.info('Using submodule_token for submodule fetch authentication.')
       } else {
         core.info('submodule_token is empty; attempting anonymous submodule fetch.')
@@ -139,7 +139,7 @@ export async function installMainSource(context: InstallContext): Promise<void> 
           operation: 'fetch git submodules for source build'
         })
       } catch (error) {
-        if (context.installSubmoduleToken) {
+        if (request.installSubmoduleToken) {
           throw new Error(
             `Failed to fetch git submodules for source build (verify submodule_token can read submodule repositories): ${(error as Error).message}`
           )
@@ -152,31 +152,13 @@ export async function installMainSource(context: InstallContext): Promise<void> 
 
     const buildTargetDir = join(clonePath, 'target')
     const manifestPath = join(clonePath, 'Cargo.toml')
-    const buildResult = spawnSync(
-      'cargo',
-      ['build', '--release', '--manifest-path', manifestPath],
-      {
-        cwd: clonePath,
-        encoding: 'utf8',
-        env: {
-          ...process.env,
-          CARGO_TARGET_DIR: buildTargetDir
-        }
-      }
-    )
-
-    if (buildResult.status !== 0) {
-      throw new Error(
-        `Failed to build jlo from source branch '${sourceBranch}' in '${sourceRemoteUrl}': ${buildResult.stderr.trim()}`
-      )
-    }
-
-    const builtBinary = join(buildTargetDir, 'release', 'jlo')
-    if (!existsSync(builtBinary)) {
-      throw new Error(
-        `Source build completed but binary not found at '${builtBinary}'.`
-      )
-    }
+    const builtBinary = buildCargoRelease({
+      cwd: clonePath,
+      manifestPath,
+      buildTargetDir,
+      sourceBranch,
+      sourceRemoteUrl
+    })
 
     copyExecutableBinary(builtBinary, binaryPath)
   } finally {

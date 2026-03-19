@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 
-export function getRequiredInput(name: string): string {
+export function readRequiredInput(name: string): string {
   const value = core.getInput(name)
   if (!value || value.trim().length === 0) {
     throw new Error(`Input '${name}' is required.`)
@@ -8,7 +8,7 @@ export function getRequiredInput(name: string): string {
   return value.trim()
 }
 
-export function getOptionalInput(name: string): string | undefined {
+export function readOptionalInput(name: string): string | undefined {
   const value = core.getInput(name)
   if (!value || value.trim().length === 0) {
     return undefined
