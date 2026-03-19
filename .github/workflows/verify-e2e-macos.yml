@@ -1,0 +1,70 @@
+# Verify E2E on macOS
+#
+# Runs end-to-end verification of the local `setup-jlo` action implementation
+# on macOS runners when explicitly dispatched.
+
+name: Verify E2E on macOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: Semver release version of jlo to install
+        required: true
+        default: 23.2.0
+        type: string
+
+jobs:
+  release-macos:
+    name: Release Install on macOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Run setup-jlo in Release Mode
+        id: setup_jlo
+        uses: ./
+        with:
+          token: ${{ secrets.JLO_RELEASE_PAT }}
+          version: ${{ inputs.release_version }}
+
+      - name: Verify Action Outputs
+        run: |
+          test "${{ steps.setup_jlo.outputs.version-token }}" = "${{ inputs.release_version }}"
+          test "${{ steps.setup_jlo.outputs.install-mode }}" = "release-tag"
+
+      - name: Verify Installed jlo Binary
+        run: |
+          command -v jlo
+          jlo --version
+
+  main-macos:
+    name: Main Install on macOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run setup-jlo in Main Mode
+        id: setup_jlo
+        uses: ./
+        with:
+          token: ${{ secrets.JLO_RELEASE_PAT }}
+          version: main
+          submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
+
+      - name: Verify Action Outputs
+        run: |
+          test "${{ steps.setup_jlo.outputs.version-token }}" = "main"
+          test "${{ steps.setup_jlo.outputs.install-mode }}" = "main"
+
+      - name: Verify Installed jlo Binary
+        run: |
+          command -v jlo
+          jlo --version

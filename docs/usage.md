@@ -18,7 +18,7 @@ This default form installs the semver-pinned runtime binary for `23.0.0`.
 The `version` input accepts two token classes:
 
 - semver such as `22.0.1`: downloads the matching `jlo-*` runtime release asset from `asterismhq/jlo`
-- `main`: clones the configured source repository, resolves the upstream `main` head, initializes submodules when present, and builds `jlo` with `cargo`
+- `main`: resolves the current `main` head SHA, reuses a matching cached build when present, or clones the source repository, fetches required submodules, and builds `jlo` with `cargo`
 
 The action exposes:
 
@@ -35,7 +35,7 @@ The action exposes:
     submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 ```
 
-This form builds `jlo` from the upstream `main` branch instead of downloading a release asset.
+This form builds `jlo` from the upstream `main` branch instead of downloading a release asset. Repeated runs reuse the cached binary when the upstream `main` head SHA has not changed.
 
 ## Main-mode Requirements
 
@@ -44,7 +44,7 @@ This form builds `jlo` from the upstream `main` branch instead of downloading a 
 - `git` on `PATH`
 - `cargo` on `PATH`
 - access to the source repository
-- `submodule_token` when the source tree contains private submodules
+- `submodule_token`
 
 `main` mode does not fall back to release installation.
 
@@ -52,10 +52,10 @@ This form builds `jlo` from the upstream `main` branch instead of downloading a 
 
 Repository-local verification commands are:
 
-- `just format-check`
-- `just lint`
-- `just typecheck`
+- `just fix`
+- `just check`
 - `just test`
+- `just package`
 - `just verify-dist`
 
 Targeted npm commands remain available behind the `just` recipes:
@@ -63,6 +63,7 @@ Targeted npm commands remain available behind the `just` recipes:
 - `npm run format`
 - `npm run format:check`
 - `npm run lint`
+- `npm run lint:fix`
 - `npm test`
 - `npm run typecheck`
 - `npm run package`

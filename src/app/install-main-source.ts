@@ -12,148 +12,87 @@ import {
   resolveCacheRoot,
   resolvePlatformCacheDirectory,
 } from '../adapters/cache/binary-install-cache'
+import { resolveGitHubHttpUsername } from '../adapters/github/github-git-http-username'
 import { buildCargoRelease } from '../adapters/process/cargo-build'
 import {
-  basicAuthHeader,
+  cloneGitHubBranch,
   commandExists,
-  isFullGitSha,
-  runGitWithOptionalAuth,
-} from '../adapters/process/git-cli'
-import { JLO_RELEASE_REPOSITORY } from '../catalog/jlo'
+  resolveGitWorktreeHeadSha,
+  updateGitHubSubmodules,
+} from '../adapters/process/github-source-git'
+import { JLO_REPOSITORY } from '../catalog/jlo'
 import { detectPlatformTuple } from '../domain/platform'
-import { parseRepositorySlug } from '../domain/repository-slug'
 
 export async function installMainSource(
   request: InstallRequest,
 ): Promise<void> {
   if (!commandExists('cargo')) {
     throw new Error(
-      'main-head install requires cargo on PATH. Provision Rust toolchain on the runner.',
+      'main install requires cargo on PATH. Provision Rust toolchain on the runner.',
     )
   }
   if (!commandExists('git')) {
-    throw new Error('main-head install requires git on PATH.')
+    throw new Error('main install requires git on PATH.')
   }
 
-  const releaseRepository = parseRepositorySlug(JLO_RELEASE_REPOSITORY)
-  const defaultSourceRemoteUrl = `https://github.com/${releaseRepository.owner}/${releaseRepository.repo}.git`
-  const sourceRemoteUrl = request.mainSourceRemoteUrl ?? defaultSourceRemoteUrl
-  const sourceRef = request.mainSourceRef ?? 'refs/heads/main'
-  const sourceBranch = request.mainSourceBranch ?? 'main'
-
-  const sourceAuthHeader = isHttpRemote(sourceRemoteUrl)
-    ? basicAuthHeader(request.installToken)
-    : undefined
-  const submoduleAuthHeader = request.installSubmoduleToken
-    ? basicAuthHeader(request.installSubmoduleToken)
-    : undefined
-
-  const lsRemoteOutput = runGitWithOptionalAuth({
-    authHeader: sourceAuthHeader,
-    args: ['ls-remote', '--', sourceRemoteUrl, sourceRef],
-    operation: 'resolve source head SHA',
-  })
-  const sha = lsRemoteOutput.trim().split(/\s+/)[0] ?? ''
-
-  if (!isFullGitSha(sha)) {
-    throw new Error(
-      `Failed to resolve source head SHA from '${sourceRemoteUrl}' ref '${sourceRef}'.`,
-    )
+  const sourceBranch = 'main'
+  if (!request.installSubmoduleToken) {
+    throw new Error('main install requires submodule_token.')
   }
 
-  const platform = detectPlatformTuple()
-  const shortSha = sha.slice(0, 12)
-  const installKey = `main-${shortSha}`
-  const cacheRoot = resolveCacheRoot(request)
-  const platformDir = resolvePlatformCacheDirectory(cacheRoot, platform)
-  const installDir = ensureInstallDirectory(platformDir, installKey)
-  const binaryPath = join(installDir, 'jlo')
-
-  if (existsSync(binaryPath)) {
-    core.info(`jlo main@${shortSha} already cached; skipping build.`)
-    pruneSiblingInstallDirectories(platformDir, installKey)
-    installBinaryOnPath(installDir)
-    core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
-    return
-  }
+  const sourceAuthUsername = await resolveGitHubHttpUsername(
+    request.installToken,
+  )
+  const submoduleAuthUsername = await resolveGitHubHttpUsername(
+    request.installSubmoduleToken,
+  )
 
   const clonePath = mkdtempSync(
     join(request.runnerTemp ?? tmpdir(), 'setup-jlo-main-'),
   )
 
   try {
-    runGitWithOptionalAuth({
-      authHeader: sourceAuthHeader,
-      args: [
-        'clone',
-        '--quiet',
-        '--depth=1',
-        '--branch',
-        sourceBranch,
-        '--',
-        sourceRemoteUrl,
-        clonePath,
-      ],
-      operation: 'clone source branch for source build',
+    // Keep source acquisition on the same authenticated clone path used by builds.
+    // A separate ls-remote path previously broke main-mode auth in CI.
+    core.info(`Cloning ${JLO_REPOSITORY}@${sourceBranch} for source build.`)
+
+    cloneGitHubBranch({
+      repository: JLO_REPOSITORY,
+      branch: sourceBranch,
+      destination: clonePath,
+      token: request.installToken,
+      username: sourceAuthUsername,
     })
 
-    const gitmodulesPath = join(clonePath, '.gitmodules')
-    if (existsSync(gitmodulesPath)) {
-      if (request.installSubmoduleToken) {
-        core.info('Using submodule_token for submodule fetch authentication.')
-      } else {
-        core.info(
-          'submodule_token is empty; attempting anonymous submodule fetch.',
-        )
-      }
+    const sha = resolveGitWorktreeHeadSha({ cwd: clonePath })
+    const platform = detectPlatformTuple()
+    const shortSha = sha.slice(0, 12)
+    const installKey = `main-${shortSha}`
+    const cacheRoot = resolveCacheRoot(request)
+    const platformDir = resolvePlatformCacheDirectory(cacheRoot, platform)
+    const installDir = ensureInstallDirectory(platformDir, installKey)
+    const binaryPath = join(installDir, 'jlo')
 
-      runGitWithOptionalAuth({
-        cwd: clonePath,
-        authHeader: submoduleAuthHeader,
-        args: [
-          'config',
-          '--local',
-          'url.https://github.com/.insteadOf',
-          'git@github.com:',
-        ],
-        operation: 'configure git submodule URL rewrite for source build',
-      })
-      runGitWithOptionalAuth({
-        cwd: clonePath,
-        authHeader: submoduleAuthHeader,
-        args: [
-          'config',
-          '--local',
-          'url.https://github.com/.insteadOf',
-          'ssh://git@github.com/',
-        ],
-        operation: 'configure git submodule URL rewrite for source build',
-      })
+    if (existsSync(binaryPath)) {
+      core.info(`jlo main@${shortSha} already cached; skipping build.`)
+      pruneSiblingInstallDirectories(platformDir, installKey)
+      installBinaryOnPath(installDir)
+      core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
+      return
+    }
 
-      runGitWithOptionalAuth({
-        cwd: clonePath,
-        authHeader: submoduleAuthHeader,
-        args: ['submodule', 'sync', '--recursive'],
-        operation: 'sync git submodule configuration for source build',
-      })
+    core.info('Using submodule_token for required submodule fetch.')
 
-      try {
-        runGitWithOptionalAuth({
-          cwd: clonePath,
-          authHeader: submoduleAuthHeader,
-          args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
-          operation: 'fetch git submodules for source build',
-        })
-      } catch (error) {
-        if (request.installSubmoduleToken) {
-          throw new Error(
-            `Failed to fetch git submodules for source build (verify submodule_token can read submodule repositories): ${(error as Error).message}`,
-          )
-        }
-        throw new Error(
-          `Failed to fetch git submodules for source build without credentials. Configure setup-jlo submodule_token for private submodules: ${(error as Error).message}`,
-        )
-      }
+    try {
+      updateGitHubSubmodules({
+        cwd: clonePath,
+        token: request.installSubmoduleToken,
+        username: submoduleAuthUsername,
+      })
+    } catch (error) {
+      throw new Error(
+        `Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): ${(error as Error).message}`,
+      )
     }
 
     const buildTargetDir = join(clonePath, 'target')
@@ -162,20 +101,14 @@ export async function installMainSource(
       cwd: clonePath,
       manifestPath,
       buildTargetDir,
-      sourceBranch,
-      sourceRemoteUrl,
     })
 
     copyExecutableBinary(builtBinary, binaryPath)
+
+    pruneSiblingInstallDirectories(platformDir, installKey)
+    installBinaryOnPath(installDir)
+    core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
   } finally {
     rmSync(clonePath, { recursive: true, force: true })
   }
-
-  pruneSiblingInstallDirectories(platformDir, installKey)
-  installBinaryOnPath(installDir)
-  core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
-}
-
-function isHttpRemote(remote: string): boolean {
-  return remote.startsWith('http://') || remote.startsWith('https://')
 }

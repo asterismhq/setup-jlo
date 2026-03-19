@@ -1,6 +1,6 @@
 # Lint and Typecheck Workflow
 #
-# Runs Biome formatting checks, Biome lint, and TypeScript typecheck.
+# Runs formatting checks, Biome lint, and TypeScript typecheck.
 
 name: Run Linters
 
@@ -19,11 +19,5 @@ jobs:
       - name: Setup Development Environment
         uses: ./.github/actions/setup
 
-      - name: Check Biome Formatting
-        run: just format-check
-
-      - name: Run Biome Lint
-        run: just lint
-
-      - name: Run TypeScript Typecheck
-        run: just typecheck
+      - name: Run Static Checks
+        run: just check

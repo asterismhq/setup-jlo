@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const {
   info,
   existsSync,
+  resolveGitHubHttpUsername,
   commandExists,
-  basicAuthHeader,
-  runGitWithOptionalAuth,
-  isFullGitSha,
-  parseRepositorySlug,
+  cloneGitHubBranch,
+  resolveGitWorktreeHeadSha,
+  updateGitHubSubmodules,
   detectPlatformTuple,
   resolveCacheRoot,
   resolvePlatformCacheDirectory,
@@ -20,11 +20,11 @@ const {
 } = vi.hoisted(() => ({
   info: vi.fn(),
   existsSync: vi.fn(),
+  resolveGitHubHttpUsername: vi.fn(),
   commandExists: vi.fn(),
-  basicAuthHeader: vi.fn(),
-  runGitWithOptionalAuth: vi.fn(),
-  isFullGitSha: vi.fn(),
-  parseRepositorySlug: vi.fn(),
+  cloneGitHubBranch: vi.fn(),
+  resolveGitWorktreeHeadSha: vi.fn(),
+  updateGitHubSubmodules: vi.fn(),
   detectPlatformTuple: vi.fn(),
   resolveCacheRoot: vi.fn(),
   resolvePlatformCacheDirectory: vi.fn(),
@@ -48,15 +48,15 @@ vi.mock('node:fs', async () => {
   }
 })
 
-vi.mock('../../src/adapters/process/git-cli', () => ({
-  commandExists,
-  basicAuthHeader,
-  runGitWithOptionalAuth,
-  isFullGitSha,
+vi.mock('../../src/adapters/github/github-git-http-username', () => ({
+  resolveGitHubHttpUsername,
 }))
 
-vi.mock('../../src/domain/repository-slug', () => ({
-  parseRepositorySlug,
+vi.mock('../../src/adapters/process/github-source-git', () => ({
+  commandExists,
+  cloneGitHubBranch,
+  resolveGitWorktreeHeadSha,
+  updateGitHubSubmodules,
 }))
 
 vi.mock('../../src/domain/platform', () => ({
@@ -82,13 +82,11 @@ import { installMainSource } from '../../src/app/install-main-source'
 describe('app install main-source orchestration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resolveGitHubHttpUsername.mockResolvedValue('jlo-user')
     commandExists.mockReturnValue(true)
-    basicAuthHeader.mockReturnValue('Authorization: Basic token')
-    parseRepositorySlug.mockReturnValue({ owner: 'asterismhq', repo: 'jlo' })
-    runGitWithOptionalAuth.mockReturnValue(
-      '0123456789abcdef0123456789abcdef01234567\trefs/heads/main\n',
+    resolveGitWorktreeHeadSha.mockReturnValue(
+      '0123456789abcdef0123456789abcdef01234567',
     )
-    isFullGitSha.mockReturnValue(true)
     detectPlatformTuple.mockReturnValue({ os: 'linux', arch: 'x86_64' })
     resolveCacheRoot.mockReturnValue('/cache')
     resolvePlatformCacheDirectory.mockReturnValue('/cache/linux-x86_64')
@@ -99,22 +97,24 @@ describe('app install main-source orchestration', () => {
     detectBinaryVersion.mockReturnValue('jlo main')
   })
 
-  it('reuses cached main binary and skips clone/build', async () => {
+  it('reuses cached main binary and skips build', async () => {
     await installMainSource({
       installToken: 'token',
+      installSubmoduleToken: 'submodule-token',
       allowDarwinX8664Fallback: false,
     })
 
-    expect(runGitWithOptionalAuth).toHaveBeenCalledWith({
-      authHeader: 'Authorization: Basic token',
-      args: [
-        'ls-remote',
-        '--',
-        'https://github.com/asterismhq/jlo.git',
-        'refs/heads/main',
-      ],
-      operation: 'resolve source head SHA',
+    expect(cloneGitHubBranch).toHaveBeenCalledWith({
+      repository: 'asterismhq/jlo',
+      branch: 'main',
+      destination: expect.any(String),
+      token: 'token',
+      username: 'jlo-user',
     })
+    expect(resolveGitWorktreeHeadSha).toHaveBeenCalledWith({
+      cwd: expect.any(String),
+    })
+    expect(updateGitHubSubmodules).not.toHaveBeenCalled()
     expect(buildCargoRelease).not.toHaveBeenCalled()
     expect(copyExecutableBinary).not.toHaveBeenCalled()
     expect(pruneSiblingInstallDirectories).toHaveBeenCalledWith(
@@ -125,5 +125,38 @@ describe('app install main-source orchestration', () => {
       '/cache/linux-x86_64/main-0123456789ab',
     )
     expect(info).toHaveBeenCalledWith('jlo installed: jlo main')
+  })
+
+  it('fetches required submodules with submodule token', async () => {
+    existsSync.mockReturnValue(false)
+    buildCargoRelease.mockReturnValue('/tmp/jlo')
+
+    await installMainSource({
+      installToken: 'token',
+      installSubmoduleToken: 'submodule-token',
+      allowDarwinX8664Fallback: false,
+    })
+
+    expect(cloneGitHubBranch).toHaveBeenCalledWith({
+      repository: 'asterismhq/jlo',
+      branch: 'main',
+      destination: expect.any(String),
+      token: 'token',
+      username: 'jlo-user',
+    })
+    expect(updateGitHubSubmodules).toHaveBeenCalledWith({
+      cwd: expect.any(String),
+      token: 'submodule-token',
+      username: 'jlo-user',
+    })
+  })
+
+  it('fails when main install omits submodule token', async () => {
+    await expect(
+      installMainSource({
+        installToken: 'token',
+        allowDarwinX8664Fallback: false,
+      }),
+    ).rejects.toThrow('main install requires submodule_token.')
   })
 })

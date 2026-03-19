@@ -18,9 +18,7 @@ The `token` input requires read access to:
 
 ## Submodule Access
 
-`submodule_token` is required only when the `main` source tree contains private submodules. Public submodules or repositories without submodules do not require it.
-
-The action attempts anonymous submodule fetch when `submodule_token` is absent. Failure remains explicit.
+`submodule_token` is required for `main` mode. The `main` source build depends on repository submodules and does not attempt anonymous fallback.
 
 ## Runtime Environment Overrides
 
@@ -28,9 +26,6 @@ The action runtime reads these environment variables when present:
 
 | Variable | Meaning |
 |----------|---------|
-| `JLO_MAIN_SOURCE_REMOTE_URL` | Override for the `main` source repository URL |
-| `JLO_MAIN_SOURCE_REF` | Override for the ref resolved by `git ls-remote` in `main` mode |
-| `JLO_MAIN_SOURCE_BRANCH` | Override for the branch cloned in `main` mode |
 | `JLO_ALLOW_DARWIN_X86_64_FALLBACK` | Enables Darwin ARM64 fallback to x86_64 runtime assets |
 | `JLO_CACHE_ROOT` | Explicit cache root override |
 | `RUNNER_ENVIRONMENT` | Influences cache-root selection for GitHub-hosted runners |

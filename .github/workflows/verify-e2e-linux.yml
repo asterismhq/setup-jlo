@@ -1,0 +1,84 @@
+# Verify E2E on Linux
+#
+# Runs end-to-end verification of the local `setup-jlo` action implementation
+# on Linux runners.
+
+name: Verify E2E on Linux
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: Semver release version of jlo to install
+        required: true
+        default: 23.2.0
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-linux:
+    name: Release Install on Linux
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Run setup-jlo in Release Mode
+        id: setup_jlo
+        uses: ./
+        with:
+          token: ${{ secrets.JLO_RELEASE_PAT }}
+          version: ${{ inputs.release_version || '23.2.0' }}
+
+      - name: Verify Action Outputs
+        run: |
+          test "${{ steps.setup_jlo.outputs.version-token }}" = "${{ inputs.release_version || '23.2.0' }}"
+          test "${{ steps.setup_jlo.outputs.install-mode }}" = "release-tag"
+
+      - name: Verify Installed jlo Binary
+        run: |
+          command -v jlo
+          jlo --version
+
+  main-linux:
+    name: Main Install on Linux
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run setup-jlo in Main Mode
+        id: setup_jlo
+        uses: ./
+        with:
+          token: ${{ secrets.JLO_RELEASE_PAT }}
+          version: main
+          submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
+
+      - name: Verify Action Outputs
+        run: |
+          test "${{ steps.setup_jlo.outputs.version-token }}" = "main"
+          test "${{ steps.setup_jlo.outputs.install-mode }}" = "main"
+
+      - name: Verify Installed jlo Binary
+        run: |
+          command -v jlo
+          jlo --version
