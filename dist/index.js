@@ -25954,6 +25954,9 @@ async function resolveGitHubHttpUsername(token) {
         throw new Error(`Failed to resolve GitHub identity for HTTPS git authentication (HTTP ${response.status}).`);
     }
     const user = (await response.json());
+    if (user.type === 'Bot') {
+        return 'x-access-token';
+    }
     const username = user.login?.trim();
     if (!username) {
         throw new Error('GitHub identity response did not include a usable login for HTTPS git authentication.');

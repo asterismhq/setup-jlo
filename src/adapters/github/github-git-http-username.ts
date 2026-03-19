@@ -28,7 +28,11 @@ export async function resolveGitHubHttpUsername(
     )
   }
 
-  const user = (await response.json()) as { login?: string }
+  const user = (await response.json()) as { login?: string; type?: string }
+  if (user.type === 'Bot') {
+    return 'x-access-token'
+  }
+
   const username = user.login?.trim()
 
   if (!username) {

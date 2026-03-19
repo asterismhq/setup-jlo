@@ -18,12 +18,27 @@ describe('github git http username resolution', () => {
       vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
-        json: async () => ({ login: 'jlo-user' }),
+        json: async () => ({ login: 'jlo-user', type: 'User' }),
       }),
     )
 
     await expect(resolveGitHubHttpUsername('github_pat_example')).resolves.toBe(
       'jlo-user',
+    )
+  })
+
+  it('uses x-access-token for bot-owned tokens', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ login: 'jlo-bot', type: 'Bot' }),
+      }),
+    )
+
+    await expect(resolveGitHubHttpUsername('github_pat_bot')).resolves.toBe(
+      'x-access-token',
     )
   })
 })
