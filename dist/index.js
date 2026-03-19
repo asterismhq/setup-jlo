@@ -30317,7 +30317,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.commandExists = commandExists;
 exports.runGitWithOptionalAuth = runGitWithOptionalAuth;
 exports.isFullGitSha = isFullGitSha;
-exports.buildAuthenticatedGitHubBase = buildAuthenticatedGitHubBase;
 exports.buildAuthenticatedGitHubRemoteUrl = buildAuthenticatedGitHubRemoteUrl;
 exports.normalizeGitHttpUsername = normalizeGitHttpUsername;
 const node_child_process_1 = __nccwpck_require__(1421);
@@ -30339,10 +30338,11 @@ function runGitWithOptionalAuth(options) {
         'http.lowSpeedTime=30',
     ];
     if (options.authToken) {
-        gitArgs.push('-c', `url.${authenticatedGitHubBase({
+        const authenticatedGitHubUrl = authenticatedGitHubBase({
             username: options.authUsername ?? 'git',
             token: options.authToken,
-        })}.insteadOf=https://github.com/`);
+        });
+        gitArgs.push('-c', `url.${authenticatedGitHubUrl}.insteadOf=https://github.com/`, '-c', `url.${authenticatedGitHubUrl}.insteadOf=git@github.com:`, '-c', `url.${authenticatedGitHubUrl}.insteadOf=ssh://git@github.com/`);
     }
     gitArgs.push(...options.args);
     const result = (0, node_child_process_1.spawnSync)('git', gitArgs, {
@@ -30364,9 +30364,6 @@ function runGitWithOptionalAuth(options) {
 }
 function isFullGitSha(value) {
     return /^[0-9a-fA-F]{40}$/.test(value);
-}
-function buildAuthenticatedGitHubBase(options) {
-    return authenticatedGitHubBase(options);
 }
 function buildAuthenticatedGitHubRemoteUrl(options) {
     if (!options.remoteUrl.startsWith('https://github.com/')) {
@@ -30472,10 +30469,6 @@ async function installMainSource(request) {
             token: sourceAuthToken,
         })
         : sourceRemoteUrl;
-    const submoduleAuthenticatedBase = (0, git_cli_1.buildAuthenticatedGitHubBase)({
-        username: submoduleAuthUsername,
-        token: submoduleAuthToken,
-    });
     const clonePath = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)(request.runnerTemp ?? (0, node_os_1.tmpdir)(), 'setup-jlo-main-'));
     try {
         core.info(`Cloning main source from '${sourceRemoteUrl}' using git HTTP username '${sourceAuthUsername ?? 'anonymous'}'.`);
@@ -30521,45 +30514,16 @@ async function installMainSource(request) {
         core.info('Using submodule_token for required submodule fetch.');
         (0, git_cli_1.runGitWithOptionalAuth)({
             cwd: clonePath,
-            args: [
-                'config',
-                '--local',
-                '--add',
-                `url.${submoduleAuthenticatedBase}.insteadOf`,
-                'https://github.com/',
-            ],
-            operation: 'configure git submodule URL rewrite for source build',
-        });
-        (0, git_cli_1.runGitWithOptionalAuth)({
-            cwd: clonePath,
-            args: [
-                'config',
-                '--local',
-                '--add',
-                `url.${submoduleAuthenticatedBase}.insteadOf`,
-                'git@github.com:',
-            ],
-            operation: 'configure git submodule URL rewrite for source build',
-        });
-        (0, git_cli_1.runGitWithOptionalAuth)({
-            cwd: clonePath,
-            args: [
-                'config',
-                '--local',
-                '--add',
-                `url.${submoduleAuthenticatedBase}.insteadOf`,
-                'ssh://git@github.com/',
-            ],
-            operation: 'configure git submodule URL rewrite for source build',
-        });
-        (0, git_cli_1.runGitWithOptionalAuth)({
-            cwd: clonePath,
+            authUsername: submoduleAuthUsername,
+            authToken: submoduleAuthToken,
             args: ['submodule', 'sync', '--recursive'],
             operation: 'sync git submodule configuration for source build',
         });
         try {
             (0, git_cli_1.runGitWithOptionalAuth)({
                 cwd: clonePath,
+                authUsername: submoduleAuthUsername,
+                authToken: submoduleAuthToken,
                 args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
                 operation: 'fetch git submodules for source build',
             });

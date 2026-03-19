@@ -26,12 +26,17 @@ export function runGitWithOptionalAuth(options: {
   ]
 
   if (options.authToken) {
+    const authenticatedGitHubUrl = authenticatedGitHubBase({
+      username: options.authUsername ?? 'git',
+      token: options.authToken,
+    })
     gitArgs.push(
       '-c',
-      `url.${authenticatedGitHubBase({
-        username: options.authUsername ?? 'git',
-        token: options.authToken,
-      })}.insteadOf=https://github.com/`,
+      `url.${authenticatedGitHubUrl}.insteadOf=https://github.com/`,
+      '-c',
+      `url.${authenticatedGitHubUrl}.insteadOf=git@github.com:`,
+      '-c',
+      `url.${authenticatedGitHubUrl}.insteadOf=ssh://git@github.com/`,
     )
   }
 
@@ -59,13 +64,6 @@ export function runGitWithOptionalAuth(options: {
 
 export function isFullGitSha(value: string): boolean {
   return /^[0-9a-fA-F]{40}$/.test(value)
-}
-
-export function buildAuthenticatedGitHubBase(options: {
-  username: string
-  token: string
-}): string {
-  return authenticatedGitHubBase(options)
 }
 
 export function buildAuthenticatedGitHubRemoteUrl(options: {

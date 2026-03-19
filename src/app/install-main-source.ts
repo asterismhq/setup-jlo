@@ -15,7 +15,6 @@ import {
 import { resolveGitHttpUsername } from '../adapters/github/github-git-http-username'
 import { buildCargoRelease } from '../adapters/process/cargo-build'
 import {
-  buildAuthenticatedGitHubBase,
   buildAuthenticatedGitHubRemoteUrl,
   commandExists,
   isFullGitSha,
@@ -67,11 +66,6 @@ export async function installMainSource(
           token: sourceAuthToken,
         })
       : sourceRemoteUrl
-  const submoduleAuthenticatedBase = buildAuthenticatedGitHubBase({
-    username: submoduleAuthUsername,
-    token: submoduleAuthToken,
-  })
-
   const clonePath = mkdtempSync(
     join(request.runnerTemp ?? tmpdir(), 'setup-jlo-main-'),
   )
@@ -134,40 +128,8 @@ export async function installMainSource(
 
     runGitWithOptionalAuth({
       cwd: clonePath,
-      args: [
-        'config',
-        '--local',
-        '--add',
-        `url.${submoduleAuthenticatedBase}.insteadOf`,
-        'https://github.com/',
-      ],
-      operation: 'configure git submodule URL rewrite for source build',
-    })
-    runGitWithOptionalAuth({
-      cwd: clonePath,
-      args: [
-        'config',
-        '--local',
-        '--add',
-        `url.${submoduleAuthenticatedBase}.insteadOf`,
-        'git@github.com:',
-      ],
-      operation: 'configure git submodule URL rewrite for source build',
-    })
-    runGitWithOptionalAuth({
-      cwd: clonePath,
-      args: [
-        'config',
-        '--local',
-        '--add',
-        `url.${submoduleAuthenticatedBase}.insteadOf`,
-        'ssh://git@github.com/',
-      ],
-      operation: 'configure git submodule URL rewrite for source build',
-    })
-
-    runGitWithOptionalAuth({
-      cwd: clonePath,
+      authUsername: submoduleAuthUsername,
+      authToken: submoduleAuthToken,
       args: ['submodule', 'sync', '--recursive'],
       operation: 'sync git submodule configuration for source build',
     })
@@ -175,6 +137,8 @@ export async function installMainSource(
     try {
       runGitWithOptionalAuth({
         cwd: clonePath,
+        authUsername: submoduleAuthUsername,
+        authToken: submoduleAuthToken,
         args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
         operation: 'fetch git submodules for source build',
       })

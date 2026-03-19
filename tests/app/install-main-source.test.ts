@@ -6,7 +6,6 @@ const {
   commandExists,
   runGitWithOptionalAuth,
   isFullGitSha,
-  buildAuthenticatedGitHubBase,
   buildAuthenticatedGitHubRemoteUrl,
   normalizeGitHttpUsername,
   parseRepositorySlug,
@@ -26,7 +25,6 @@ const {
   commandExists: vi.fn(),
   runGitWithOptionalAuth: vi.fn(),
   isFullGitSha: vi.fn(),
-  buildAuthenticatedGitHubBase: vi.fn(),
   buildAuthenticatedGitHubRemoteUrl: vi.fn(),
   normalizeGitHttpUsername: vi.fn(),
   parseRepositorySlug: vi.fn(),
@@ -58,7 +56,6 @@ vi.mock('../../src/adapters/process/git-cli', () => ({
   commandExists,
   runGitWithOptionalAuth,
   isFullGitSha,
-  buildAuthenticatedGitHubBase,
   buildAuthenticatedGitHubRemoteUrl,
   normalizeGitHttpUsername,
 }))
@@ -96,9 +93,6 @@ describe('app install main-source orchestration', () => {
     vi.clearAllMocks()
     commandExists.mockReturnValue(true)
     resolveGitHttpUsername.mockResolvedValue('jlo-bot')
-    buildAuthenticatedGitHubBase.mockImplementation(
-      ({ username, token }) => `https://${username}:${token}@github.com/`,
-    )
     buildAuthenticatedGitHubRemoteUrl.mockImplementation(
       ({ remoteUrl, username, token }) =>
         remoteUrl.replace('https://', `https://${username}:${token}@`),
@@ -156,7 +150,7 @@ describe('app install main-source orchestration', () => {
     expect(info).toHaveBeenCalledWith('jlo installed: jlo main')
   })
 
-  it('adds both ssh rewrite rules before updating submodules', async () => {
+  it('fetches required submodules with submodule token', async () => {
     existsSync.mockImplementation((path: string) => {
       if (path.endsWith('/jlo')) {
         return false
@@ -176,39 +170,15 @@ describe('app install main-source orchestration', () => {
 
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
       expect.objectContaining({
-        args: [
-          'config',
-          '--local',
-          '--add',
-          'url.https://jlo-bot:submodule-token@github.com/.insteadOf',
-          'https://github.com/',
-        ],
+        authUsername: 'jlo-bot',
+        authToken: 'submodule-token',
+        args: ['submodule', 'sync', '--recursive'],
       }),
     )
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
       expect.objectContaining({
-        args: [
-          'config',
-          '--local',
-          '--add',
-          'url.https://jlo-bot:submodule-token@github.com/.insteadOf',
-          'git@github.com:',
-        ],
-      }),
-    )
-    expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
-      expect.objectContaining({
-        args: [
-          'config',
-          '--local',
-          '--add',
-          'url.https://jlo-bot:submodule-token@github.com/.insteadOf',
-          'ssh://git@github.com/',
-        ],
-      }),
-    )
-    expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
-      expect.objectContaining({
+        authUsername: 'jlo-bot',
+        authToken: 'submodule-token',
         args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
       }),
     )
