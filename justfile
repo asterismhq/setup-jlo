@@ -8,20 +8,15 @@ help:
     @echo "Development tasks for setup-jlo:"
     @just --list | tail -n +2 | awk '{printf "  \033[36m%-20s\033[0m %s\n", $1, substr($0, index($0, $2))}'
 
-# Format repository files with Biome
-format:
+# Apply formatter and safe lint fixes
+fix:
     npm run format
+    npm run lint:fix
 
-# Verify repository formatting with Biome
-format-check:
+# Run formatting checks, lint, and typecheck
+check:
     npm run format:check
-
-# Run Biome lint checks
-lint:
     npm run lint
-
-# Run TypeScript typecheck
-typecheck:
     npm run typecheck
 
 # Run test suite
@@ -35,3 +30,7 @@ package:
 # Verify committed dist output matches generated output
 verify-dist:
     npm run verify:dist
+
+# Remove repository-local generated artifacts
+clean:
+    rm -rf .tmp coverage node_modules

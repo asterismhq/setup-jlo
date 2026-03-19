@@ -6,6 +6,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
     "format": "biome format --write .",
     "format:check": "biome check --formatter-enabled=true --linter-enabled=false --assist-enabled=false .",
     "test": "vitest run",

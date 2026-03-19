@@ -10,19 +10,19 @@
 
 The repository-owned verification and maintenance recipes are:
 
-- `just format`: runs `npm run format`
-- `just format-check`: runs `npm run format:check`
-- `just lint`: runs `npm run lint`
-- `just typecheck`: runs `npm run typecheck`
+- `just fix`: runs `npm run format` and `npm run lint:fix`
+- `just check`: runs `npm run format:check`, `npm run lint`, and `npm run typecheck`
 - `just test`: runs `npm test`
 - `just package`: runs `npm run package`
 - `just verify-dist`: runs `npm run verify:dist`
+- `just clean`: removes repository-local generated artifacts under `.tmp`, `coverage`, and `node_modules`
 
 `package.json` retains the atomic npm scripts behind these recipes:
 
 - `npm run format`
 - `npm run format:check`
 - `npm run lint`
+- `npm run lint:fix`
 - `npm test`
 - `npm run typecheck`
 - `npm run package`

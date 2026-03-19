@@ -52,10 +52,10 @@ This form builds `jlo` from the upstream `main` branch instead of downloading a 
 
 Repository-local verification commands are:
 
-- `just format-check`
-- `just lint`
-- `just typecheck`
+- `just fix`
+- `just check`
 - `just test`
+- `just package`
 - `just verify-dist`
 
 Targeted npm commands remain available behind the `just` recipes:
@@ -63,6 +63,7 @@ Targeted npm commands remain available behind the `just` recipes:
 - `npm run format`
 - `npm run format:check`
 - `npm run lint`
+- `npm run lint:fix`
 - `npm test`
 - `npm run typecheck`
 - `npm run package`
