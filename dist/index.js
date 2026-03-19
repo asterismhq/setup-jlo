@@ -26066,13 +26066,15 @@ function commandExists(program) {
 }
 function resolveGitHubBranchHeadSha(options) {
     const output = runGitHubCommand({
-        token: options.token,
-        username: options.username,
         args: [
             'ls-remote',
             '--exit-code',
             '--heads',
-            buildGitHubRepositoryUrl(options.repository),
+            buildAuthenticatedGitHubRepositoryUrl({
+                repository: options.repository,
+                username: options.username,
+                token: options.token,
+            }),
             options.branch,
         ],
         operation: `resolve ${options.repository}@${options.branch} head SHA`,
@@ -26085,8 +26087,6 @@ function resolveGitHubBranchHeadSha(options) {
 }
 function cloneGitHubBranch(options) {
     runGitHubCommand({
-        token: options.token,
-        username: options.username,
         args: [
             'clone',
             '--quiet',
@@ -26094,7 +26094,11 @@ function cloneGitHubBranch(options) {
             '--branch',
             options.branch,
             '--',
-            buildGitHubRepositoryUrl(options.repository),
+            buildAuthenticatedGitHubRepositoryUrl({
+                repository: options.repository,
+                username: options.username,
+                token: options.token,
+            }),
             options.destination,
         ],
         operation: `clone ${options.repository}@${options.branch}`,
@@ -26154,6 +26158,12 @@ function runGitHubCommand(options) {
 }
 function buildGitHubRepositoryUrl(repository) {
     return `${GITHUB_HTTPS_BASE}${repository}.git`;
+}
+function buildAuthenticatedGitHubRepositoryUrl(options) {
+    return buildGitHubRepositoryUrl(options.repository).replace(GITHUB_HTTPS_BASE, buildAuthenticatedGitHubBase({
+        username: options.username,
+        token: options.token,
+    }));
 }
 function buildAuthenticatedGitHubBase(options) {
     const encodedUsername = encodeURIComponent(options.username);
