@@ -8,7 +8,7 @@ This directory is the central documentation index for `setup-jlo`.
 
 ## Architecture
 
-- [Architecture](architecture.md): repository boundaries, runtime execution flow, cache layout, and failure invariants
+- [Architecture Boundary](architecture/boundary.md): runtime boundaries, dependency direction, cache layout, and failure invariants
 
 ## Configuration
 
