@@ -1,7 +1,6 @@
 export interface InstallRequest {
   installToken: string
   installSubmoduleToken?: string
-  mainSourceRemoteUrl?: string
   allowDarwinX8664Fallback: boolean
   cacheRootOverride?: string
   runnerEnvironment?: string
@@ -16,9 +15,6 @@ export function resolveInstallRequest(options: {
   return {
     installToken: options.token,
     installSubmoduleToken: normalizeOptional(options.submoduleToken),
-    mainSourceRemoteUrl: normalizeOptional(
-      process.env.JLO_MAIN_SOURCE_REMOTE_URL,
-    ),
     allowDarwinX8664Fallback: parseBooleanEnv(
       process.env.JLO_ALLOW_DARWIN_X86_64_FALLBACK,
     ),

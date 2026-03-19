@@ -28,7 +28,6 @@ The action runtime reads these environment variables when present:
 
 | Variable | Meaning |
 |----------|---------|
-| `JLO_MAIN_SOURCE_REMOTE_URL` | Override for the `main` source repository URL |
 | `JLO_ALLOW_DARWIN_X86_64_FALLBACK` | Enables Darwin ARM64 fallback to x86_64 runtime assets |
 | `JLO_CACHE_ROOT` | Explicit cache root override |
 | `RUNNER_ENVIRONMENT` | Influences cache-root selection for GitHub-hosted runners |

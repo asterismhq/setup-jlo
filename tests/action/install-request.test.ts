@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { resolveInstallRequest } from '../../src/action/install-request'
 
 const ENV_KEYS = [
-  'JLO_MAIN_SOURCE_REMOTE_URL',
   'JLO_ALLOW_DARWIN_X86_64_FALLBACK',
   'JLO_CACHE_ROOT',
   'RUNNER_ENVIRONMENT',
@@ -19,7 +18,6 @@ describe('action install request normalization', () => {
     for (const key of ENV_KEYS) {
       vi.stubEnv(key, '')
     }
-    vi.stubEnv('JLO_MAIN_SOURCE_REMOTE_URL', ' https://example.com/repo.git ')
     vi.stubEnv('JLO_ALLOW_DARWIN_X86_64_FALLBACK', 'true')
     vi.stubEnv('JLO_CACHE_ROOT', ' /tmp/cache ')
     vi.stubEnv('RUNNER_ENVIRONMENT', ' github-hosted ')
@@ -34,7 +32,6 @@ describe('action install request normalization', () => {
     expect(request).toEqual({
       installToken: ' install-token ',
       installSubmoduleToken: 'submodule-token',
-      mainSourceRemoteUrl: 'https://example.com/repo.git',
       allowDarwinX8664Fallback: true,
       cacheRootOverride: '/tmp/cache',
       runnerEnvironment: 'github-hosted',
