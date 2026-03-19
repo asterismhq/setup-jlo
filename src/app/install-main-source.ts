@@ -15,6 +15,7 @@ import {
 import { resolveGitHttpUsername } from '../adapters/github/github-git-http-username'
 import { buildCargoRelease } from '../adapters/process/cargo-build'
 import {
+  buildAuthenticatedGitHubRemoteUrl,
   commandExists,
   isFullGitSha,
   normalizeGitHttpUsername,
@@ -58,6 +59,15 @@ export async function installMainSource(
     ? request.installSubmoduleToken
     : undefined
 
+  const sourceFetchRemoteUrl =
+    sourceAuthToken && sourceAuthUsername
+      ? buildAuthenticatedGitHubRemoteUrl({
+          remoteUrl: sourceRemoteUrl,
+          username: sourceAuthUsername,
+          token: sourceAuthToken,
+        })
+      : sourceRemoteUrl
+
   core.info(
     `Resolving main source head from '${sourceRemoteUrl}' using git HTTP username '${sourceAuthUsername ?? 'anonymous'}'.`,
   )
@@ -67,7 +77,7 @@ export async function installMainSource(
     lsRemoteOutput = runGitWithOptionalAuth({
       authUsername: sourceAuthUsername,
       authToken: sourceAuthToken,
-      args: ['ls-remote', '--', sourceRemoteUrl, sourceRef],
+      args: ['ls-remote', '--', sourceFetchRemoteUrl, sourceRef],
       operation: 'resolve source head SHA',
     })
   } catch (error) {
@@ -114,7 +124,7 @@ export async function installMainSource(
         '--branch',
         sourceBranch,
         '--',
-        sourceRemoteUrl,
+        sourceFetchRemoteUrl,
         clonePath,
       ],
       operation: 'clone source branch for source build',
@@ -130,6 +140,19 @@ export async function installMainSource(
         )
       }
 
+      runGitWithOptionalAuth({
+        cwd: clonePath,
+        authUsername: submoduleAuthUsername,
+        authToken: submoduleAuthToken,
+        args: [
+          'config',
+          '--local',
+          '--add',
+          'url.https://github.com/.insteadOf',
+          'https://github.com/',
+        ],
+        operation: 'configure git submodule URL rewrite for source build',
+      })
       runGitWithOptionalAuth({
         cwd: clonePath,
         authUsername: submoduleAuthUsername,

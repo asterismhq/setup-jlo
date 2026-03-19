@@ -6,6 +6,7 @@ const {
   commandExists,
   runGitWithOptionalAuth,
   isFullGitSha,
+  buildAuthenticatedGitHubRemoteUrl,
   normalizeGitHttpUsername,
   parseRepositorySlug,
   detectPlatformTuple,
@@ -24,6 +25,7 @@ const {
   commandExists: vi.fn(),
   runGitWithOptionalAuth: vi.fn(),
   isFullGitSha: vi.fn(),
+  buildAuthenticatedGitHubRemoteUrl: vi.fn(),
   normalizeGitHttpUsername: vi.fn(),
   parseRepositorySlug: vi.fn(),
   detectPlatformTuple: vi.fn(),
@@ -54,6 +56,7 @@ vi.mock('../../src/adapters/process/git-cli', () => ({
   commandExists,
   runGitWithOptionalAuth,
   isFullGitSha,
+  buildAuthenticatedGitHubRemoteUrl,
   normalizeGitHttpUsername,
 }))
 
@@ -90,6 +93,10 @@ describe('app install main-source orchestration', () => {
     vi.clearAllMocks()
     commandExists.mockReturnValue(true)
     resolveGitHttpUsername.mockResolvedValue('jlo-bot')
+    buildAuthenticatedGitHubRemoteUrl.mockImplementation(
+      ({ remoteUrl, username, token }) =>
+        remoteUrl.replace('https://', `https://${username}:${token}@`),
+    )
     normalizeGitHttpUsername.mockImplementation((value: string) => value)
     parseRepositorySlug.mockReturnValue({ owner: 'asterismhq', repo: 'jlo' })
     runGitWithOptionalAuth.mockReturnValue(
@@ -118,7 +125,7 @@ describe('app install main-source orchestration', () => {
       args: [
         'ls-remote',
         '--',
-        'https://github.com/asterismhq/jlo.git',
+        'https://jlo-bot:token@github.com/asterismhq/jlo.git',
         'refs/heads/main',
       ],
       operation: 'resolve source head SHA',
@@ -153,6 +160,19 @@ describe('app install main-source orchestration', () => {
       allowDarwinX8664Fallback: false,
     })
 
+    expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authUsername: 'jlo-bot',
+        authToken: 'submodule-token',
+        args: [
+          'config',
+          '--local',
+          '--add',
+          'url.https://github.com/.insteadOf',
+          'https://github.com/',
+        ],
+      }),
+    )
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
       expect.objectContaining({
         authUsername: 'jlo-bot',

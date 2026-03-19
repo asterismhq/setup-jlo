@@ -78,10 +78,11 @@ jobs:
           fi
 
           echo "Resolved git HTTP username: ${git_username}"
+          encoded_username="$(node -p "encodeURIComponent(process.argv[1])" "${git_username}")"
+          encoded_token="$(node -p "encodeURIComponent(process.argv[1])" "${JLO_RELEASE_PAT}")"
           GIT_TERMINAL_PROMPT=0 \
             git \
-            -c "url.https://${git_username}:${JLO_RELEASE_PAT}@github.com/.insteadOf=https://github.com/" \
-            ls-remote -- https://github.com/asterismhq/jlo.git refs/heads/main >/dev/null
+            ls-remote -- "https://${encoded_username}:${encoded_token}@github.com/asterismhq/jlo.git" refs/heads/main >/dev/null
 
       - name: Run setup-jlo in Main Mode
         id: setup_jlo

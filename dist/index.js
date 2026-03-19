@@ -30317,6 +30317,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.commandExists = commandExists;
 exports.runGitWithOptionalAuth = runGitWithOptionalAuth;
 exports.isFullGitSha = isFullGitSha;
+exports.buildAuthenticatedGitHubRemoteUrl = buildAuthenticatedGitHubRemoteUrl;
 exports.normalizeGitHttpUsername = normalizeGitHttpUsername;
 const node_child_process_1 = __nccwpck_require__(1421);
 function commandExists(program) {
@@ -30362,6 +30363,15 @@ function runGitWithOptionalAuth(options) {
 }
 function isFullGitSha(value) {
     return /^[0-9a-fA-F]{40}$/.test(value);
+}
+function buildAuthenticatedGitHubRemoteUrl(options) {
+    if (!options.remoteUrl.startsWith('https://github.com/')) {
+        return options.remoteUrl;
+    }
+    return options.remoteUrl.replace('https://github.com/', authenticatedGitHubBase({
+        username: options.username,
+        token: options.token,
+    }));
 }
 function authenticatedGitHubBase(options) {
     const encodedUsername = encodeURIComponent(options.username);
@@ -30453,13 +30463,20 @@ async function installMainSource(request) {
     const submoduleAuthToken = request.installSubmoduleToken
         ? request.installSubmoduleToken
         : undefined;
+    const sourceFetchRemoteUrl = sourceAuthToken && sourceAuthUsername
+        ? (0, git_cli_1.buildAuthenticatedGitHubRemoteUrl)({
+            remoteUrl: sourceRemoteUrl,
+            username: sourceAuthUsername,
+            token: sourceAuthToken,
+        })
+        : sourceRemoteUrl;
     core.info(`Resolving main source head from '${sourceRemoteUrl}' using git HTTP username '${sourceAuthUsername ?? 'anonymous'}'.`);
     let lsRemoteOutput;
     try {
         lsRemoteOutput = (0, git_cli_1.runGitWithOptionalAuth)({
             authUsername: sourceAuthUsername,
             authToken: sourceAuthToken,
-            args: ['ls-remote', '--', sourceRemoteUrl, sourceRef],
+            args: ['ls-remote', '--', sourceFetchRemoteUrl, sourceRef],
             operation: 'resolve source head SHA',
         });
     }
@@ -30496,7 +30513,7 @@ async function installMainSource(request) {
                 '--branch',
                 sourceBranch,
                 '--',
-                sourceRemoteUrl,
+                sourceFetchRemoteUrl,
                 clonePath,
             ],
             operation: 'clone source branch for source build',
@@ -30509,6 +30526,19 @@ async function installMainSource(request) {
             else {
                 core.info('submodule_token is empty; attempting anonymous submodule fetch.');
             }
+            (0, git_cli_1.runGitWithOptionalAuth)({
+                cwd: clonePath,
+                authUsername: submoduleAuthUsername,
+                authToken: submoduleAuthToken,
+                args: [
+                    'config',
+                    '--local',
+                    '--add',
+                    'url.https://github.com/.insteadOf',
+                    'https://github.com/',
+                ],
+                operation: 'configure git submodule URL rewrite for source build',
+            });
             (0, git_cli_1.runGitWithOptionalAuth)({
                 cwd: clonePath,
                 authUsername: submoduleAuthUsername,

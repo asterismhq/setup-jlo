@@ -61,6 +61,24 @@ export function isFullGitSha(value: string): boolean {
   return /^[0-9a-fA-F]{40}$/.test(value)
 }
 
+export function buildAuthenticatedGitHubRemoteUrl(options: {
+  remoteUrl: string
+  username: string
+  token: string
+}): string {
+  if (!options.remoteUrl.startsWith('https://github.com/')) {
+    return options.remoteUrl
+  }
+
+  return options.remoteUrl.replace(
+    'https://github.com/',
+    authenticatedGitHubBase({
+      username: options.username,
+      token: options.token,
+    }),
+  )
+}
+
 function authenticatedGitHubBase(options: {
   username: string
   token: string
