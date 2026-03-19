@@ -4,7 +4,6 @@ const {
   info,
   existsSync,
   commandExists,
-  basicAuthHeader,
   runGitWithOptionalAuth,
   isFullGitSha,
   parseRepositorySlug,
@@ -21,7 +20,6 @@ const {
   info: vi.fn(),
   existsSync: vi.fn(),
   commandExists: vi.fn(),
-  basicAuthHeader: vi.fn(),
   runGitWithOptionalAuth: vi.fn(),
   isFullGitSha: vi.fn(),
   parseRepositorySlug: vi.fn(),
@@ -50,7 +48,6 @@ vi.mock('node:fs', async () => {
 
 vi.mock('../../src/adapters/process/git-cli', () => ({
   commandExists,
-  basicAuthHeader,
   runGitWithOptionalAuth,
   isFullGitSha,
 }))
@@ -83,7 +80,6 @@ describe('app install main-source orchestration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     commandExists.mockReturnValue(true)
-    basicAuthHeader.mockReturnValue('Authorization: Basic token')
     parseRepositorySlug.mockReturnValue({ owner: 'asterismhq', repo: 'jlo' })
     runGitWithOptionalAuth.mockReturnValue(
       '0123456789abcdef0123456789abcdef01234567\trefs/heads/main\n',
@@ -106,7 +102,7 @@ describe('app install main-source orchestration', () => {
     })
 
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith({
-      authHeader: 'Authorization: Basic token',
+      authToken: 'token',
       args: [
         'ls-remote',
         '--',
@@ -147,6 +143,7 @@ describe('app install main-source orchestration', () => {
 
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
       expect.objectContaining({
+        authToken: 'submodule-token',
         args: [
           'config',
           '--local',
@@ -158,6 +155,7 @@ describe('app install main-source orchestration', () => {
     )
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
       expect.objectContaining({
+        authToken: 'submodule-token',
         args: [
           'config',
           '--local',
@@ -169,6 +167,7 @@ describe('app install main-source orchestration', () => {
     )
     expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
       expect.objectContaining({
+        authToken: 'submodule-token',
         args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
       }),
     )

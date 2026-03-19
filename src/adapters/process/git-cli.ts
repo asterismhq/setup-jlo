@@ -1,4 +1,3 @@
-import { Buffer } from 'node:buffer'
 import { spawnSync } from 'node:child_process'
 
 export function commandExists(program: string): boolean {
@@ -10,7 +9,7 @@ export function commandExists(program: string): boolean {
 
 export function runGitWithOptionalAuth(options: {
   cwd?: string
-  authHeader?: string
+  authToken?: string
   args: string[]
   operation: string
 }): string {
@@ -25,8 +24,13 @@ export function runGitWithOptionalAuth(options: {
     'http.lowSpeedTime=30',
   ]
 
-  if (options.authHeader) {
-    gitArgs.push('-c', `http.extraheader=${options.authHeader}`)
+  if (options.authToken) {
+    gitArgs.push(
+      '-c',
+      `credential.helper=${credentialHelperScript(options.authToken)}`,
+      '-c',
+      'credential.useHttpPath=true',
+    )
   }
 
   gitArgs.push(...options.args)
@@ -51,21 +55,11 @@ export function runGitWithOptionalAuth(options: {
   throw new Error(`Failed to ${options.operation}: ${result.stdout.trim()}`)
 }
 
-export function basicAuthHeader(token: string): string {
-  const username = normalizeGitHttpUsername(process.env.GITHUB_ACTOR)
-  const payload = Buffer.from(`${username}:${token}`, 'utf8').toString('base64')
-  return `Authorization: Basic ${payload}`
-}
-
 export function isFullGitSha(value: string): boolean {
   return /^[0-9a-fA-F]{40}$/.test(value)
 }
 
-function normalizeGitHttpUsername(value: string | undefined): string {
-  if (!value) {
-    return 'git'
-  }
-
-  const normalized = value.trim()
-  return normalized.length > 0 ? normalized : 'git'
+function credentialHelperScript(token: string): string {
+  const escapedToken = token.replaceAll("'", "'\"'\"'")
+  return `!f() { test "$1" = get || exit 0; echo "username=x-access-token"; echo 'password=${escapedToken}'; }; f`
 }

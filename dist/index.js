@@ -25714,7 +25714,6 @@ function resolveInstallRequest(options) {
     return {
         installToken: options.token,
         installSubmoduleToken: normalizeOptional(options.submoduleToken),
-        mainSourceRemoteUrl: normalizeOptional(process.env.JLO_MAIN_SOURCE_REMOTE_URL),
         allowDarwinX8664Fallback: parseBooleanEnv(process.env.JLO_ALLOW_DARWIN_X86_64_FALLBACK),
         cacheRootOverride: normalizeOptional(process.env.JLO_CACHE_ROOT),
         runnerEnvironment: normalizeOptional(process.env.RUNNER_ENVIRONMENT),
@@ -26018,9 +26017,7 @@ function buildCargoRelease(options) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.commandExists = commandExists;
 exports.runGitWithOptionalAuth = runGitWithOptionalAuth;
-exports.basicAuthHeader = basicAuthHeader;
 exports.isFullGitSha = isFullGitSha;
-const node_buffer_1 = __nccwpck_require__(4573);
 const node_child_process_1 = __nccwpck_require__(1421);
 function commandExists(program) {
     const result = (0, node_child_process_1.spawnSync)(program, ['--version'], {
@@ -26039,8 +26036,8 @@ function runGitWithOptionalAuth(options) {
         '-c',
         'http.lowSpeedTime=30',
     ];
-    if (options.authHeader) {
-        gitArgs.push('-c', `http.extraheader=${options.authHeader}`);
+    if (options.authToken) {
+        gitArgs.push('-c', `credential.helper=${credentialHelperScript(options.authToken)}`, '-c', 'credential.useHttpPath=true');
     }
     gitArgs.push(...options.args);
     const result = (0, node_child_process_1.spawnSync)('git', gitArgs, {
@@ -26060,20 +26057,12 @@ function runGitWithOptionalAuth(options) {
     }
     throw new Error(`Failed to ${options.operation}: ${result.stdout.trim()}`);
 }
-function basicAuthHeader(token) {
-    const username = normalizeGitHttpUsername(process.env.GITHUB_ACTOR);
-    const payload = node_buffer_1.Buffer.from(`${username}:${token}`, 'utf8').toString('base64');
-    return `Authorization: Basic ${payload}`;
-}
 function isFullGitSha(value) {
     return /^[0-9a-fA-F]{40}$/.test(value);
 }
-function normalizeGitHttpUsername(value) {
-    if (!value) {
-        return 'git';
-    }
-    const normalized = value.trim();
-    return normalized.length > 0 ? normalized : 'git';
+function credentialHelperScript(token) {
+    const escapedToken = token.replaceAll("'", "'\"'\"'");
+    return `!f() { test "$1" = get || exit 0; echo "username=x-access-token"; echo 'password=${escapedToken}'; }; f`;
 }
 
 
@@ -26137,18 +26126,17 @@ async function installMainSource(request) {
         throw new Error('main-head install requires git on PATH.');
     }
     const releaseRepository = (0, repository_slug_1.parseRepositorySlug)(jlo_1.JLO_RELEASE_REPOSITORY);
-    const defaultSourceRemoteUrl = `https://github.com/${releaseRepository.owner}/${releaseRepository.repo}.git`;
-    const sourceRemoteUrl = request.mainSourceRemoteUrl ?? defaultSourceRemoteUrl;
+    const sourceRemoteUrl = `https://github.com/${releaseRepository.owner}/${releaseRepository.repo}.git`;
     const sourceRef = 'refs/heads/main';
     const sourceBranch = 'main';
-    const sourceAuthHeader = isHttpRemote(sourceRemoteUrl)
-        ? (0, git_cli_1.basicAuthHeader)(request.installToken)
+    const sourceAuthToken = isHttpRemote(sourceRemoteUrl)
+        ? request.installToken
         : undefined;
-    const submoduleAuthHeader = request.installSubmoduleToken
-        ? (0, git_cli_1.basicAuthHeader)(request.installSubmoduleToken)
+    const submoduleAuthToken = request.installSubmoduleToken
+        ? request.installSubmoduleToken
         : undefined;
     const lsRemoteOutput = (0, git_cli_1.runGitWithOptionalAuth)({
-        authHeader: sourceAuthHeader,
+        authToken: sourceAuthToken,
         args: ['ls-remote', '--', sourceRemoteUrl, sourceRef],
         operation: 'resolve source head SHA',
     });
@@ -26173,7 +26161,7 @@ async function installMainSource(request) {
     const clonePath = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)(request.runnerTemp ?? (0, node_os_1.tmpdir)(), 'setup-jlo-main-'));
     try {
         (0, git_cli_1.runGitWithOptionalAuth)({
-            authHeader: sourceAuthHeader,
+            authToken: sourceAuthToken,
             args: [
                 'clone',
                 '--quiet',
@@ -26196,7 +26184,7 @@ async function installMainSource(request) {
             }
             (0, git_cli_1.runGitWithOptionalAuth)({
                 cwd: clonePath,
-                authHeader: submoduleAuthHeader,
+                authToken: submoduleAuthToken,
                 args: [
                     'config',
                     '--local',
@@ -26208,7 +26196,7 @@ async function installMainSource(request) {
             });
             (0, git_cli_1.runGitWithOptionalAuth)({
                 cwd: clonePath,
-                authHeader: submoduleAuthHeader,
+                authToken: submoduleAuthToken,
                 args: [
                     'config',
                     '--local',
@@ -26220,14 +26208,14 @@ async function installMainSource(request) {
             });
             (0, git_cli_1.runGitWithOptionalAuth)({
                 cwd: clonePath,
-                authHeader: submoduleAuthHeader,
+                authToken: submoduleAuthToken,
                 args: ['submodule', 'sync', '--recursive'],
                 operation: 'sync git submodule configuration for source build',
             });
             try {
                 (0, git_cli_1.runGitWithOptionalAuth)({
                     cwd: clonePath,
-                    authHeader: submoduleAuthHeader,
+                    authToken: submoduleAuthToken,
                     args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
                     operation: 'fetch git submodules for source build',
                 });
@@ -26651,14 +26639,6 @@ module.exports = require("https");
 
 "use strict";
 module.exports = require("net");
-
-/***/ }),
-
-/***/ 4573:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:buffer");
 
 /***/ }),
 
