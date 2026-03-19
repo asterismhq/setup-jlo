@@ -10,8 +10,8 @@
 
 The repository-owned verification and maintenance recipes are:
 
-- `just fix`: runs `npm run format` and `npm run lint:fix`
-- `just check`: runs `npm run format:check`, `npm run lint`, and `npm run typecheck`
+- `just fix`: runs `npm run format`, `npm run lint:fix`, and `npm run package`
+- `just check`: runs `npm run format:check`, `npm run lint`, `npm run typecheck`, and `npm run verify:dist`
 - `just test`: runs `npm test`
 - `just package`: runs `npm run package`
 - `just verify-dist`: runs `npm run verify:dist`
