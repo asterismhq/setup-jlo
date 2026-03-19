@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { resolveInstallRequest } from '../../src/action/install-request'
 
 const ENV_KEYS = [
@@ -12,32 +12,23 @@ const ENV_KEYS = [
   'RUNNER_TOOL_CACHE'
 ] as const
 
-const previousEnv = new Map<string, string | undefined>()
-for (const key of ENV_KEYS) {
-  previousEnv.set(key, process.env[key])
-}
-
 afterEach(() => {
-  for (const key of ENV_KEYS) {
-    const value = previousEnv.get(key)
-    if (value === undefined) {
-      delete process.env[key]
-      continue
-    }
-    process.env[key] = value
-  }
+  vi.unstubAllEnvs()
 })
 
 describe('action install request normalization', () => {
   it('normalizes environment values and booleans', () => {
-    process.env.JLO_MAIN_SOURCE_REMOTE_URL = ' https://example.com/repo.git '
-    process.env.JLO_MAIN_SOURCE_REF = ' refs/heads/main '
-    process.env.JLO_MAIN_SOURCE_BRANCH = ' main '
-    process.env.JLO_ALLOW_DARWIN_X86_64_FALLBACK = 'true'
-    process.env.JLO_CACHE_ROOT = ' /tmp/cache '
-    process.env.RUNNER_ENVIRONMENT = ' github-hosted '
-    process.env.RUNNER_TEMP = ' /tmp/runner '
-    process.env.RUNNER_TOOL_CACHE = ' /opt/toolcache '
+    for (const key of ENV_KEYS) {
+      vi.stubEnv(key, '')
+    }
+    vi.stubEnv('JLO_MAIN_SOURCE_REMOTE_URL', ' https://example.com/repo.git ')
+    vi.stubEnv('JLO_MAIN_SOURCE_REF', ' refs/heads/main ')
+    vi.stubEnv('JLO_MAIN_SOURCE_BRANCH', ' main ')
+    vi.stubEnv('JLO_ALLOW_DARWIN_X86_64_FALLBACK', 'true')
+    vi.stubEnv('JLO_CACHE_ROOT', ' /tmp/cache ')
+    vi.stubEnv('RUNNER_ENVIRONMENT', ' github-hosted ')
+    vi.stubEnv('RUNNER_TEMP', ' /tmp/runner ')
+    vi.stubEnv('RUNNER_TOOL_CACHE', ' /opt/toolcache ')
 
     const request = resolveInstallRequest({
       token: ' install-token ',
