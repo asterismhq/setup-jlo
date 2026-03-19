@@ -30206,17 +30206,20 @@ function normalizeOptional(value) {
 
 /***/ }),
 
-/***/ 1105:
+/***/ 6832:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.resolveGitHubAccountLogin = resolveGitHubAccountLogin;
+exports.resolveGitHttpUsername = resolveGitHttpUsername;
 const github_1 = __nccwpck_require__(3228);
-async function resolveGitHubAccountLogin(token) {
+async function resolveGitHttpUsername(token) {
     const octokit = (0, github_1.getOctokit)(token);
     const response = await octokit.rest.users.getAuthenticated();
+    if (response.data.type === 'Bot') {
+        return 'x-access-token';
+    }
     return response.data.login;
 }
 
@@ -30421,7 +30424,7 @@ const node_os_1 = __nccwpck_require__(8161);
 const node_path_1 = __nccwpck_require__(6760);
 const core = __importStar(__nccwpck_require__(7484));
 const binary_install_cache_1 = __nccwpck_require__(3889);
-const github_account_login_1 = __nccwpck_require__(1105);
+const github_git_http_username_1 = __nccwpck_require__(6832);
 const cargo_build_1 = __nccwpck_require__(199);
 const git_cli_1 = __nccwpck_require__(3605);
 const jlo_1 = __nccwpck_require__(9416);
@@ -30439,10 +30442,10 @@ async function installMainSource(request) {
     const sourceRef = 'refs/heads/main';
     const sourceBranch = 'main';
     const sourceAuthUsername = isHttpRemote(sourceRemoteUrl)
-        ? (0, git_cli_1.normalizeGitHttpUsername)(await (0, github_account_login_1.resolveGitHubAccountLogin)(request.installToken))
+        ? (0, git_cli_1.normalizeGitHttpUsername)(await (0, github_git_http_username_1.resolveGitHttpUsername)(request.installToken))
         : undefined;
     const submoduleAuthUsername = request.installSubmoduleToken
-        ? (0, git_cli_1.normalizeGitHttpUsername)(await (0, github_account_login_1.resolveGitHubAccountLogin)(request.installSubmoduleToken))
+        ? (0, git_cli_1.normalizeGitHttpUsername)(await (0, github_git_http_username_1.resolveGitHttpUsername)(request.installSubmoduleToken))
         : undefined;
     const sourceAuthToken = isHttpRemote(sourceRemoteUrl)
         ? request.installToken

@@ -17,7 +17,7 @@ const {
   detectBinaryVersion,
   buildCargoRelease,
   copyExecutableBinary,
-  resolveGitHubAccountLogin,
+  resolveGitHttpUsername,
 } = vi.hoisted(() => ({
   info: vi.fn(),
   existsSync: vi.fn(),
@@ -35,7 +35,7 @@ const {
   detectBinaryVersion: vi.fn(),
   buildCargoRelease: vi.fn(),
   copyExecutableBinary: vi.fn(),
-  resolveGitHubAccountLogin: vi.fn(),
+  resolveGitHttpUsername: vi.fn(),
 }))
 
 vi.mock('@actions/core', () => ({
@@ -57,8 +57,8 @@ vi.mock('../../src/adapters/process/git-cli', () => ({
   normalizeGitHttpUsername,
 }))
 
-vi.mock('../../src/adapters/github/github-account-login', () => ({
-  resolveGitHubAccountLogin,
+vi.mock('../../src/adapters/github/github-git-http-username', () => ({
+  resolveGitHttpUsername,
 }))
 
 vi.mock('../../src/domain/repository-slug', () => ({
@@ -89,7 +89,7 @@ describe('app install main-source orchestration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     commandExists.mockReturnValue(true)
-    resolveGitHubAccountLogin.mockResolvedValue('jlo-bot')
+    resolveGitHttpUsername.mockResolvedValue('jlo-bot')
     normalizeGitHttpUsername.mockImplementation((value: string) => value)
     parseRepositorySlug.mockReturnValue({ owner: 'asterismhq', repo: 'jlo' })
     runGitWithOptionalAuth.mockReturnValue(

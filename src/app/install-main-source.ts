@@ -12,7 +12,7 @@ import {
   resolveCacheRoot,
   resolvePlatformCacheDirectory,
 } from '../adapters/cache/binary-install-cache'
-import { resolveGitHubAccountLogin } from '../adapters/github/github-account-login'
+import { resolveGitHttpUsername } from '../adapters/github/github-git-http-username'
 import { buildCargoRelease } from '../adapters/process/cargo-build'
 import {
   commandExists,
@@ -42,12 +42,12 @@ export async function installMainSource(
   const sourceBranch = 'main'
   const sourceAuthUsername = isHttpRemote(sourceRemoteUrl)
     ? normalizeGitHttpUsername(
-        await resolveGitHubAccountLogin(request.installToken),
+        await resolveGitHttpUsername(request.installToken),
       )
     : undefined
   const submoduleAuthUsername = request.installSubmoduleToken
     ? normalizeGitHttpUsername(
-        await resolveGitHubAccountLogin(request.installSubmoduleToken),
+        await resolveGitHttpUsername(request.installSubmoduleToken),
       )
     : undefined
 
