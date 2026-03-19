@@ -38,8 +38,8 @@ export async function installMainSource(
   const releaseRepository = parseRepositorySlug(JLO_RELEASE_REPOSITORY)
   const defaultSourceRemoteUrl = `https://github.com/${releaseRepository.owner}/${releaseRepository.repo}.git`
   const sourceRemoteUrl = request.mainSourceRemoteUrl ?? defaultSourceRemoteUrl
-  const sourceRef = request.mainSourceRef ?? 'refs/heads/main'
-  const sourceBranch = request.mainSourceBranch ?? 'main'
+  const sourceRef = 'refs/heads/main'
+  const sourceBranch = 'main'
 
   const sourceAuthHeader = isHttpRemote(sourceRemoteUrl)
     ? basicAuthHeader(request.installToken)

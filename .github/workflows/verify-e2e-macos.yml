@@ -48,12 +48,22 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v5
 
+      - name: Checkout jlo Source Repository
+        uses: actions/checkout@v5
+        with:
+          repository: asterismhq/jlo
+          ref: main
+          token: ${{ secrets.JLO_RELEASE_PAT }}
+          path: .tmp/jlo-source
+
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
 
       - name: Run setup-jlo in Main Mode
         id: setup_jlo
         uses: ./
+        env:
+          JLO_MAIN_SOURCE_REMOTE_URL: ${{ github.workspace }}/.tmp/jlo-source
         with:
           token: ${{ secrets.JLO_RELEASE_PAT }}
           version: main

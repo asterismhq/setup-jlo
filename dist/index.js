@@ -25715,8 +25715,6 @@ function resolveInstallRequest(options) {
         installToken: options.token,
         installSubmoduleToken: normalizeOptional(options.submoduleToken),
         mainSourceRemoteUrl: normalizeOptional(process.env.JLO_MAIN_SOURCE_REMOTE_URL),
-        mainSourceRef: normalizeOptional(process.env.JLO_MAIN_SOURCE_REF),
-        mainSourceBranch: normalizeOptional(process.env.JLO_MAIN_SOURCE_BRANCH),
         allowDarwinX8664Fallback: parseBooleanEnv(process.env.JLO_ALLOW_DARWIN_X86_64_FALLBACK),
         cacheRootOverride: normalizeOptional(process.env.JLO_CACHE_ROOT),
         runnerEnvironment: normalizeOptional(process.env.RUNNER_ENVIRONMENT),
@@ -26141,8 +26139,8 @@ async function installMainSource(request) {
     const releaseRepository = (0, repository_slug_1.parseRepositorySlug)(jlo_1.JLO_RELEASE_REPOSITORY);
     const defaultSourceRemoteUrl = `https://github.com/${releaseRepository.owner}/${releaseRepository.repo}.git`;
     const sourceRemoteUrl = request.mainSourceRemoteUrl ?? defaultSourceRemoteUrl;
-    const sourceRef = request.mainSourceRef ?? 'refs/heads/main';
-    const sourceBranch = request.mainSourceBranch ?? 'main';
+    const sourceRef = 'refs/heads/main';
+    const sourceBranch = 'main';
     const sourceAuthHeader = isHttpRemote(sourceRemoteUrl)
         ? (0, git_cli_1.basicAuthHeader)(request.installToken)
         : undefined;

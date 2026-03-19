@@ -61,9 +61,7 @@ export function isFullGitSha(value: string): boolean {
   return /^[0-9a-fA-F]{40}$/.test(value)
 }
 
-function normalizeGitHttpUsername(
-  value: string | undefined,
-): string {
+function normalizeGitHttpUsername(value: string | undefined): string {
   if (!value) {
     return 'git'
   }
