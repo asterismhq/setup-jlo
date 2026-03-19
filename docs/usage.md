@@ -50,14 +50,20 @@ This form builds `jlo` from the upstream `main` branch instead of downloading a 
 
 ## Local Verification
 
-Repository-local verification is:
+Repository-local verification commands are:
 
-- `npm run ci`
+- `just format-check`
+- `just lint`
+- `just typecheck`
+- `just test`
+- `just verify-dist`
 
-Targeted commands remain available when only one surface is under active change:
+Targeted npm commands remain available behind the `just` recipes:
 
+- `npm run format`
+- `npm run format:check`
 - `npm run lint`
 - `npm test`
-- `npm run build`
+- `npm run typecheck`
 - `npm run package`
 - `npm run verify:dist`

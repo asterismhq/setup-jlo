@@ -18,16 +18,18 @@ export function resolveInstallRequest(options: {
   return {
     installToken: options.token,
     installSubmoduleToken: normalizeOptional(options.submoduleToken),
-    mainSourceRemoteUrl: normalizeOptional(process.env.JLO_MAIN_SOURCE_REMOTE_URL),
+    mainSourceRemoteUrl: normalizeOptional(
+      process.env.JLO_MAIN_SOURCE_REMOTE_URL,
+    ),
     mainSourceRef: normalizeOptional(process.env.JLO_MAIN_SOURCE_REF),
     mainSourceBranch: normalizeOptional(process.env.JLO_MAIN_SOURCE_BRANCH),
     allowDarwinX8664Fallback: parseBooleanEnv(
-      process.env.JLO_ALLOW_DARWIN_X86_64_FALLBACK
+      process.env.JLO_ALLOW_DARWIN_X86_64_FALLBACK,
     ),
     cacheRootOverride: normalizeOptional(process.env.JLO_CACHE_ROOT),
     runnerEnvironment: normalizeOptional(process.env.RUNNER_ENVIRONMENT),
     runnerTemp: normalizeOptional(process.env.RUNNER_TEMP),
-    runnerToolCache: normalizeOptional(process.env.RUNNER_TOOL_CACHE)
+    runnerToolCache: normalizeOptional(process.env.RUNNER_TOOL_CACHE),
   }
 }
 

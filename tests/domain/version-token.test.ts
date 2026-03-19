@@ -6,7 +6,7 @@ describe('setup-jlo version token behavior', () => {
     expect(parseVersionToken('0.5.2')).toEqual({
       kind: 'release',
       version: '0.5.2',
-      tag: 'v0.5.2'
+      tag: 'v0.5.2',
     })
   })
 
@@ -14,20 +14,20 @@ describe('setup-jlo version token behavior', () => {
     expect(parseVersionToken('v0.5.2')).toEqual({
       kind: 'release',
       version: '0.5.2',
-      tag: 'v0.5.2'
+      tag: 'v0.5.2',
     })
   })
 
   it('parses main token to main payload', () => {
     expect(parseVersionToken('main')).toEqual({
       kind: 'main',
-      token: 'main'
+      token: 'main',
     })
   })
 
   it('rejects invalid token values', () => {
     expect(() => parseVersionToken('latest')).toThrow(
-      "Invalid version input 'latest'. Expected semver or 'main'."
+      "Invalid version input 'latest'. Expected semver or 'main'.",
     )
   })
 })

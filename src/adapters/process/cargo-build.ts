@@ -17,21 +17,21 @@ export function buildCargoRelease(options: {
       encoding: 'utf8',
       env: {
         ...process.env,
-        CARGO_TARGET_DIR: options.buildTargetDir
-      }
-    }
+        CARGO_TARGET_DIR: options.buildTargetDir,
+      },
+    },
   )
 
   if (buildResult.status !== 0) {
     throw new Error(
-      `Failed to build jlo from source branch '${options.sourceBranch}' in '${options.sourceRemoteUrl}': ${buildResult.stderr.trim()}`
+      `Failed to build jlo from source branch '${options.sourceBranch}' in '${options.sourceRemoteUrl}': ${buildResult.stderr.trim()}`,
     )
   }
 
   const builtBinary = join(options.buildTargetDir, 'release', 'jlo')
   if (!existsSync(builtBinary)) {
     throw new Error(
-      `Source build completed but binary not found at '${builtBinary}'.`
+      `Source build completed but binary not found at '${builtBinary}'.`,
     )
   }
 

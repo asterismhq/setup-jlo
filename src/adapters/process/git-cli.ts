@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process'
 
 export function commandExists(program: string): boolean {
   const result = spawnSync(program, ['--version'], {
-    stdio: ['ignore', 'ignore', 'ignore']
+    stdio: ['ignore', 'ignore', 'ignore'],
   })
   return result.status === 0
 }
@@ -22,7 +22,7 @@ export function runGitWithOptionalAuth(options: {
     '-c',
     'http.lowSpeedLimit=1024',
     '-c',
-    'http.lowSpeedTime=30'
+    'http.lowSpeedTime=30',
   ]
 
   if (options.authHeader) {
@@ -36,8 +36,8 @@ export function runGitWithOptionalAuth(options: {
     encoding: 'utf8',
     env: {
       ...process.env,
-      GIT_TERMINAL_PROMPT: '0'
-    }
+      GIT_TERMINAL_PROMPT: '0',
+    },
   })
 
   if (result.status === 0) {
@@ -52,7 +52,9 @@ export function runGitWithOptionalAuth(options: {
 }
 
 export function basicAuthHeader(token: string): string {
-  const payload = Buffer.from(`x-access-token:${token}`, 'utf8').toString('base64')
+  const payload = Buffer.from(`x-access-token:${token}`, 'utf8').toString(
+    'base64',
+  )
   return `Authorization: Basic ${payload}`
 }
 

@@ -1,4 +1,8 @@
-name: release
+# Release Workflow
+#
+# Builds and publishes GitHub releases on tag push.
+
+name: Release
 
 on:
   push:
@@ -9,10 +13,12 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  resolve-version:
+    name: Resolve Release Version
     runs-on: ubuntu-latest
     outputs:
       major-tag: ${{ steps.version.outputs.major_tag }}
+
     steps:
       - id: version
         name: Resolve release tags
@@ -22,31 +28,53 @@ jobs:
             exit 1
           fi
           echo "major_tag=v${BASH_REMATCH[1]}" >> "${GITHUB_OUTPUT}"
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version-file: '.nvmrc'
-      - run: npm ci
-      - run: npm run ci
-      - uses: softprops/action-gh-release@v2
+
+  lint:
+    name: Lint and Typecheck
+    uses: ./.github/workflows/run-linters.yml
+
+  test:
+    name: Test
+    uses: ./.github/workflows/run-tests.yml
+
+  verify-dist:
+    name: Verify Dist
+    uses: ./.github/workflows/verify-dist.yml
+
+  release:
+    name: Publish Release
+    needs: [resolve-version, lint, test, verify-dist]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
 
   move-major-tag:
-    needs: release
+    name: Move Major Tag
+    needs: [resolve-version, release]
     runs-on: ubuntu-latest
     concurrency:
-      group: move-major-tag-${{ needs.release.outputs.major-tag }}
+      group: move-major-tag-${{ needs.resolve-version.outputs.major-tag }}
       cancel-in-progress: true
+
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout Tagged Revision
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.ref }}
+
       - name: Update moving major tag
         env:
-          MAJOR_TAG: ${{ needs.release.outputs.major-tag }}
+          MAJOR_TAG: ${{ needs.resolve-version.outputs.major-tag }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git tag --force --annotate "${MAJOR_TAG}" --message "Update ${MAJOR_TAG} to ${GITHUB_REF_NAME}" "${GITHUB_SHA}"
           git push origin "refs/tags/${MAJOR_TAG}" --force
+

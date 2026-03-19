@@ -1,4 +1,10 @@
-import { mkdtempSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import {
+  mkdtempSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import * as core from '@actions/core'
@@ -11,16 +17,19 @@ import {
   isCachedBinaryForVersion,
   pruneSiblingInstallDirectories,
   resolveCacheRoot,
-  resolvePlatformCacheDirectory
+  resolvePlatformCacheDirectory,
 } from '../adapters/cache/binary-install-cache'
 import { fetchReleaseAsset } from '../adapters/github/release-asset-api'
 import { JLO_RELEASE_REPOSITORY } from '../catalog/jlo'
-import { buildReleaseAssetCandidates, detectPlatformTuple } from '../domain/platform'
+import {
+  buildReleaseAssetCandidates,
+  detectPlatformTuple,
+} from '../domain/platform'
 import type { ParsedVersionToken } from '../domain/version-token'
 
 export async function installReleaseVersion(
   request: InstallRequest,
-  versionToken: Extract<ParsedVersionToken, { kind: 'release' }>
+  versionToken: Extract<ParsedVersionToken, { kind: 'release' }>,
 ): Promise<void> {
   const platform = detectPlatformTuple()
   const cacheRoot = resolveCacheRoot(request)
@@ -38,17 +47,17 @@ export async function installReleaseVersion(
 
   const candidates = buildReleaseAssetCandidates(
     platform,
-    request.allowDarwinX8664Fallback
+    request.allowDarwinX8664Fallback,
   )
   const releaseAsset = await fetchReleaseAsset({
     token: request.installToken,
     releaseRepository: JLO_RELEASE_REPOSITORY,
     tagVersion: versionToken.tag,
-    candidates
+    candidates,
   })
 
   const tempDirectory = mkdtempSync(
-    join(request.runnerTemp ?? tmpdir(), 'setup-jlo-release-')
+    join(request.runnerTemp ?? tmpdir(), 'setup-jlo-release-'),
   )
   const downloadPath = join(tempDirectory, releaseAsset.name)
 
@@ -56,7 +65,7 @@ export async function installReleaseVersion(
     writeFileSync(downloadPath, releaseAsset.contents)
     if (statSync(downloadPath).size === 0) {
       throw new Error(
-        `Downloaded release asset '${releaseAsset.name}' is missing or empty in '${JLO_RELEASE_REPOSITORY}' (${versionToken.tag}).`
+        `Downloaded release asset '${releaseAsset.name}' is missing or empty in '${JLO_RELEASE_REPOSITORY}' (${versionToken.tag}).`,
       )
     }
 

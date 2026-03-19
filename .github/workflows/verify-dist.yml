@@ -1,0 +1,23 @@
+# Verify Dist Workflow
+#
+# Verifies that the committed dist directory matches the source.
+
+name: Verify Dist
+
+on:
+  workflow_call:
+
+jobs:
+  verify-dist:
+    name: Verify Dist
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Setup Development Environment
+        uses: ./.github/actions/setup
+
+      - name: Verify Committed Dist
+        run: just verify-dist

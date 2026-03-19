@@ -11,7 +11,7 @@ const {
   pruneSiblingInstallDirectories,
   installBinaryOnPath,
   detectBinaryVersion,
-  fetchReleaseAsset
+  fetchReleaseAsset,
 } = vi.hoisted(() => ({
   info: vi.fn(),
   detectPlatformTuple: vi.fn(),
@@ -23,16 +23,16 @@ const {
   pruneSiblingInstallDirectories: vi.fn(),
   installBinaryOnPath: vi.fn(),
   detectBinaryVersion: vi.fn(),
-  fetchReleaseAsset: vi.fn()
+  fetchReleaseAsset: vi.fn(),
 }))
 
 vi.mock('@actions/core', () => ({
-  info
+  info,
 }))
 
 vi.mock('../../src/domain/platform', () => ({
   detectPlatformTuple,
-  buildReleaseAssetCandidates
+  buildReleaseAssetCandidates,
 }))
 
 vi.mock('../../src/adapters/cache/binary-install-cache', () => ({
@@ -43,11 +43,11 @@ vi.mock('../../src/adapters/cache/binary-install-cache', () => ({
   pruneSiblingInstallDirectories,
   installBinaryOnPath,
   detectBinaryVersion,
-  ensureExecutablePermissions: vi.fn()
+  ensureExecutablePermissions: vi.fn(),
 }))
 
 vi.mock('../../src/adapters/github/release-asset-api', () => ({
-  fetchReleaseAsset
+  fetchReleaseAsset,
 }))
 
 import { installReleaseVersion } from '../../src/app/install-release'
@@ -68,22 +68,24 @@ describe('app install release orchestration', () => {
     await installReleaseVersion(
       {
         installToken: 'token',
-        allowDarwinX8664Fallback: false
+        allowDarwinX8664Fallback: false,
       },
       {
         kind: 'release',
         version: '1.2.3',
-        tag: 'v1.2.3'
-      }
+        tag: 'v1.2.3',
+      },
     )
 
     expect(buildReleaseAssetCandidates).not.toHaveBeenCalled()
     expect(fetchReleaseAsset).not.toHaveBeenCalled()
     expect(pruneSiblingInstallDirectories).toHaveBeenCalledWith(
       '/cache/linux-x86_64',
-      'v1.2.3'
+      'v1.2.3',
     )
-    expect(installBinaryOnPath).toHaveBeenCalledWith('/cache/linux-x86_64/v1.2.3')
+    expect(installBinaryOnPath).toHaveBeenCalledWith(
+      '/cache/linux-x86_64/v1.2.3',
+    )
     expect(info).toHaveBeenCalledWith('jlo installed: jlo 1.2.3')
   })
 })
