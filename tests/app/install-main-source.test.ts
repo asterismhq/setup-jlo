@@ -126,4 +126,51 @@ describe('app install main-source orchestration', () => {
     )
     expect(info).toHaveBeenCalledWith('jlo installed: jlo main')
   })
+
+  it('adds both ssh rewrite rules before updating submodules', async () => {
+    existsSync.mockImplementation((path: string) => {
+      if (path.endsWith('/jlo')) {
+        return false
+      }
+      if (path.endsWith('/.gitmodules')) {
+        return true
+      }
+      return false
+    })
+    buildCargoRelease.mockReturnValue('/tmp/jlo')
+
+    await installMainSource({
+      installToken: 'token',
+      installSubmoduleToken: 'submodule-token',
+      allowDarwinX8664Fallback: false,
+    })
+
+    expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        args: [
+          'config',
+          '--local',
+          '--add',
+          'url.https://github.com/.insteadOf',
+          'git@github.com:',
+        ],
+      }),
+    )
+    expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        args: [
+          'config',
+          '--local',
+          '--add',
+          'url.https://github.com/.insteadOf',
+          'ssh://git@github.com/',
+        ],
+      }),
+    )
+    expect(runGitWithOptionalAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
+      }),
+    )
+  })
 })

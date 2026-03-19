@@ -113,6 +113,7 @@ export async function installMainSource(
         args: [
           'config',
           '--local',
+          '--add',
           'url.https://github.com/.insteadOf',
           'git@github.com:',
         ],
@@ -124,6 +125,7 @@ export async function installMainSource(
         args: [
           'config',
           '--local',
+          '--add',
           'url.https://github.com/.insteadOf',
           'ssh://git@github.com/',
         ],

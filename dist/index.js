@@ -26200,6 +26200,7 @@ async function installMainSource(request) {
                 args: [
                     'config',
                     '--local',
+                    '--add',
                     'url.https://github.com/.insteadOf',
                     'git@github.com:',
                 ],
@@ -26211,6 +26212,7 @@ async function installMainSource(request) {
                 args: [
                     'config',
                     '--local',
+                    '--add',
                     'url.https://github.com/.insteadOf',
                     'ssh://git@github.com/',
                 ],
