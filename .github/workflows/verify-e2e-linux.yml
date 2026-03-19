@@ -65,6 +65,24 @@ jobs:
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Verify Source Repository Access With JLO_RELEASE_PAT
+        env:
+          JLO_RELEASE_PAT: ${{ secrets.JLO_RELEASE_PAT }}
+        run: |
+          login="$(gh api /user --hostname github.com --jq .login --header "Authorization: Bearer ${JLO_RELEASE_PAT}")"
+          account_type="$(gh api /user --hostname github.com --jq .type --header "Authorization: Bearer ${JLO_RELEASE_PAT}")"
+          git_username="${login}"
+          if [ "${account_type}" = "Bot" ]; then
+            git_username="x-access-token"
+          fi
+
+          echo "Resolved git HTTP username: ${git_username}"
+          GIT_TERMINAL_PROMPT=0 \
+            git \
+            -c credential.helper="!f() { test \"$1\" = get || exit 0; echo \"username=${git_username}\"; echo \"password=${JLO_RELEASE_PAT}\"; }; f" \
+            -c credential.useHttpPath=true \
+            ls-remote -- https://github.com/asterismhq/jlo.git refs/heads/main >/dev/null
+
       - name: Run setup-jlo in Main Mode
         id: setup_jlo
         uses: ./
