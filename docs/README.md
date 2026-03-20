@@ -4,11 +4,11 @@ This directory is the central documentation index for `setup-jlo`.
 
 ## Usage
 
-- [Usage](usage.md): workflow examples, install modes, outputs, and local verification entrypoints
+- [Usage](usage.md): workflow examples and install modes
 
 ## Architecture
 
-- [Architecture Boundary](architecture/boundary.md): runtime boundaries, dependency direction, cache layout, and failure invariants
+- [Architecture](architecture.md): runtime boundaries, dependency direction, cache layout, and failure invariants
 
 ## Configuration
 
