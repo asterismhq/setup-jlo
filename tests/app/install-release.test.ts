@@ -4,7 +4,6 @@ const {
   info,
   detectPlatformTuple,
   buildReleaseAssetCandidates,
-  resolveCacheRoot,
   resolvePlatformCacheDirectory,
   ensureInstallDirectory,
   isCachedBinaryForVersion,
@@ -16,7 +15,6 @@ const {
   info: vi.fn(),
   detectPlatformTuple: vi.fn(),
   buildReleaseAssetCandidates: vi.fn(),
-  resolveCacheRoot: vi.fn(),
   resolvePlatformCacheDirectory: vi.fn(),
   ensureInstallDirectory: vi.fn(),
   isCachedBinaryForVersion: vi.fn(),
@@ -36,7 +34,6 @@ vi.mock('../../src/domain/platform', () => ({
 }))
 
 vi.mock('../../src/adapters/cache/binary-install-cache', () => ({
-  resolveCacheRoot,
   resolvePlatformCacheDirectory,
   ensureInstallDirectory,
   isCachedBinaryForVersion,
@@ -57,7 +54,6 @@ describe('app install release orchestration', () => {
     vi.clearAllMocks()
     detectPlatformTuple.mockReturnValue({ os: 'linux', arch: 'x86_64' })
     buildReleaseAssetCandidates.mockReturnValue(['jlo-linux-x86_64'])
-    resolveCacheRoot.mockReturnValue('/cache')
     resolvePlatformCacheDirectory.mockReturnValue('/cache/linux-x86_64')
     ensureInstallDirectory.mockReturnValue('/cache/linux-x86_64/v1.2.3')
     isCachedBinaryForVersion.mockReturnValue(true)
@@ -67,8 +63,10 @@ describe('app install release orchestration', () => {
   it('reuses cached release binary and skips release download', async () => {
     await installReleaseVersion(
       {
-        installToken: 'token',
+        token: 'token',
         allowDarwinX8664Fallback: false,
+        cacheRoot: '/cache',
+        tempDirectory: '/tmp',
       },
       {
         kind: 'release',
