@@ -11,6 +11,13 @@ const {
   installBinaryOnPath,
   detectBinaryVersion,
   fetchReleaseAsset,
+  ensureExecutablePermissions,
+  mkdtempSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+  tmpdir,
 } = vi.hoisted(() => ({
   info: vi.fn(),
   detectPlatformTuple: vi.fn(),
@@ -22,10 +29,29 @@ const {
   installBinaryOnPath: vi.fn(),
   detectBinaryVersion: vi.fn(),
   fetchReleaseAsset: vi.fn(),
+  ensureExecutablePermissions: vi.fn(),
+  mkdtempSync: vi.fn(),
+  renameSync: vi.fn(),
+  rmSync: vi.fn(),
+  statSync: vi.fn(),
+  writeFileSync: vi.fn(),
+  tmpdir: vi.fn(),
 }))
 
 vi.mock('@actions/core', () => ({
   info,
+}))
+
+vi.mock('node:fs', () => ({
+  mkdtempSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+}))
+
+vi.mock('node:os', () => ({
+  tmpdir,
 }))
 
 vi.mock('../../src/domain/platform', () => ({
@@ -40,7 +66,7 @@ vi.mock('../../src/adapters/cache/binary-install-cache', () => ({
   pruneSiblingInstallDirectories,
   installBinaryOnPath,
   detectBinaryVersion,
-  ensureExecutablePermissions: vi.fn(),
+  ensureExecutablePermissions,
 }))
 
 vi.mock('../../src/adapters/github/release-asset-api', () => ({
@@ -77,13 +103,74 @@ describe('app install release orchestration', () => {
 
     expect(buildReleaseAssetCandidates).not.toHaveBeenCalled()
     expect(fetchReleaseAsset).not.toHaveBeenCalled()
-    expect(pruneSiblingInstallDirectories).toHaveBeenCalledWith(
-      '/cache/linux-x86_64',
-      'v1.2.3',
-    )
-    expect(installBinaryOnPath).toHaveBeenCalledWith(
-      '/cache/linux-x86_64/v1.2.3',
+    expect(info).toHaveBeenCalledWith(
+      'jlo 1.2.3 already cached; skipping download.',
     )
     expect(info).toHaveBeenCalledWith('jlo installed: jlo 1.2.3')
+  })
+
+  it('fails and cleans up temp directory if downloaded asset is empty', async () => {
+    isCachedBinaryForVersion.mockReturnValue(false)
+    tmpdir.mockReturnValue('/tmp')
+    mkdtempSync.mockReturnValue('/tmp/setup-jlo-release-1234')
+    fetchReleaseAsset.mockResolvedValue({
+      name: 'jlo-linux-x86_64',
+      contents: Buffer.from(''),
+    })
+    statSync.mockReturnValue({ size: 0 })
+
+    await expect(
+      installReleaseVersion(
+        {
+          installToken: 'token',
+          allowDarwinX8664Fallback: false,
+        },
+        {
+          kind: 'release',
+          version: '1.2.3',
+          tag: 'v1.2.3',
+        },
+      ),
+    ).rejects.toThrow(
+      "Downloaded release asset 'jlo-linux-x86_64' is missing or empty in 'asterismhq/jlo' (v1.2.3).",
+    )
+
+    expect(rmSync).toHaveBeenCalledWith('/tmp/setup-jlo-release-1234', {
+      recursive: true,
+      force: true,
+    })
+  })
+
+  it('cleans up temp directory if ensureExecutablePermissions throws', async () => {
+    isCachedBinaryForVersion.mockReturnValue(false)
+    tmpdir.mockReturnValue('/tmp')
+    mkdtempSync.mockReturnValue('/tmp/setup-jlo-release-1234')
+    fetchReleaseAsset.mockResolvedValue({
+      name: 'jlo-linux-x86_64',
+      contents: Buffer.from('binary-data'),
+    })
+    statSync.mockReturnValue({ size: 100 })
+    ensureExecutablePermissions.mockImplementation(() => {
+      throw new Error('Permission denied')
+    })
+
+    await expect(
+      installReleaseVersion(
+        {
+          installToken: 'token',
+          allowDarwinX8664Fallback: false,
+        },
+        {
+          kind: 'release',
+          version: '1.2.3',
+          tag: 'v1.2.3',
+        },
+      ),
+    ).rejects.toThrow('Permission denied')
+
+    expect(rmSync).toHaveBeenCalledWith('/tmp/setup-jlo-release-1234', {
+      recursive: true,
+      force: true,
+    })
   })
 })
