@@ -25847,6 +25847,7 @@ const node_fs_1 = __nccwpck_require__(3024);
 const node_child_process_1 = __nccwpck_require__(1421);
 const node_path_1 = __nccwpck_require__(6760);
 const core = __importStar(__nccwpck_require__(7484));
+const version_token_1 = __nccwpck_require__(6948);
 function resolveCacheRoot(options) {
     if (options.cacheRootOverride) {
         return options.cacheRootOverride;
@@ -25909,9 +25910,9 @@ function ensureExecutablePermissions(path) {
 }
 function extractFirstSemverTriplet(value) {
     for (const token of value.split(/\s+/)) {
-        const normalized = token.replace(/^v/, '');
-        if (/^\d+\.\d+\.\d+$/.test(normalized)) {
-            return normalized;
+        const semverCore = (0, version_token_1.extractSemver)(token);
+        if (semverCore !== undefined) {
+            return semverCore;
         }
     }
     return undefined;
@@ -26481,15 +26482,24 @@ function parseRepositorySlug(slug) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.extractSemver = extractSemver;
 exports.parseVersionToken = parseVersionToken;
 const SEMVER_PATTERN = /^\d+\.\d+\.\d+$/;
-function parseVersionToken(token) {
+function extractSemver(token) {
     const normalized = token.trim();
     const semverCore = normalized.replace(/^v/, '');
+    if (SEMVER_PATTERN.test(semverCore)) {
+        return semverCore;
+    }
+    return undefined;
+}
+function parseVersionToken(token) {
+    const normalized = token.trim();
     if (normalized === 'main') {
         return { kind: 'main', token: 'main' };
     }
-    if (SEMVER_PATTERN.test(semverCore)) {
+    const semverCore = extractSemver(normalized);
+    if (semverCore !== undefined) {
         return { kind: 'release', version: semverCore, tag: `v${semverCore}` };
     }
     throw new Error(`Invalid version input '${normalized}'. Expected semver or 'main'.`);
