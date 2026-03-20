@@ -26271,7 +26271,7 @@ async function installMainSource(request) {
             });
         }
         catch (error) {
-            throw new Error(`Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): ${error.message}`);
+            throw new Error(`Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): ${error instanceof Error ? error.message : String(error)}`);
         }
         const buildTargetDir = (0, node_path_1.join)(clonePath, 'target');
         const manifestPath = (0, node_path_1.join)(clonePath, 'Cargo.toml');
