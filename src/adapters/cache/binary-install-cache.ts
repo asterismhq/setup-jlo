@@ -10,6 +10,7 @@ import { spawnSync } from 'node:child_process'
 import { join, resolve } from 'node:path'
 import * as core from '@actions/core'
 import type { PlatformTuple } from '../../domain/platform'
+import { extractSemver } from '../../domain/version-token'
 
 export function resolveCacheRoot(options: {
   cacheRootOverride?: string
@@ -109,9 +110,9 @@ export function ensureExecutablePermissions(path: string): void {
 
 function extractFirstSemverTriplet(value: string): string | undefined {
   for (const token of value.split(/\s+/)) {
-    const normalized = token.replace(/^v/, '')
-    if (/^\d+\.\d+\.\d+$/.test(normalized)) {
-      return normalized
+    const semverCore = extractSemver(token)
+    if (semverCore !== undefined) {
+      return semverCore
     }
   }
   return undefined
