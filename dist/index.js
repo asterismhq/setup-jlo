@@ -26528,14 +26528,14 @@ function extractSemver(token) {
     }
     return undefined;
 }
-function parseVersionToken(token) {
-    const normalized = token.trim();
+function parseVersionToken(versionToken) {
+    const normalized = versionToken.trim();
     if (normalized === 'main') {
         return { kind: 'main', token: 'main' };
     }
     const semverCore = extractSemver(normalized);
     if (semverCore !== undefined) {
-        return { kind: 'release', version: semverCore, tag: `v${semverCore}` };
+        return { kind: 'release-tag', version: semverCore, tag: `v${semverCore}` };
     }
     throw new Error(`Invalid version input '${normalized}'. Expected semver or 'main'.`);
 }
@@ -26590,22 +26590,22 @@ const outputs_1 = __nccwpck_require__(8948);
 const install_main_source_1 = __nccwpck_require__(4432);
 const install_release_1 = __nccwpck_require__(4472);
 const version_token_1 = __nccwpck_require__(6948);
-function resolveInstallMode(token) {
-    return (0, version_token_1.parseVersionToken)(token).kind === 'release' ? 'release-tag' : 'main';
+function resolveInstallMode(versionToken) {
+    return (0, version_token_1.parseVersionToken)(versionToken).kind;
 }
 async function run() {
     const token = (0, inputs_1.readRequiredInput)('token');
     const versionToken = (0, inputs_1.readRequiredInput)('version');
     const submoduleToken = (0, inputs_1.readOptionalInput)('submodule_token');
     const parsedVersion = (0, version_token_1.parseVersionToken)(versionToken);
-    const installMode = parsedVersion.kind === 'release' ? 'release-tag' : 'main';
+    const installMode = parsedVersion.kind;
     core.info(`Resolved version='${versionToken}' (${installMode}).`);
     (0, outputs_1.emitInstallOutputs)(versionToken, installMode);
     const installRequest = (0, install_request_1.resolveInstallRequest)({
         token,
         submoduleToken,
     });
-    if (parsedVersion.kind === 'release') {
+    if (parsedVersion.kind === 'release-tag') {
         await (0, install_release_1.installReleaseVersion)(installRequest, parsedVersion);
         return;
     }

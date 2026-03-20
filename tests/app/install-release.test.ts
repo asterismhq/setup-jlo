@@ -69,7 +69,7 @@ describe('app install release orchestration', () => {
         tempDirectory: '/tmp',
       },
       {
-        kind: 'release',
+        kind: 'release-tag',
         version: '1.2.3',
         tag: 'v1.2.3',
       },

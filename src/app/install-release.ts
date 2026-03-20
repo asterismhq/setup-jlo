@@ -27,7 +27,7 @@ import type { ParsedVersionToken } from '../domain/version-token'
 
 export async function installReleaseVersion(
   request: InstallRequest,
-  versionToken: Extract<ParsedVersionToken, { kind: 'release' }>,
+  versionToken: Extract<ParsedVersionToken, { kind: 'release-tag' }>,
 ): Promise<void> {
   const platform = detectPlatformTuple()
   const cacheRoot = request.cacheRoot
