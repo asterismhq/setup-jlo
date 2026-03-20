@@ -41,4 +41,86 @@ describe('github git http username resolution', () => {
       'x-access-token',
     )
   })
+
+  it('throws error on 401 unauthorized', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+      }),
+    )
+
+    await expect(
+      resolveGitHubHttpUsername('github_pat_invalid'),
+    ).rejects.toThrowError(
+      'token cannot resolve GitHub identity for HTTPS git authentication. Ensure the token remains valid and authorized.',
+    )
+  })
+
+  it('throws error on 403 forbidden', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+      }),
+    )
+
+    await expect(
+      resolveGitHubHttpUsername('github_pat_invalid'),
+    ).rejects.toThrowError(
+      'token cannot resolve GitHub identity for HTTPS git authentication. Ensure the token remains valid and authorized.',
+    )
+  })
+
+  it('throws error on other non-ok status', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+      }),
+    )
+
+    await expect(
+      resolveGitHubHttpUsername('github_pat_error'),
+    ).rejects.toThrowError(
+      'Failed to resolve GitHub identity for HTTPS git authentication (HTTP 500).',
+    )
+  })
+
+  it('throws error if login is missing from successful response', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ type: 'User' }),
+      }),
+    )
+
+    await expect(
+      resolveGitHubHttpUsername('github_pat_missing_login'),
+    ).rejects.toThrowError(
+      'GitHub identity response did not include a usable login for HTTPS git authentication.',
+    )
+  })
+
+  it('throws error if login is empty from successful response', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ login: '  ', type: 'User' }),
+      }),
+    )
+
+    await expect(
+      resolveGitHubHttpUsername('github_pat_empty_login'),
+    ).rejects.toThrowError(
+      'GitHub identity response did not include a usable login for HTTPS git authentication.',
+    )
+  })
 })
