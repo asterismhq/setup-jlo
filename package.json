@@ -4,6 +4,9 @@
   "description": "GitHub Action for setting up the jlo CLI",
   "private": true,
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.14.0 <25"
+  },
   "scripts": {
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",
