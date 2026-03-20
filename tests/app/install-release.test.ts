@@ -71,7 +71,7 @@ describe('app install release orchestration', () => {
         allowDarwinX8664Fallback: false,
       },
       {
-        kind: 'release',
+        kind: 'release-tag',
         version: '1.2.3',
         tag: 'v1.2.3',
       },
