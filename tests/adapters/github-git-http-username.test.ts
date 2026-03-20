@@ -41,4 +41,19 @@ describe('github git http username resolution', () => {
       'x-access-token',
     )
   })
+
+  it('throws on invalid JSON response structure', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ login: 123, type: null }),
+      }),
+    )
+
+    await expect(
+      resolveGitHubHttpUsername('github_pat_invalid')
+    ).rejects.toThrow(/invalid/i)
+  })
 })
