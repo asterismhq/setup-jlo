@@ -28,7 +28,8 @@ The runtime boundaries are:
 Runtime dependencies follow this direction:
 
 ```text
-index -> action -> app -> domain
+index -> app -> domain
+index -> action
 app -> action
 app -> adapters
 app -> catalog
