@@ -68,7 +68,10 @@ describe('binary-install-cache adapter', () => {
   describe('resolvePlatformCacheDirectory', () => {
     it('resolves platform directory', () => {
       expect(
-        resolvePlatformCacheDirectory('/cache', { os: 'linux', arch: 'x86_64' }),
+        resolvePlatformCacheDirectory('/cache', {
+          os: 'linux',
+          arch: 'x86_64',
+        }),
       ).toBe('/cache/linux-x86_64')
     })
   })
@@ -107,7 +110,7 @@ describe('binary-install-cache adapter', () => {
         { name: 'keep', isDirectory: () => true },
         { name: 'remove1', isDirectory: () => true },
         { name: 'remove2', isDirectory: () => false },
-      ] as any[])
+      ] as unknown as ReturnType<typeof fs.readdirSync>)
 
       pruneSiblingInstallDirectories('/cache', 'keep')
 
@@ -115,8 +118,14 @@ describe('binary-install-cache adapter', () => {
         recursive: true,
         force: true,
       })
-      expect(fs.rmSync).not.toHaveBeenCalledWith('/cache/keep', expect.anything())
-      expect(fs.rmSync).not.toHaveBeenCalledWith('/cache/remove2', expect.anything())
+      expect(fs.rmSync).not.toHaveBeenCalledWith(
+        '/cache/keep',
+        expect.anything(),
+      )
+      expect(fs.rmSync).not.toHaveBeenCalledWith(
+        '/cache/remove2',
+        expect.anything(),
+      )
     })
   })
 
