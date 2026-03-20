@@ -25936,6 +25936,19 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.resolveGitHubHttpUsername = resolveGitHubHttpUsername;
 const GITHUB_API_USER_URL = 'https://api.github.com/user';
 const GITHUB_APP_INSTALLATION_TOKEN_PREFIX = 'ghs_';
+function isGitHubUser(data) {
+    if (typeof data !== 'object' || data === null) {
+        return false;
+    }
+    const obj = data;
+    if (obj.login !== undefined && typeof obj.login !== 'string') {
+        return false;
+    }
+    if (obj.type !== undefined && typeof obj.type !== 'string') {
+        return false;
+    }
+    return true;
+}
 async function resolveGitHubHttpUsername(token) {
     // GitHub App installation tokens authenticate git over HTTPS as x-access-token.
     if (token.startsWith(GITHUB_APP_INSTALLATION_TOKEN_PREFIX)) {
@@ -25954,7 +25967,11 @@ async function resolveGitHubHttpUsername(token) {
     if (!response.ok) {
         throw new Error(`Failed to resolve GitHub identity for HTTPS git authentication (HTTP ${response.status}).`);
     }
-    const user = (await response.json());
+    const rawUser = await response.json();
+    if (!isGitHubUser(rawUser)) {
+        throw new Error('Invalid user metadata structure received from GitHub API. Expected an object with optional string properties "login" and "type".');
+    }
+    const user = rawUser;
     // Bot-owned tokens also require x-access-token rather than the reported login.
     if (user.type === 'Bot') {
         return 'x-access-token';
@@ -25977,6 +25994,25 @@ async function resolveGitHubHttpUsername(token) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.fetchReleaseAsset = fetchReleaseAsset;
 const repository_slug_1 = __nccwpck_require__(339);
+function isReleaseMetadata(data) {
+    if (typeof data !== 'object' || data === null) {
+        return false;
+    }
+    const obj = data;
+    if (obj.assets === undefined) {
+        return true;
+    }
+    if (!Array.isArray(obj.assets)) {
+        return false;
+    }
+    return obj.assets.every((asset) => {
+        if (typeof asset !== 'object' || asset === null) {
+            return false;
+        }
+        const assetObj = asset;
+        return typeof assetObj.id === 'number' && typeof assetObj.name === 'string';
+    });
+}
 async function fetchReleaseAsset(options) {
     const { owner, repo } = (0, repository_slug_1.parseRepositorySlug)(options.releaseRepository);
     const headers = {
@@ -25994,7 +26030,11 @@ async function fetchReleaseAsset(options) {
     if (!metadataResponse.ok) {
         throw new Error(`Failed to query release metadata for '${options.tagVersion}' in '${options.releaseRepository}' (HTTP ${metadataResponse.status}).`);
     }
-    const metadata = (await metadataResponse.json());
+    const rawMetadata = await metadataResponse.json();
+    if (!isReleaseMetadata(rawMetadata)) {
+        throw new Error(`Invalid release metadata structure received from GitHub API for '${options.tagVersion}' in '${options.releaseRepository}'. Expected an object with an optional 'assets' array containing 'id' (number) and 'name' (string).`);
+    }
+    const metadata = rawMetadata;
     const matchedAsset = options.candidates
         .map((candidate) => metadata.assets?.find((asset) => asset.name === candidate))
         .find((asset) => asset !== undefined);
