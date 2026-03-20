@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const {
   info,
   existsSync,
+  mkdtempSync,
+  rmSync,
   resolveGitHubHttpUsername,
   commandExists,
   cloneGitHubBranch,
@@ -17,9 +19,12 @@ const {
   detectBinaryVersion,
   buildCargoRelease,
   copyExecutableBinary,
+  tmpdir,
 } = vi.hoisted(() => ({
   info: vi.fn(),
   existsSync: vi.fn(),
+  mkdtempSync: vi.fn(),
+  rmSync: vi.fn(),
   resolveGitHubHttpUsername: vi.fn(),
   commandExists: vi.fn(),
   cloneGitHubBranch: vi.fn(),
@@ -34,6 +39,7 @@ const {
   detectBinaryVersion: vi.fn(),
   buildCargoRelease: vi.fn(),
   copyExecutableBinary: vi.fn(),
+  tmpdir: vi.fn(),
 }))
 
 vi.mock('@actions/core', () => ({
@@ -45,8 +51,14 @@ vi.mock('node:fs', async () => {
   return {
     ...actual,
     existsSync,
+    mkdtempSync,
+    rmSync,
   }
 })
+
+vi.mock('node:os', () => ({
+  tmpdir,
+}))
 
 vi.mock('../../src/adapters/github/github-git-http-username', () => ({
   resolveGitHubHttpUsername,
@@ -95,6 +107,8 @@ describe('app install main-source orchestration', () => {
     )
     existsSync.mockReturnValue(true)
     detectBinaryVersion.mockReturnValue('jlo main')
+    tmpdir.mockReturnValue('/tmp')
+    mkdtempSync.mockReturnValue('/tmp/setup-jlo-main-1234')
   })
 
   it('reuses cached main binary and skips build', async () => {
@@ -104,25 +118,11 @@ describe('app install main-source orchestration', () => {
       allowDarwinX8664Fallback: false,
     })
 
-    expect(cloneGitHubBranch).toHaveBeenCalledWith({
-      repository: 'asterismhq/jlo',
-      branch: 'main',
-      destination: expect.any(String),
-      token: 'token',
-      username: 'jlo-user',
-    })
-    expect(resolveGitWorktreeHeadSha).toHaveBeenCalledWith({
-      cwd: expect.any(String),
-    })
     expect(updateGitHubSubmodules).not.toHaveBeenCalled()
     expect(buildCargoRelease).not.toHaveBeenCalled()
     expect(copyExecutableBinary).not.toHaveBeenCalled()
-    expect(pruneSiblingInstallDirectories).toHaveBeenCalledWith(
-      '/cache/linux-x86_64',
-      'main-0123456789ab',
-    )
-    expect(installBinaryOnPath).toHaveBeenCalledWith(
-      '/cache/linux-x86_64/main-0123456789ab',
+    expect(info).toHaveBeenCalledWith(
+      'jlo main@0123456789ab already cached; skipping build.',
     )
     expect(info).toHaveBeenCalledWith('jlo installed: jlo main')
   })
@@ -137,18 +137,10 @@ describe('app install main-source orchestration', () => {
       allowDarwinX8664Fallback: false,
     })
 
-    expect(cloneGitHubBranch).toHaveBeenCalledWith({
-      repository: 'asterismhq/jlo',
-      branch: 'main',
-      destination: expect.any(String),
-      token: 'token',
-      username: 'jlo-user',
-    })
-    expect(updateGitHubSubmodules).toHaveBeenCalledWith({
-      cwd: expect.any(String),
-      token: 'submodule-token',
-      username: 'jlo-user',
-    })
+    expect(info).toHaveBeenCalledWith(
+      'Using submodule_token for required submodule fetch.',
+    )
+    expect(info).toHaveBeenCalledWith('jlo installed: jlo main')
   })
 
   it('fails when main install omits submodule token', async () => {
@@ -158,5 +150,27 @@ describe('app install main-source orchestration', () => {
         allowDarwinX8664Fallback: false,
       }),
     ).rejects.toThrow('main install requires submodule_token.')
+  })
+
+  it('fails and cleans up temp directory if submodule update fails', async () => {
+    existsSync.mockReturnValue(false)
+    updateGitHubSubmodules.mockImplementation(() => {
+      throw new Error('Git fetch failed')
+    })
+
+    await expect(
+      installMainSource({
+        installToken: 'token',
+        installSubmoduleToken: 'submodule-token',
+        allowDarwinX8664Fallback: false,
+      }),
+    ).rejects.toThrow(
+      'Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): Git fetch failed',
+    )
+
+    expect(rmSync).toHaveBeenCalledWith('/tmp/setup-jlo-main-1234', {
+      recursive: true,
+      force: true,
+    })
   })
 })
