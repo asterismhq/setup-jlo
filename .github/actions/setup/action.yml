@@ -21,6 +21,6 @@ runs:
       with:
         just-version: 1.46.0
 
-    - name: Install Dependencies
-      run: npm ci
+    - name: Run just setup
+      run: just setup
       shell: bash

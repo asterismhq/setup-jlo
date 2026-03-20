@@ -8,6 +8,10 @@ help:
     @echo "Development tasks for setup-jlo:"
     @just --list | tail -n +2 | awk '{printf "  \033[36m%-20s\033[0m %s\n", $1, substr($0, index($0, $2))}'
 
+# Install repository dependencies from the lockfile
+setup:
+    npm ci
+
 # Apply formatter, safe lint fixes, and refresh committed dist
 fix:
     npm run format
