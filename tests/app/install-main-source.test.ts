@@ -9,7 +9,6 @@ const {
   resolveGitWorktreeHeadSha,
   updateGitHubSubmodules,
   detectPlatformTuple,
-  resolveCacheRoot,
   resolvePlatformCacheDirectory,
   ensureInstallDirectory,
   installBinaryOnPath,
@@ -26,7 +25,6 @@ const {
   resolveGitWorktreeHeadSha: vi.fn(),
   updateGitHubSubmodules: vi.fn(),
   detectPlatformTuple: vi.fn(),
-  resolveCacheRoot: vi.fn(),
   resolvePlatformCacheDirectory: vi.fn(),
   ensureInstallDirectory: vi.fn(),
   installBinaryOnPath: vi.fn(),
@@ -64,7 +62,6 @@ vi.mock('../../src/domain/platform', () => ({
 }))
 
 vi.mock('../../src/adapters/cache/binary-install-cache', () => ({
-  resolveCacheRoot,
   resolvePlatformCacheDirectory,
   ensureInstallDirectory,
   installBinaryOnPath,
@@ -88,7 +85,6 @@ describe('app install main-source orchestration', () => {
       '0123456789abcdef0123456789abcdef01234567',
     )
     detectPlatformTuple.mockReturnValue({ os: 'linux', arch: 'x86_64' })
-    resolveCacheRoot.mockReturnValue('/cache')
     resolvePlatformCacheDirectory.mockReturnValue('/cache/linux-x86_64')
     ensureInstallDirectory.mockReturnValue(
       '/cache/linux-x86_64/main-0123456789ab',
@@ -99,9 +95,11 @@ describe('app install main-source orchestration', () => {
 
   it('reuses cached main binary and skips build', async () => {
     await installMainSource({
-      installToken: 'token',
-      installSubmoduleToken: 'submodule-token',
+      token: 'token',
+      submoduleToken: 'submodule-token',
       allowDarwinX8664Fallback: false,
+      cacheRoot: '/cache',
+      tempDirectory: '/tmp',
     })
 
     expect(cloneGitHubBranch).toHaveBeenCalledWith({
@@ -132,9 +130,11 @@ describe('app install main-source orchestration', () => {
     buildCargoRelease.mockReturnValue('/tmp/jlo')
 
     await installMainSource({
-      installToken: 'token',
-      installSubmoduleToken: 'submodule-token',
+      token: 'token',
+      submoduleToken: 'submodule-token',
       allowDarwinX8664Fallback: false,
+      cacheRoot: '/cache',
+      tempDirectory: '/tmp',
     })
 
     expect(cloneGitHubBranch).toHaveBeenCalledWith({
@@ -154,8 +154,10 @@ describe('app install main-source orchestration', () => {
   it('fails when main install omits submodule token', async () => {
     await expect(
       installMainSource({
-        installToken: 'token',
+        token: 'token',
         allowDarwinX8664Fallback: false,
+        cacheRoot: '/cache',
+        tempDirectory: '/tmp',
       }),
     ).rejects.toThrow('main install requires submodule_token.')
   })

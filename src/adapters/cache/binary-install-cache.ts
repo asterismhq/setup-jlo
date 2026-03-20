@@ -7,31 +7,9 @@ import {
   rmSync,
 } from 'node:fs'
 import { spawnSync } from 'node:child_process'
-import { join, resolve } from 'node:path'
+import { join } from 'node:path'
 import * as core from '@actions/core'
 import type { PlatformTuple } from '../../domain/platform'
-
-export function resolveCacheRoot(options: {
-  cacheRootOverride?: string
-  runnerEnvironment?: string
-  runnerTemp?: string
-  runnerToolCache?: string
-}): string {
-  if (options.cacheRootOverride) {
-    return options.cacheRootOverride
-  }
-
-  if (options.runnerEnvironment === 'github-hosted') {
-    return resolve(options.runnerTemp ?? '/tmp', 'jlo-bin-cache')
-  }
-
-  const homeDirectory = normalizeOptional(process.env.HOME)
-  const base =
-    options.runnerToolCache ??
-    (homeDirectory ? resolve(homeDirectory, '.cache') : '/tmp')
-
-  return resolve(base, 'jlo-bin-cache')
-}
 
 export function resolvePlatformCacheDirectory(
   cacheRoot: string,
@@ -115,12 +93,4 @@ function extractFirstSemverTriplet(value: string): string | undefined {
     }
   }
   return undefined
-}
-
-function normalizeOptional(value: string | undefined): string | undefined {
-  if (!value) {
-    return undefined
-  }
-  const normalized = value.trim()
-  return normalized.length > 0 ? normalized : undefined
 }

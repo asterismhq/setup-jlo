@@ -1,27 +1,47 @@
+import { tmpdir } from 'node:os'
+import { resolve } from 'node:path'
+
 export interface InstallRequest {
-  installToken: string
-  installSubmoduleToken?: string
+  token: string
+  submoduleToken?: string
   allowDarwinX8664Fallback: boolean
-  cacheRootOverride?: string
-  runnerEnvironment?: string
-  runnerTemp?: string
-  runnerToolCache?: string
+  cacheRoot: string
+  tempDirectory: string
 }
 
 export function resolveInstallRequest(options: {
   token: string
   submoduleToken?: string
 }): InstallRequest {
+  const allowDarwinX8664Fallback = parseBooleanEnv(
+    process.env.JLO_ALLOW_DARWIN_X86_64_FALLBACK,
+  )
+  const cacheRootOverride = normalizeOptional(process.env.JLO_CACHE_ROOT)
+  const runnerEnvironment = normalizeOptional(process.env.RUNNER_ENVIRONMENT)
+  const runnerTemp = normalizeOptional(process.env.RUNNER_TEMP)
+  const runnerToolCache = normalizeOptional(process.env.RUNNER_TOOL_CACHE)
+  const homeDirectory = normalizeOptional(process.env.HOME)
+
+  const tempDirectory = runnerTemp ?? tmpdir()
+
+  let cacheRoot: string
+  if (cacheRootOverride) {
+    cacheRoot = cacheRootOverride
+  } else if (runnerEnvironment === 'github-hosted') {
+    cacheRoot = resolve(runnerTemp ?? '/tmp', 'jlo-bin-cache')
+  } else {
+    const base =
+      runnerToolCache ??
+      (homeDirectory ? resolve(homeDirectory, '.cache') : '/tmp')
+    cacheRoot = resolve(base, 'jlo-bin-cache')
+  }
+
   return {
-    installToken: options.token,
-    installSubmoduleToken: normalizeOptional(options.submoduleToken),
-    allowDarwinX8664Fallback: parseBooleanEnv(
-      process.env.JLO_ALLOW_DARWIN_X86_64_FALLBACK,
-    ),
-    cacheRootOverride: normalizeOptional(process.env.JLO_CACHE_ROOT),
-    runnerEnvironment: normalizeOptional(process.env.RUNNER_ENVIRONMENT),
-    runnerTemp: normalizeOptional(process.env.RUNNER_TEMP),
-    runnerToolCache: normalizeOptional(process.env.RUNNER_TOOL_CACHE),
+    token: options.token,
+    submoduleToken: normalizeOptional(options.submoduleToken),
+    allowDarwinX8664Fallback,
+    cacheRoot,
+    tempDirectory,
   }
 }
 
