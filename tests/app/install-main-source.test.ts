@@ -159,4 +159,21 @@ describe('app install main-source orchestration', () => {
       }),
     ).rejects.toThrow('main install requires submodule_token.')
   })
+
+  it('safely wraps non-Error strings thrown during submodule updates', async () => {
+    existsSync.mockReturnValue(false)
+    updateGitHubSubmodules.mockImplementation(() => {
+      throw 'fatal: repository not found'
+    })
+
+    await expect(
+      installMainSource({
+        installToken: 'token',
+        installSubmoduleToken: 'submodule-token',
+        allowDarwinX8664Fallback: false,
+      }),
+    ).rejects.toThrow(
+      'Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): fatal: repository not found',
+    )
+  })
 })

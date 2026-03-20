@@ -91,7 +91,7 @@ export async function installMainSource(
       })
     } catch (error) {
       throw new Error(
-        `Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): ${(error as Error).message}`,
+        `Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): ${error instanceof Error ? error.message : String(error)}`,
       )
     }
 
