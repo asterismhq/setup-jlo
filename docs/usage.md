@@ -20,11 +20,6 @@ The `version` input accepts two token classes:
 - semver such as `22.0.1`: downloads the matching `jlo-*` runtime release asset from `asterismhq/jlo`
 - `main`: resolves the current `main` head SHA, reuses a matching cached build when present, or clones the source repository, fetches required submodules, and builds `jlo` with `cargo`
 
-The action exposes:
-
-- `version-token`: the raw token passed to the `version` input
-- `install-mode`: `release-tag` or `main`
-
 ## Main-mode Example
 
 ```yaml
@@ -47,27 +42,3 @@ This form builds `jlo` from the upstream `main` branch instead of downloading a 
 - `submodule_token`
 
 `main` mode does not fall back to release installation.
-
-## Local Verification
-
-Repository-local verification commands are:
-
-- `just fix`
-- `just check`
-- `just test`
-- `just package`
-- `just verify-dist`
-
-`just fix` refreshes committed `dist/` after source-side fixes.
-`just check` includes committed `dist/` verification.
-
-Targeted npm commands remain available behind the `just` recipes:
-
-- `npm run format`
-- `npm run format:check`
-- `npm run lint`
-- `npm run lint:fix`
-- `npm test`
-- `npm run typecheck`
-- `npm run package`
-- `npm run verify:dist`

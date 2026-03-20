@@ -23,7 +23,7 @@ See [docs/usage.md](docs/usage.md) for the input surface, install modes, and wor
 
 The repository contains one action runtime under `src/` with explicit ownership boundaries (`action`, `app`, `domain`, `adapters`, and `catalog`), one committed distribution under `dist/`, and one verification path that compares committed `dist/` output with fresh `ncc` packaging.
 
-See [docs/architecture/boundary.md](docs/architecture/boundary.md) for ownership boundaries, dependency direction, runtime flow, and failure invariants.
+See [docs/architecture.md](docs/architecture.md) for ownership boundaries, dependency direction, runtime flow, and failure invariants.
 
 ## Configuration
 
