@@ -9,7 +9,7 @@ The repository surfaces are:
 - `action.yml`: public action contract
 - `src/`: TypeScript runtime organized by action, app, domain, adapters, and catalog boundaries
 - `dist/`: committed package output used by GitHub Actions at tag resolution time
-- `tests/`: repository-owned boundary tests under `tests/action`, `tests/app`, and `tests/domain`
+- `tests/`: repository-owned boundary tests under `tests/action`, `tests/adapters`, `tests/app`, and `tests/domain`
 - `scripts/verify-dist.mjs`: committed-distribution verification
 
 ## Runtime Boundaries
@@ -28,8 +28,9 @@ The runtime boundaries are:
 Runtime dependencies follow this direction:
 
 ```text
-index -> action -> app -> domain
-action -> domain
+index -> app -> domain
+index -> action
+app -> action
 app -> adapters
 app -> catalog
 adapters -> domain
@@ -77,7 +78,7 @@ The repository demonstrates a reusable TypeScript GitHub Action baseline:
 - `action.yml`
 - minimal `src/index.ts` bootstrap
 - boundary-owned runtime directories (`src/action`, `src/app`, `src/domain`, `src/adapters`)
-- boundary-owned tests (`tests/action`, `tests/app`, `tests/domain`)
+- boundary-owned tests (`tests/action`, `tests/adapters`, `tests/app`, `tests/domain`)
 - standard validation and committed-output verification (`just`, `scripts/verify-dist.mjs`)
 
 ## Repository-Specific Layer
