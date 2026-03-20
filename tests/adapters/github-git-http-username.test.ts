@@ -53,7 +53,7 @@ describe('github git http username resolution', () => {
     )
 
     await expect(
-      resolveGitHubHttpUsername('github_pat_invalid')
+      resolveGitHubHttpUsername('github_pat_invalid'),
     ).rejects.toThrow(/invalid/i)
   })
 })

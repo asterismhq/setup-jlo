@@ -1,7 +1,9 @@
 const GITHUB_API_USER_URL = 'https://api.github.com/user'
 const GITHUB_APP_INSTALLATION_TOKEN_PREFIX = 'ghs_'
 
-function isGitHubUser(data: unknown): data is { login?: string; type?: string } {
+function isGitHubUser(
+  data: unknown,
+): data is { login?: string; type?: string } {
   if (typeof data !== 'object' || data === null) {
     return false
   }
