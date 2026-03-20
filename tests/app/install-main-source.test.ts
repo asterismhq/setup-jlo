@@ -92,6 +92,10 @@ vi.mock('../../src/adapters/process/cargo-build', () => ({
 import { installMainSource } from '../../src/app/install-main-source'
 
 describe('app install main-source orchestration', () => {
+  const MOCK_TMP_DIR = '/tmp'
+  const MOCK_CLONE_PATH = '/tmp/setup-jlo-main-1234'
+  const MOCK_BUILD_PATH = '/tmp/jlo'
+
   beforeEach(() => {
     vi.clearAllMocks()
     resolveGitHubHttpUsername.mockResolvedValue('jlo-user')
@@ -107,8 +111,8 @@ describe('app install main-source orchestration', () => {
     )
     existsSync.mockReturnValue(true)
     detectBinaryVersion.mockReturnValue('jlo main')
-    tmpdir.mockReturnValue('/tmp')
-    mkdtempSync.mockReturnValue('/tmp/setup-jlo-main-1234')
+    tmpdir.mockReturnValue(MOCK_TMP_DIR)
+    mkdtempSync.mockReturnValue(MOCK_CLONE_PATH)
   })
 
   it('reuses cached main binary and skips build', async () => {
@@ -129,7 +133,7 @@ describe('app install main-source orchestration', () => {
 
   it('fetches required submodules with submodule token', async () => {
     existsSync.mockReturnValue(false)
-    buildCargoRelease.mockReturnValue('/tmp/jlo')
+    buildCargoRelease.mockReturnValue(MOCK_BUILD_PATH)
 
     await installMainSource({
       installToken: 'token',
@@ -168,7 +172,7 @@ describe('app install main-source orchestration', () => {
       'Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): Git fetch failed',
     )
 
-    expect(rmSync).toHaveBeenCalledWith('/tmp/setup-jlo-main-1234', {
+    expect(rmSync).toHaveBeenCalledWith(MOCK_CLONE_PATH, {
       recursive: true,
       force: true,
     })

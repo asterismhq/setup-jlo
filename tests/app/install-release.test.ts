@@ -79,6 +79,9 @@ vi.mock('../../src/adapters/github/release-asset-api', () => ({
 import { installReleaseVersion } from '../../src/app/install-release'
 
 describe('app install release orchestration', () => {
+  const MOCK_TMP_DIR = '/tmp'
+  const MOCK_DOWNLOAD_PATH = '/tmp/setup-jlo-release-1234'
+
   beforeEach(() => {
     vi.clearAllMocks()
     detectPlatformTuple.mockReturnValue({ os: 'linux', arch: 'x86_64' })
@@ -113,8 +116,8 @@ describe('app install release orchestration', () => {
 
   it('fails and cleans up temp directory if downloaded asset is empty', async () => {
     isCachedBinaryForVersion.mockReturnValue(false)
-    tmpdir.mockReturnValue('/tmp')
-    mkdtempSync.mockReturnValue('/tmp/setup-jlo-release-1234')
+    tmpdir.mockReturnValue(MOCK_TMP_DIR)
+    mkdtempSync.mockReturnValue(MOCK_DOWNLOAD_PATH)
     fetchReleaseAsset.mockResolvedValue({
       name: 'jlo-linux-x86_64',
       contents: Buffer.from(''),
@@ -137,7 +140,7 @@ describe('app install release orchestration', () => {
       "Downloaded release asset 'jlo-linux-x86_64' is missing or empty in 'asterismhq/jlo' (v1.2.3).",
     )
 
-    expect(rmSync).toHaveBeenCalledWith('/tmp/setup-jlo-release-1234', {
+    expect(rmSync).toHaveBeenCalledWith(MOCK_DOWNLOAD_PATH, {
       recursive: true,
       force: true,
     })
@@ -145,8 +148,8 @@ describe('app install release orchestration', () => {
 
   it('cleans up temp directory if ensureExecutablePermissions throws', async () => {
     isCachedBinaryForVersion.mockReturnValue(false)
-    tmpdir.mockReturnValue('/tmp')
-    mkdtempSync.mockReturnValue('/tmp/setup-jlo-release-1234')
+    tmpdir.mockReturnValue(MOCK_TMP_DIR)
+    mkdtempSync.mockReturnValue(MOCK_DOWNLOAD_PATH)
     fetchReleaseAsset.mockResolvedValue({
       name: 'jlo-linux-x86_64',
       contents: Buffer.from('binary-data'),
@@ -170,7 +173,7 @@ describe('app install release orchestration', () => {
       ),
     ).rejects.toThrow('Permission denied')
 
-    expect(rmSync).toHaveBeenCalledWith('/tmp/setup-jlo-release-1234', {
+    expect(rmSync).toHaveBeenCalledWith(MOCK_DOWNLOAD_PATH, {
       recursive: true,
       force: true,
     })
