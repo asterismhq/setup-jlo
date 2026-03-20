@@ -1,5 +1,31 @@
 import { parseRepositorySlug } from '../../domain/repository-slug'
 
+function isReleaseMetadata(
+  data: unknown,
+): data is { assets?: Array<{ id: number; name: string }> } {
+  if (typeof data !== 'object' || data === null) {
+    return false
+  }
+
+  const obj = data as Record<string, unknown>
+
+  if (obj.assets === undefined) {
+    return true
+  }
+
+  if (!Array.isArray(obj.assets)) {
+    return false
+  }
+
+  return obj.assets.every((asset: unknown) => {
+    if (typeof asset !== 'object' || asset === null) {
+      return false
+    }
+    const assetObj = asset as Record<string, unknown>
+    return typeof assetObj.id === 'number' && typeof assetObj.name === 'string'
+  })
+}
+
 export async function fetchReleaseAsset(options: {
   token: string
   releaseRepository: string
@@ -34,9 +60,13 @@ export async function fetchReleaseAsset(options: {
     )
   }
 
-  const metadata = (await metadataResponse.json()) as {
-    assets?: Array<{ id: number; name: string }>
+  const rawMetadata: unknown = await metadataResponse.json()
+  if (!isReleaseMetadata(rawMetadata)) {
+    throw new Error(
+      `Invalid release metadata structure received from GitHub API for '${options.tagVersion}' in '${options.releaseRepository}'. Expected an object with an optional 'assets' array containing 'id' (number) and 'name' (string).`,
+    )
   }
+  const metadata = rawMetadata
   const matchedAsset = options.candidates
     .map((candidate) =>
       metadata.assets?.find((asset) => asset.name === candidate),
