@@ -47,9 +47,6 @@ This form builds `jlo` from the upstream `main` branch instead of downloading a 
 
 Repository-local verification commands are:
 
-- `just fix`
-- `just check`
-- `just test`
-
-`just fix` applies formatter and safe lint fixes.
-`just check` validates format, lint, and type safety.
+- `just fix`: applies formatter and safe lint fixes.
+- `just check`: validates format, lint, and type safety.
+- `just test`: runs the test suite.
