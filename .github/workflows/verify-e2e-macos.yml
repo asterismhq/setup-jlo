@@ -14,6 +14,9 @@ on:
         default: 23.2.0
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   release-macos:
     name: Release Install on macOS
@@ -22,6 +25,12 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v5
+
+      - name: Setup Development Environment
+        uses: ./.github/actions/setup
+
+      - name: Build Action Distribution
+        run: npm run package
 
       - name: Run setup-jlo in Release Mode
         id: setup_jlo
@@ -47,6 +56,12 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v5
+
+      - name: Setup Development Environment
+        uses: ./.github/actions/setup
+
+      - name: Build Action Distribution
+        run: npm run package
 
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable

@@ -6,8 +6,10 @@ import { installMainSource } from './app/install-main-source'
 import { installReleaseVersion } from './app/install-release'
 import { parseVersionToken } from './domain/version-token'
 
-export function resolveInstallMode(token: string): 'release-tag' | 'main' {
-  return parseVersionToken(token).kind === 'release' ? 'release-tag' : 'main'
+export function resolveInstallMode(
+  versionToken: string,
+): 'release-tag' | 'main' {
+  return parseVersionToken(versionToken).kind
 }
 
 async function run(): Promise<void> {
@@ -16,7 +18,7 @@ async function run(): Promise<void> {
   const submoduleToken = readOptionalInput('submodule_token')
 
   const parsedVersion = parseVersionToken(versionToken)
-  const installMode = parsedVersion.kind === 'release' ? 'release-tag' : 'main'
+  const installMode = parsedVersion.kind
 
   core.info(`Resolved version='${versionToken}' (${installMode}).`)
 
@@ -27,7 +29,7 @@ async function run(): Promise<void> {
     submoduleToken,
   })
 
-  if (parsedVersion.kind === 'release') {
+  if (parsedVersion.kind === 'release-tag') {
     await installReleaseVersion(installRequest, parsedVersion)
     return
   }

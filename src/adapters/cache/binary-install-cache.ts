@@ -7,31 +7,10 @@ import {
   rmSync,
 } from 'node:fs'
 import { spawnSync } from 'node:child_process'
-import { join, resolve } from 'node:path'
+import { join } from 'node:path'
 import * as core from '@actions/core'
 import type { PlatformTuple } from '../../domain/platform'
-
-export function resolveCacheRoot(options: {
-  cacheRootOverride?: string
-  runnerEnvironment?: string
-  runnerTemp?: string
-  runnerToolCache?: string
-}): string {
-  if (options.cacheRootOverride) {
-    return options.cacheRootOverride
-  }
-
-  if (options.runnerEnvironment === 'github-hosted') {
-    return resolve(options.runnerTemp ?? '/tmp', 'jlo-bin-cache')
-  }
-
-  const homeDirectory = normalizeOptional(process.env.HOME)
-  const base =
-    options.runnerToolCache ??
-    (homeDirectory ? resolve(homeDirectory, '.cache') : '/tmp')
-
-  return resolve(base, 'jlo-bin-cache')
-}
+import { extractSemver } from '../../domain/version-token'
 
 export function resolvePlatformCacheDirectory(
   cacheRoot: string,
@@ -109,18 +88,10 @@ export function ensureExecutablePermissions(path: string): void {
 
 function extractFirstSemverTriplet(value: string): string | undefined {
   for (const token of value.split(/\s+/)) {
-    const normalized = token.replace(/^v/, '')
-    if (/^\d+\.\d+\.\d+$/.test(normalized)) {
-      return normalized
+    const semverCore = extractSemver(token)
+    if (semverCore !== undefined) {
+      return semverCore
     }
   }
   return undefined
-}
-
-function normalizeOptional(value: string | undefined): string | undefined {
-  if (!value) {
-    return undefined
-  }
-  const normalized = value.trim()
-  return normalized.length > 0 ? normalized : undefined
 }
