@@ -42,28 +42,15 @@ describe('github git http username resolution', () => {
     )
   })
 
-  it('throws error on 401 unauthorized', async () => {
+  it.each([
+    { status: 401, description: 'unauthorized' },
+    { status: 403, description: 'forbidden' },
+  ])('throws error on $status $description', async ({ status }) => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
         ok: false,
-        status: 401,
-      }),
-    )
-
-    await expect(
-      resolveGitHubHttpUsername('github_pat_invalid'),
-    ).rejects.toThrowError(
-      'token cannot resolve GitHub identity for HTTPS git authentication. Ensure the token remains valid and authorized.',
-    )
-  })
-
-  it('throws error on 403 forbidden', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 403,
+        status,
       }),
     )
 

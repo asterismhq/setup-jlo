@@ -7,33 +7,17 @@ describe('release-asset-api adapter', () => {
   })
 
   describe('fetchReleaseAsset', () => {
-    it('throws error on 401 unauthorized metadata fetch', async () => {
+    it.each([
+      { status: 401, description: 'unauthorized' },
+      { status: 403, description: 'forbidden' },
+    ])('throws error on $status $description metadata fetch', async ({
+      status,
+    }) => {
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
           ok: false,
-          status: 401,
-        }),
-      )
-
-      await expect(
-        fetchReleaseAsset({
-          token: 'invalid',
-          releaseRepository: 'owner/repo',
-          tagVersion: 'v1.0.0',
-          candidates: ['asset-linux'],
-        }),
-      ).rejects.toThrowError(
-        "token cannot access release metadata in 'owner/repo'. Ensure contents:read and organization SSO authorization.",
-      )
-    })
-
-    it('throws error on 403 forbidden metadata fetch', async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({
-          ok: false,
-          status: 403,
+          status,
         }),
       )
 
