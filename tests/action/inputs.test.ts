@@ -19,15 +19,11 @@ describe('inputs', () => {
       expect(result).toBe('some-value')
     })
 
-    it('throws an error if the input is missing', () => {
-      vi.mocked(core.getInput).mockReturnValue('')
-      expect(() => readRequiredInput('my-input')).toThrow(
-        "Input 'my-input' is required.",
-      )
-    })
-
-    it('throws an error if the input is only whitespace', () => {
-      vi.mocked(core.getInput).mockReturnValue('   ')
+    it.each([
+      ['missing', ''],
+      ['only whitespace', '   '],
+    ])('throws an error if the input is %s', (_, value) => {
+      vi.mocked(core.getInput).mockReturnValue(value)
       expect(() => readRequiredInput('my-input')).toThrow(
         "Input 'my-input' is required.",
       )
@@ -42,14 +38,11 @@ describe('inputs', () => {
       expect(result).toBe('optional-value')
     })
 
-    it('returns undefined if the input is missing', () => {
-      vi.mocked(core.getInput).mockReturnValue('')
-      const result = readOptionalInput('my-optional-input')
-      expect(result).toBeUndefined()
-    })
-
-    it('returns undefined if the input is only whitespace', () => {
-      vi.mocked(core.getInput).mockReturnValue('   ')
+    it.each([
+      ['missing', ''],
+      ['only whitespace', '   '],
+    ])('returns undefined if the input is %s', (_, value) => {
+      vi.mocked(core.getInput).mockReturnValue(value)
       const result = readOptionalInput('my-optional-input')
       expect(result).toBeUndefined()
     })

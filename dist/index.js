@@ -26501,7 +26501,11 @@ function detectRosettaArm64() {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.parseRepositorySlug = parseRepositorySlug;
 function parseRepositorySlug(slug) {
-    const [owner, repo] = slug.split('/');
+    const parts = slug.split('/');
+    if (parts.length !== 2) {
+        throw new Error(`Invalid repository '${slug}'. Expected '<owner>/<repo>' format.`);
+    }
+    const [owner, repo] = parts;
     if (!owner || !repo) {
         throw new Error(`Invalid repository '${slug}'. Expected '<owner>/<repo>' format.`);
     }
