@@ -42,3 +42,14 @@ This form builds `jlo` from the upstream `main` branch instead of downloading a 
 - `submodule_token`
 
 `main` mode does not fall back to release installation.
+
+## Local Verification
+
+Repository-local verification commands are:
+
+- `just fix`
+- `just check`
+- `just test`
+
+`just fix` applies formatter and safe lint fixes.
+`just check` validates format, lint, and type safety.

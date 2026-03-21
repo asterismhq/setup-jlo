@@ -39,6 +39,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v5
 
+      - name: Setup Development Environment
+        uses: ./.github/actions/setup
+
+      - name: Build Action Distribution
+        run: npm run package
+
       - name: Run setup-jlo in Release Mode
         id: setup_jlo
         uses: ./
@@ -64,6 +70,12 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v5
+
+      - name: Setup Development Environment
+        uses: ./.github/actions/setup
+
+      - name: Build Action Distribution
+        run: npm run package
 
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
