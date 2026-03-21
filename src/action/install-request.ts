@@ -28,11 +28,11 @@ export function resolveInstallRequest(options: {
   if (cacheRootOverride) {
     cacheRoot = cacheRootOverride
   } else if (runnerEnvironment === 'github-hosted') {
-    cacheRoot = resolve(runnerTemp ?? '/tmp', 'jlo-bin-cache')
+    cacheRoot = resolve(runnerTemp ?? tmpdir(), 'jlo-bin-cache')
   } else {
     const base =
       runnerToolCache ??
-      (homeDirectory ? resolve(homeDirectory, '.cache') : '/tmp')
+      (homeDirectory ? resolve(homeDirectory, '.cache') : tmpdir())
     cacheRoot = resolve(base, 'jlo-bin-cache')
   }
 
