@@ -25704,21 +25704,40 @@ function readOptionalInput(name) {
 /***/ }),
 
 /***/ 1345:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.resolveInstallRequest = resolveInstallRequest;
+const node_os_1 = __nccwpck_require__(8161);
+const node_path_1 = __nccwpck_require__(6760);
 function resolveInstallRequest(options) {
+    const allowDarwinX8664Fallback = parseBooleanEnv(process.env.JLO_ALLOW_DARWIN_X86_64_FALLBACK);
+    const cacheRootOverride = normalizeOptional(process.env.JLO_CACHE_ROOT);
+    const runnerEnvironment = normalizeOptional(process.env.RUNNER_ENVIRONMENT);
+    const runnerTemp = normalizeOptional(process.env.RUNNER_TEMP);
+    const runnerToolCache = normalizeOptional(process.env.RUNNER_TOOL_CACHE);
+    const homeDirectory = normalizeOptional(process.env.HOME);
+    const tempDirectory = runnerTemp ?? (0, node_os_1.tmpdir)();
+    let cacheRoot;
+    if (cacheRootOverride) {
+        cacheRoot = cacheRootOverride;
+    }
+    else if (runnerEnvironment === 'github-hosted') {
+        cacheRoot = (0, node_path_1.resolve)(runnerTemp ?? (0, node_os_1.tmpdir)(), 'jlo-bin-cache');
+    }
+    else {
+        const base = runnerToolCache ??
+            (homeDirectory ? (0, node_path_1.resolve)(homeDirectory, '.cache') : (0, node_os_1.tmpdir)());
+        cacheRoot = (0, node_path_1.resolve)(base, 'jlo-bin-cache');
+    }
     return {
-        installToken: options.token,
-        installSubmoduleToken: normalizeOptional(options.submoduleToken),
-        allowDarwinX8664Fallback: parseBooleanEnv(process.env.JLO_ALLOW_DARWIN_X86_64_FALLBACK),
-        cacheRootOverride: normalizeOptional(process.env.JLO_CACHE_ROOT),
-        runnerEnvironment: normalizeOptional(process.env.RUNNER_ENVIRONMENT),
-        runnerTemp: normalizeOptional(process.env.RUNNER_TEMP),
-        runnerToolCache: normalizeOptional(process.env.RUNNER_TOOL_CACHE),
+        token: options.token,
+        submoduleToken: normalizeOptional(options.submoduleToken),
+        allowDarwinX8664Fallback,
+        cacheRoot,
+        tempDirectory,
     };
 }
 function normalizeOptional(value) {
@@ -25834,7 +25853,6 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.resolveCacheRoot = resolveCacheRoot;
 exports.resolvePlatformCacheDirectory = resolvePlatformCacheDirectory;
 exports.ensureInstallDirectory = ensureInstallDirectory;
 exports.installBinaryOnPath = installBinaryOnPath;
@@ -25847,18 +25865,7 @@ const node_fs_1 = __nccwpck_require__(3024);
 const node_child_process_1 = __nccwpck_require__(1421);
 const node_path_1 = __nccwpck_require__(6760);
 const core = __importStar(__nccwpck_require__(7484));
-function resolveCacheRoot(options) {
-    if (options.cacheRootOverride) {
-        return options.cacheRootOverride;
-    }
-    if (options.runnerEnvironment === 'github-hosted') {
-        return (0, node_path_1.resolve)(options.runnerTemp ?? '/tmp', 'jlo-bin-cache');
-    }
-    const homeDirectory = normalizeOptional(process.env.HOME);
-    const base = options.runnerToolCache ??
-        (homeDirectory ? (0, node_path_1.resolve)(homeDirectory, '.cache') : '/tmp');
-    return (0, node_path_1.resolve)(base, 'jlo-bin-cache');
-}
+const version_token_1 = __nccwpck_require__(6948);
 function resolvePlatformCacheDirectory(cacheRoot, platform) {
     return (0, node_path_1.join)(cacheRoot, `${platform.os}-${platform.arch}`);
 }
@@ -25909,19 +25916,12 @@ function ensureExecutablePermissions(path) {
 }
 function extractFirstSemverTriplet(value) {
     for (const token of value.split(/\s+/)) {
-        const normalized = token.replace(/^v/, '');
-        if (/^\d+\.\d+\.\d+$/.test(normalized)) {
-            return normalized;
+        const semverCore = (0, version_token_1.extractSemver)(token);
+        if (semverCore !== undefined) {
+            return semverCore;
         }
     }
     return undefined;
-}
-function normalizeOptional(value) {
-    if (!value) {
-        return undefined;
-    }
-    const normalized = value.trim();
-    return normalized.length > 0 ? normalized : undefined;
 }
 
 
@@ -26251,7 +26251,6 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.installMainSource = installMainSource;
 const node_fs_1 = __nccwpck_require__(3024);
-const node_os_1 = __nccwpck_require__(8161);
 const node_path_1 = __nccwpck_require__(6760);
 const core = __importStar(__nccwpck_require__(7484));
 const binary_install_cache_1 = __nccwpck_require__(3889);
@@ -26268,12 +26267,12 @@ async function installMainSource(request) {
         throw new Error('main install requires git on PATH.');
     }
     const sourceBranch = 'main';
-    if (!request.installSubmoduleToken) {
+    if (!request.submoduleToken) {
         throw new Error('main install requires submodule_token.');
     }
-    const sourceAuthUsername = await (0, github_git_http_username_1.resolveGitHubHttpUsername)(request.installToken);
-    const submoduleAuthUsername = await (0, github_git_http_username_1.resolveGitHubHttpUsername)(request.installSubmoduleToken);
-    const clonePath = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)(request.runnerTemp ?? (0, node_os_1.tmpdir)(), 'setup-jlo-main-'));
+    const sourceAuthUsername = await (0, github_git_http_username_1.resolveGitHubHttpUsername)(request.token);
+    const submoduleAuthUsername = await (0, github_git_http_username_1.resolveGitHubHttpUsername)(request.submoduleToken);
+    const clonePath = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)(request.tempDirectory, 'setup-jlo-main-'));
     try {
         // Keep source acquisition on the same authenticated clone path used by builds.
         // A separate ls-remote path previously broke main-mode auth in CI.
@@ -26282,14 +26281,14 @@ async function installMainSource(request) {
             repository: jlo_1.JLO_REPOSITORY,
             branch: sourceBranch,
             destination: clonePath,
-            token: request.installToken,
+            token: request.token,
             username: sourceAuthUsername,
         });
         const sha = (0, github_source_git_1.resolveGitWorktreeHeadSha)({ cwd: clonePath });
         const platform = (0, platform_1.detectPlatformTuple)();
         const shortSha = sha.slice(0, 12);
         const installKey = `main-${shortSha}`;
-        const cacheRoot = (0, binary_install_cache_1.resolveCacheRoot)(request);
+        const cacheRoot = request.cacheRoot;
         const platformDir = (0, binary_install_cache_1.resolvePlatformCacheDirectory)(cacheRoot, platform);
         const installDir = (0, binary_install_cache_1.ensureInstallDirectory)(platformDir, installKey);
         const binaryPath = (0, node_path_1.join)(installDir, 'jlo');
@@ -26304,12 +26303,12 @@ async function installMainSource(request) {
         try {
             (0, github_source_git_1.updateGitHubSubmodules)({
                 cwd: clonePath,
-                token: request.installSubmoduleToken,
+                token: request.submoduleToken,
                 username: submoduleAuthUsername,
             });
         }
         catch (error) {
-            throw new Error(`Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): ${error.message}`);
+            throw new Error(`Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): ${error instanceof Error ? error.message : String(error)}`);
         }
         const buildTargetDir = (0, node_path_1.join)(clonePath, 'target');
         const manifestPath = (0, node_path_1.join)(clonePath, 'Cargo.toml');
@@ -26372,7 +26371,6 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.installReleaseVersion = installReleaseVersion;
 const node_fs_1 = __nccwpck_require__(3024);
-const node_os_1 = __nccwpck_require__(8161);
 const node_path_1 = __nccwpck_require__(6760);
 const core = __importStar(__nccwpck_require__(7484));
 const binary_install_cache_1 = __nccwpck_require__(3889);
@@ -26381,7 +26379,7 @@ const jlo_1 = __nccwpck_require__(9416);
 const platform_1 = __nccwpck_require__(3013);
 async function installReleaseVersion(request, versionToken) {
     const platform = (0, platform_1.detectPlatformTuple)();
-    const cacheRoot = (0, binary_install_cache_1.resolveCacheRoot)(request);
+    const cacheRoot = request.cacheRoot;
     const platformDir = (0, binary_install_cache_1.resolvePlatformCacheDirectory)(cacheRoot, platform);
     const installDir = (0, binary_install_cache_1.ensureInstallDirectory)(platformDir, versionToken.tag);
     const binaryPath = (0, node_path_1.join)(installDir, 'jlo');
@@ -26394,12 +26392,12 @@ async function installReleaseVersion(request, versionToken) {
     }
     const candidates = (0, platform_1.buildReleaseAssetCandidates)(platform, request.allowDarwinX8664Fallback);
     const releaseAsset = await (0, release_asset_api_1.fetchReleaseAsset)({
-        token: request.installToken,
+        token: request.token,
         releaseRepository: jlo_1.JLO_REPOSITORY,
         tagVersion: versionToken.tag,
         candidates,
     });
-    const tempDirectory = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)(request.runnerTemp ?? (0, node_os_1.tmpdir)(), 'setup-jlo-release-'));
+    const tempDirectory = (0, node_fs_1.mkdtempSync)((0, node_path_1.join)(request.tempDirectory, 'setup-jlo-release-'));
     const downloadPath = (0, node_path_1.join)(tempDirectory, releaseAsset.name);
     try {
         (0, node_fs_1.writeFileSync)(downloadPath, releaseAsset.contents);
@@ -26519,15 +26517,24 @@ function parseRepositorySlug(slug) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.extractSemver = extractSemver;
 exports.parseVersionToken = parseVersionToken;
 const SEMVER_PATTERN = /^\d+\.\d+\.\d+$/;
-function parseVersionToken(token) {
+function extractSemver(token) {
     const normalized = token.trim();
     const semverCore = normalized.replace(/^v/, '');
+    if (SEMVER_PATTERN.test(semverCore)) {
+        return semverCore;
+    }
+    return undefined;
+}
+function parseVersionToken(token) {
+    const normalized = token.trim();
     if (normalized === 'main') {
         return { kind: 'main', token: 'main' };
     }
-    if (SEMVER_PATTERN.test(semverCore)) {
+    const semverCore = extractSemver(normalized);
+    if (semverCore !== undefined) {
         return { kind: 'release', version: semverCore, tag: `v${semverCore}` };
     }
     throw new Error(`Invalid version input '${normalized}'. Expected semver or 'main'.`);

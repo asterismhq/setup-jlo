@@ -170,9 +170,11 @@ describe('app install main-source orchestration', () => {
 
     await expect(
       installMainSource({
-        installToken: 'token',
-        installSubmoduleToken: 'submodule-token',
+        token: 'token',
+        submoduleToken: 'submodule-token',
         allowDarwinX8664Fallback: false,
+        cacheRoot: '/cache',
+        tempDirectory: '/tmp',
       }),
     ).rejects.toThrow(
       /Failed to fetch required git submodules.*: fatal: repository not found/,
