@@ -29,19 +29,13 @@ describe('detectPlatformTuple', () => {
     Object.defineProperty(process, 'arch', { value: arch })
   }
 
-  it('detects linux x86_64 correctly', () => {
-    mockProcess('linux', 'x64')
-    expect(detectPlatformTuple()).toEqual({ os: 'linux', arch: 'x86_64' })
-  })
-
-  it('detects linux aarch64 correctly', () => {
-    mockProcess('linux', 'arm64')
-    expect(detectPlatformTuple()).toEqual({ os: 'linux', arch: 'aarch64' })
-  })
-
-  it('detects darwin aarch64 correctly', () => {
-    mockProcess('darwin', 'arm64')
-    expect(detectPlatformTuple()).toEqual({ os: 'darwin', arch: 'aarch64' })
+  it.each([
+    ['linux x86_64', 'linux', 'x64', { os: 'linux', arch: 'x86_64' }],
+    ['linux aarch64', 'linux', 'arm64', { os: 'linux', arch: 'aarch64' }],
+    ['darwin aarch64', 'darwin', 'arm64', { os: 'darwin', arch: 'aarch64' }],
+  ])('detects %s correctly', (_, platform, arch, expected) => {
+    mockProcess(platform, arch)
+    expect(detectPlatformTuple()).toEqual(expected)
   })
 
   it('detects darwin x86_64 correctly without rosetta', () => {
@@ -64,18 +58,17 @@ describe('detectPlatformTuple', () => {
     expect(detectPlatformTuple()).toEqual({ os: 'darwin', arch: 'x86_64' })
   })
 
-  it('throws for unsupported OS', () => {
-    mockProcess('win32', 'x64')
-    expect(() => detectPlatformTuple()).toThrow(
-      'Unsupported OS for setup-jlo: win32',
-    )
-  })
-
-  it('throws for unsupported Architecture', () => {
-    mockProcess('linux', 'ia32')
-    expect(() => detectPlatformTuple()).toThrow(
+  it.each([
+    ['unsupported OS', 'win32', 'x64', 'Unsupported OS for setup-jlo: win32'],
+    [
+      'unsupported Architecture',
+      'linux',
+      'ia32',
       'Unsupported architecture for setup-jlo: ia32',
-    )
+    ],
+  ])('throws for %s', (_, platform, arch, message) => {
+    mockProcess(platform, arch)
+    expect(() => detectPlatformTuple()).toThrow(message)
   })
 })
 

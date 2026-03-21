@@ -24,4 +24,10 @@ describe('parseRepositorySlug', () => {
       "Invalid repository 'owner/'. Expected '<owner>/<repo>' format.",
     )
   })
+
+  it('throws an error for slugs with more than one slash', () => {
+    expect(() => parseRepositorySlug('owner/repo/extra')).toThrow(
+      "Invalid repository 'owner/repo/extra'. Expected '<owner>/<repo>' format.",
+    )
+  })
 })

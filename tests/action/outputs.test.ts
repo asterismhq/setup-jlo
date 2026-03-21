@@ -11,19 +11,18 @@ describe('emitInstallOutputs', () => {
     vi.clearAllMocks()
   })
 
-  it('sets the correct outputs for version-token and install-mode', () => {
-    emitInstallOutputs('v1.0.0', 'release-tag')
+  const cases = [
+    ['v1.0.0', 'release-tag'],
+    ['main', 'main'],
+  ] as const
+
+  it.each(
+    cases,
+  )('sets the correct outputs for version-token %s and install-mode %s', (versionToken, installMode) => {
+    emitInstallOutputs(versionToken, installMode)
 
     expect(core.setOutput).toHaveBeenCalledTimes(2)
-    expect(core.setOutput).toHaveBeenCalledWith('version-token', 'v1.0.0')
-    expect(core.setOutput).toHaveBeenCalledWith('install-mode', 'release-tag')
-  })
-
-  it('sets the correct outputs for main install mode', () => {
-    emitInstallOutputs('main', 'main')
-
-    expect(core.setOutput).toHaveBeenCalledTimes(2)
-    expect(core.setOutput).toHaveBeenCalledWith('version-token', 'main')
-    expect(core.setOutput).toHaveBeenCalledWith('install-mode', 'main')
+    expect(core.setOutput).toHaveBeenCalledWith('version-token', versionToken)
+    expect(core.setOutput).toHaveBeenCalledWith('install-mode', installMode)
   })
 })
