@@ -13,17 +13,18 @@ function isReleaseMetadata(
     return true
   }
 
-  if (!Array.isArray(obj.assets)) {
-    return false
-  }
-
-  return obj.assets.every((asset: unknown) => {
-    if (typeof asset !== 'object' || asset === null) {
-      return false
-    }
-    const assetObj = asset as Record<string, unknown>
-    return typeof assetObj.id === 'number' && typeof assetObj.name === 'string'
-  })
+  return (
+    Array.isArray(obj.assets) &&
+    obj.assets.every((asset: unknown) => {
+      if (typeof asset !== 'object' || asset === null) {
+        return false
+      }
+      const assetObj = asset as Record<string, unknown>
+      return (
+        typeof assetObj.id === 'number' && typeof assetObj.name === 'string'
+      )
+    })
+  )
 }
 
 export async function fetchReleaseAsset(options: {
