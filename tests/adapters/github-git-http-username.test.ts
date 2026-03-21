@@ -42,7 +42,6 @@ describe('github git http username resolution', () => {
     )
   })
 
-<<<<<<< HEAD
   it('throws on invalid JSON response structure', async () => {
     vi.stubGlobal(
       'fetch',
@@ -50,33 +49,23 @@ describe('github git http username resolution', () => {
         ok: true,
         status: 200,
         json: async () => ({ login: 123, type: null }),
-=======
-  it('throws error on 401 unauthorized', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 401,
->>>>>>> dddeb78 (test: implement missing adapter unit tests)
       }),
     )
 
     await expect(
       resolveGitHubHttpUsername('github_pat_invalid'),
-<<<<<<< HEAD
     ).rejects.toThrow(/invalid/i)
-=======
-    ).rejects.toThrowError(
-      'token cannot resolve GitHub identity for HTTPS git authentication. Ensure the token remains valid and authorized.',
-    )
   })
 
-  it('throws error on 403 forbidden', async () => {
+  it.each([
+    { status: 401, description: 'unauthorized' },
+    { status: 403, description: 'forbidden' },
+  ])('throws error on $status $description', async ({ status }) => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
         ok: false,
-        status: 403,
+        status,
       }),
     )
 
@@ -135,6 +124,5 @@ describe('github git http username resolution', () => {
     ).rejects.toThrowError(
       'GitHub identity response did not include a usable login for HTTPS git authentication.',
     )
->>>>>>> dddeb78 (test: implement missing adapter unit tests)
   })
 })
