@@ -3,7 +3,6 @@ import * as fs from 'node:fs'
 import * as childProcess from 'node:child_process'
 import * as core from '@actions/core'
 import {
-  resolveCacheRoot,
   resolvePlatformCacheDirectory,
   ensureInstallDirectory,
   installBinaryOnPath,
@@ -22,47 +21,6 @@ describe('binary-install-cache adapter', () => {
   afterEach(() => {
     vi.clearAllMocks()
     vi.unstubAllEnvs()
-  })
-
-  describe('resolveCacheRoot', () => {
-    it('returns override if provided', () => {
-      expect(resolveCacheRoot({ cacheRootOverride: '/custom' })).toBe('/custom')
-    })
-
-    it('returns github-hosted root', () => {
-      expect(
-        resolveCacheRoot({
-          runnerEnvironment: 'github-hosted',
-          runnerTemp: '/tmp/runner',
-        }),
-      ).toBe('/tmp/runner/jlo-bin-cache')
-    })
-
-    it('returns github-hosted root with default tmp', () => {
-      expect(
-        resolveCacheRoot({
-          runnerEnvironment: 'github-hosted',
-        }),
-      ).toBe('/tmp/jlo-bin-cache')
-    })
-
-    it('returns tool cache root if provided', () => {
-      expect(
-        resolveCacheRoot({
-          runnerToolCache: '/toolcache',
-        }),
-      ).toBe('/toolcache/jlo-bin-cache')
-    })
-
-    it('returns home cache root if HOME is set', () => {
-      vi.stubEnv('HOME', '/home/user')
-      expect(resolveCacheRoot({})).toBe('/home/user/.cache/jlo-bin-cache')
-    })
-
-    it('returns default tmp cache root if HOME is not set', () => {
-      vi.stubEnv('HOME', '')
-      expect(resolveCacheRoot({})).toBe('/tmp/jlo-bin-cache')
-    })
   })
 
   describe('resolvePlatformCacheDirectory', () => {
