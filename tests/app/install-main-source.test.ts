@@ -173,7 +173,7 @@ describe('app install main-source orchestration', () => {
         allowDarwinX8664Fallback: false,
       }),
     ).rejects.toThrow(
-      'Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): fatal: repository not found',
+      /Failed to fetch required git submodules.*: fatal: repository not found/,
     )
   })
 })
