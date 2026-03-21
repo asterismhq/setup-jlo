@@ -125,11 +125,13 @@ describe('app install release orchestration', () => {
     await expect(
       installReleaseVersion(
         {
-          installToken: 'token',
+          token: 'token',
           allowDarwinX8664Fallback: false,
+          cacheRoot: '/cache',
+          tempDirectory: '/tmp',
         },
         {
-          kind: 'release',
+          kind: 'release-tag',
           version: '1.2.3',
           tag: 'v1.2.3',
         },
@@ -160,11 +162,13 @@ describe('app install release orchestration', () => {
     await expect(
       installReleaseVersion(
         {
-          installToken: 'token',
+          token: 'token',
           allowDarwinX8664Fallback: false,
+          cacheRoot: '/cache',
+          tempDirectory: '/tmp',
         },
         {
-          kind: 'release',
+          kind: 'release-tag',
           version: '1.2.3',
           tag: 'v1.2.3',
         },
