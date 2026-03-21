@@ -10,7 +10,7 @@ on:
       - 'v*.*.*'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   resolve-version:
@@ -41,8 +41,6 @@ jobs:
     name: Publish Release
     needs: [resolve-version, static-checks, test]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout Repository
@@ -57,8 +55,6 @@ jobs:
     name: Move Major Tag
     needs: [resolve-version, release]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     concurrency:
       group: move-major-tag-${{ needs.resolve-version.outputs.major-tag }}
       cancel-in-progress: true

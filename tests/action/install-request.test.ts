@@ -32,7 +32,7 @@ describe('action install request normalization', () => {
       token: ' install-token ',
       submoduleToken: 'submodule-token',
       allowDarwinX8664Fallback: true,
-      cacheRoot: resolve(tmpdir(), 'jlo-bin-cache'),
+      cacheRoot: '/tmp/jlo-bin-cache',
       tempDirectory: tmpdir(),
     })
   })
@@ -49,8 +49,8 @@ describe('action install request normalization', () => {
       token: 'token',
     })
 
-    expect(request.cacheRoot).toBe(resolve('/tmp/cache'))
-    expect(request.tempDirectory).toBe(resolve('/tmp/runner'))
+    expect(request.cacheRoot).toBe('/tmp/cache')
+    expect(request.tempDirectory).toBe('/tmp/runner')
   })
 
   it('resolves cacheRoot for github-hosted runners', () => {

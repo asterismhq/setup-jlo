@@ -7,9 +7,6 @@ name: Run Tests
 on:
   workflow_call:
 
-permissions:
-  contents: read
-
 jobs:
   run-tests:
     name: Run Tests
