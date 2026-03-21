@@ -26002,16 +26002,14 @@ function isReleaseMetadata(data) {
     if (obj.assets === undefined) {
         return true;
     }
-    if (!Array.isArray(obj.assets)) {
-        return false;
-    }
-    return obj.assets.every((asset) => {
-        if (typeof asset !== 'object' || asset === null) {
-            return false;
-        }
-        const assetObj = asset;
-        return typeof assetObj.id === 'number' && typeof assetObj.name === 'string';
-    });
+    return (Array.isArray(obj.assets) &&
+        obj.assets.every((asset) => {
+            if (typeof asset !== 'object' || asset === null) {
+                return false;
+            }
+            const assetObj = asset;
+            return (typeof assetObj.id === 'number' && typeof assetObj.name === 'string');
+        }));
 }
 async function fetchReleaseAsset(options) {
     const { owner, repo } = (0, repository_slug_1.parseRepositorySlug)(options.releaseRepository);
