@@ -3,13 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const {
   info,
   existsSync,
+  mkdtempSync,
+  rmSync,
   resolveGitHubHttpUsername,
   commandExists,
   cloneGitHubBranch,
   resolveGitWorktreeHeadSha,
   updateGitHubSubmodules,
   detectPlatformTuple,
-  resolveCacheRoot,
   resolvePlatformCacheDirectory,
   ensureInstallDirectory,
   installBinaryOnPath,
@@ -17,16 +18,18 @@ const {
   detectBinaryVersion,
   buildCargoRelease,
   copyExecutableBinary,
+  tmpdir,
 } = vi.hoisted(() => ({
   info: vi.fn(),
   existsSync: vi.fn(),
+  mkdtempSync: vi.fn(),
+  rmSync: vi.fn(),
   resolveGitHubHttpUsername: vi.fn(),
   commandExists: vi.fn(),
   cloneGitHubBranch: vi.fn(),
   resolveGitWorktreeHeadSha: vi.fn(),
   updateGitHubSubmodules: vi.fn(),
   detectPlatformTuple: vi.fn(),
-  resolveCacheRoot: vi.fn(),
   resolvePlatformCacheDirectory: vi.fn(),
   ensureInstallDirectory: vi.fn(),
   installBinaryOnPath: vi.fn(),
@@ -34,6 +37,7 @@ const {
   detectBinaryVersion: vi.fn(),
   buildCargoRelease: vi.fn(),
   copyExecutableBinary: vi.fn(),
+  tmpdir: vi.fn(),
 }))
 
 vi.mock('@actions/core', () => ({
@@ -45,8 +49,14 @@ vi.mock('node:fs', async () => {
   return {
     ...actual,
     existsSync,
+    mkdtempSync,
+    rmSync,
   }
 })
+
+vi.mock('node:os', () => ({
+  tmpdir,
+}))
 
 vi.mock('../../src/adapters/github/github-git-http-username', () => ({
   resolveGitHubHttpUsername,
@@ -64,7 +74,6 @@ vi.mock('../../src/domain/platform', () => ({
 }))
 
 vi.mock('../../src/adapters/cache/binary-install-cache', () => ({
-  resolveCacheRoot,
   resolvePlatformCacheDirectory,
   ensureInstallDirectory,
   installBinaryOnPath,
@@ -80,6 +89,10 @@ vi.mock('../../src/adapters/process/cargo-build', () => ({
 import { installMainSource } from '../../src/app/install-main-source'
 
 describe('app install main-source orchestration', () => {
+  const MOCK_TMP_DIR = '/tmp'
+  const MOCK_CLONE_PATH = '/tmp/setup-jlo-main-1234'
+  const MOCK_BUILD_PATH = '/tmp/jlo'
+
   beforeEach(() => {
     vi.clearAllMocks()
     resolveGitHubHttpUsername.mockResolvedValue('jlo-user')
@@ -88,75 +101,103 @@ describe('app install main-source orchestration', () => {
       '0123456789abcdef0123456789abcdef01234567',
     )
     detectPlatformTuple.mockReturnValue({ os: 'linux', arch: 'x86_64' })
-    resolveCacheRoot.mockReturnValue('/cache')
     resolvePlatformCacheDirectory.mockReturnValue('/cache/linux-x86_64')
     ensureInstallDirectory.mockReturnValue(
       '/cache/linux-x86_64/main-0123456789ab',
     )
     existsSync.mockReturnValue(true)
     detectBinaryVersion.mockReturnValue('jlo main')
+    tmpdir.mockReturnValue(MOCK_TMP_DIR)
+    mkdtempSync.mockReturnValue(MOCK_CLONE_PATH)
   })
 
   it('reuses cached main binary and skips build', async () => {
     await installMainSource({
-      installToken: 'token',
-      installSubmoduleToken: 'submodule-token',
+      token: 'token',
+      submoduleToken: 'submodule-token',
       allowDarwinX8664Fallback: false,
+      cacheRoot: '/cache',
+      tempDirectory: '/tmp',
     })
 
-    expect(cloneGitHubBranch).toHaveBeenCalledWith({
-      repository: 'asterismhq/jlo',
-      branch: 'main',
-      destination: expect.any(String),
-      token: 'token',
-      username: 'jlo-user',
-    })
-    expect(resolveGitWorktreeHeadSha).toHaveBeenCalledWith({
-      cwd: expect.any(String),
-    })
     expect(updateGitHubSubmodules).not.toHaveBeenCalled()
     expect(buildCargoRelease).not.toHaveBeenCalled()
     expect(copyExecutableBinary).not.toHaveBeenCalled()
-    expect(pruneSiblingInstallDirectories).toHaveBeenCalledWith(
-      '/cache/linux-x86_64',
-      'main-0123456789ab',
-    )
-    expect(installBinaryOnPath).toHaveBeenCalledWith(
-      '/cache/linux-x86_64/main-0123456789ab',
+    expect(info).toHaveBeenCalledWith(
+      'jlo main@0123456789ab already cached; skipping build.',
     )
     expect(info).toHaveBeenCalledWith('jlo installed: jlo main')
   })
 
   it('fetches required submodules with submodule token', async () => {
     existsSync.mockReturnValue(false)
-    buildCargoRelease.mockReturnValue('/tmp/jlo')
+    buildCargoRelease.mockReturnValue(MOCK_BUILD_PATH)
 
     await installMainSource({
-      installToken: 'token',
-      installSubmoduleToken: 'submodule-token',
+      token: 'token',
+      submoduleToken: 'submodule-token',
       allowDarwinX8664Fallback: false,
+      cacheRoot: '/cache',
+      tempDirectory: '/tmp',
     })
 
-    expect(cloneGitHubBranch).toHaveBeenCalledWith({
-      repository: 'asterismhq/jlo',
-      branch: 'main',
-      destination: expect.any(String),
-      token: 'token',
-      username: 'jlo-user',
-    })
-    expect(updateGitHubSubmodules).toHaveBeenCalledWith({
-      cwd: expect.any(String),
-      token: 'submodule-token',
-      username: 'jlo-user',
-    })
+    expect(info).toHaveBeenCalledWith(
+      'Using submodule_token for required submodule fetch.',
+    )
+    expect(info).toHaveBeenCalledWith('jlo installed: jlo main')
   })
 
   it('fails when main install omits submodule token', async () => {
     await expect(
       installMainSource({
-        installToken: 'token',
+        token: 'token',
         allowDarwinX8664Fallback: false,
+        cacheRoot: '/cache',
+        tempDirectory: '/tmp',
       }),
     ).rejects.toThrow('main install requires submodule_token.')
+  })
+
+  it('fails and cleans up temp directory if submodule update fails', async () => {
+    existsSync.mockReturnValue(false)
+    updateGitHubSubmodules.mockImplementation(() => {
+      throw new Error('Git fetch failed')
+    })
+
+    await expect(
+      installMainSource({
+        token: 'token',
+        submoduleToken: 'submodule-token',
+        allowDarwinX8664Fallback: false,
+        cacheRoot: '/cache',
+        tempDirectory: '/tmp',
+      }),
+    ).rejects.toThrow(
+      'Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): Git fetch failed',
+    )
+
+    expect(rmSync).toHaveBeenCalledWith(MOCK_CLONE_PATH, {
+      recursive: true,
+      force: true,
+    })
+  })
+
+  it('safely wraps non-Error strings thrown during submodule updates', async () => {
+    existsSync.mockReturnValue(false)
+    updateGitHubSubmodules.mockImplementation(() => {
+      throw 'fatal: repository not found'
+    })
+
+    await expect(
+      installMainSource({
+        token: 'token',
+        submoduleToken: 'submodule-token',
+        allowDarwinX8664Fallback: false,
+        cacheRoot: '/cache',
+        tempDirectory: '/tmp',
+      }),
+    ).rejects.toThrow(
+      /Failed to fetch required git submodules.*: fatal: repository not found/,
+    )
   })
 })

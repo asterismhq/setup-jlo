@@ -1,5 +1,4 @@
 import { existsSync, mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import * as core from '@actions/core'
 import type { InstallRequest } from '../action/install-request'
@@ -9,7 +8,6 @@ import {
   ensureInstallDirectory,
   installBinaryOnPath,
   pruneSiblingInstallDirectories,
-  resolveCacheRoot,
   resolvePlatformCacheDirectory,
 } from '../adapters/cache/binary-install-cache'
 import { resolveGitHubHttpUsername } from '../adapters/github/github-git-http-username'
@@ -36,20 +34,16 @@ export async function installMainSource(
   }
 
   const sourceBranch = 'main'
-  if (!request.installSubmoduleToken) {
+  if (!request.submoduleToken) {
     throw new Error('main install requires submodule_token.')
   }
 
-  const sourceAuthUsername = await resolveGitHubHttpUsername(
-    request.installToken,
-  )
+  const sourceAuthUsername = await resolveGitHubHttpUsername(request.token)
   const submoduleAuthUsername = await resolveGitHubHttpUsername(
-    request.installSubmoduleToken,
+    request.submoduleToken,
   )
 
-  const clonePath = mkdtempSync(
-    join(request.runnerTemp ?? tmpdir(), 'setup-jlo-main-'),
-  )
+  const clonePath = mkdtempSync(join(request.tempDirectory, 'setup-jlo-main-'))
 
   try {
     // Keep source acquisition on the same authenticated clone path used by builds.
@@ -60,7 +54,7 @@ export async function installMainSource(
       repository: JLO_REPOSITORY,
       branch: sourceBranch,
       destination: clonePath,
-      token: request.installToken,
+      token: request.token,
       username: sourceAuthUsername,
     })
 
@@ -68,7 +62,7 @@ export async function installMainSource(
     const platform = detectPlatformTuple()
     const shortSha = sha.slice(0, 12)
     const installKey = `main-${shortSha}`
-    const cacheRoot = resolveCacheRoot(request)
+    const cacheRoot = request.cacheRoot
     const platformDir = resolvePlatformCacheDirectory(cacheRoot, platform)
     const installDir = ensureInstallDirectory(platformDir, installKey)
     const binaryPath = join(installDir, 'jlo')
@@ -86,12 +80,12 @@ export async function installMainSource(
     try {
       updateGitHubSubmodules({
         cwd: clonePath,
-        token: request.installSubmoduleToken,
+        token: request.submoduleToken,
         username: submoduleAuthUsername,
       })
     } catch (error) {
       throw new Error(
-        `Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): ${(error as Error).message}`,
+        `Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): ${error instanceof Error ? error.message : String(error)}`,
       )
     }
 
