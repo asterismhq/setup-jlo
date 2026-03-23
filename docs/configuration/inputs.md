@@ -8,7 +8,7 @@
 |------|----------|---------|---------|
 | `token` | yes | none | GitHub token used to read release metadata, release assets, and the source repository for `main` mode |
 | `version` | yes | none | jlo version token to install, such as `23.0.0` or `main` |
-| `submodule_token` | no | empty | GitHub token used for required authenticated submodule fetch during `main` mode |
+| `submodule_token` | yes (for `main`) | empty | GitHub token used for required authenticated submodule fetch during `main` mode |
 
 ## Outputs
 
