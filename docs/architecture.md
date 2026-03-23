@@ -2,7 +2,7 @@
 
 ## Repository Boundary
 
-`setup-jlo` is a single-action repository. The repository owns GitHub Actions execution for installing `jlo`; it does not own `jlo` release production or the control-plane workflow generation that chooses the version token.
+`setup-jlo` is a single-action repository. The repository owns GitHub Actions execution for installing `jlo`; it does not own `jlo` release production or the control-plane workflow generation that chooses the version ref.
 
 The repository surfaces are:
 
@@ -18,7 +18,7 @@ The runtime boundaries are:
 - `src/index.ts`: bootstrap and top-level orchestration only
 - `src/action/`: action boundary input reading, output emission, and install-request normalization
 - `src/app/`: release and main-source use-case orchestration
-- `src/domain/`: pure token parsing, platform normalization, and repository-slug parsing
+- `src/domain/`: pure version ref parsing, platform normalization, and repository-slug parsing
 - `src/adapters/`: cache, GitHub API, and process integrations
 - `src/catalog/`: repository-specific constants for the upstream `jlo` source
 
@@ -55,7 +55,7 @@ The action runtime executes this sequence:
 
 The current ownership split is:
 
-- `jlo`: version-token contract, workflow generation that embeds the version input, and runtime binary release assets
+- `jlo`: version-ref contract, workflow generation that embeds the version input, and runtime binary release assets
 - `setup-jlo`: GitHub Actions executor for release and `main` installation
 - consumer repositories: workflow definitions, secrets, and access settings required to run the private action
 

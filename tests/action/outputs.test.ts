@@ -18,11 +18,11 @@ describe('emitInstallOutputs', () => {
 
   it.each(
     cases,
-  )('sets the correct outputs for version-token %s and install-mode %s', (versionToken, installMode) => {
-    emitInstallOutputs(versionToken, installMode)
+  )('sets the correct outputs for version-token %s and install-mode %s', (versionRef, installMode) => {
+    emitInstallOutputs(versionRef, installMode)
 
     expect(core.setOutput).toHaveBeenCalledTimes(2)
-    expect(core.setOutput).toHaveBeenCalledWith('version-token', versionToken)
+    expect(core.setOutput).toHaveBeenCalledWith('version-token', versionRef)
     expect(core.setOutput).toHaveBeenCalledWith('install-mode', installMode)
   })
 })

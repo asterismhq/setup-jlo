@@ -1,8 +1,8 @@
 # setup-jlo
 
-`setup-jlo` is a GitHub Action that installs the `jlo` CLI for a supplied version token. The action owns GitHub Actions execution for both release-tag installation and `main` source-build installation.
+`setup-jlo` is a GitHub Action that installs the `jlo` CLI for a supplied version ref. The action owns GitHub Actions execution for both release-tag installation and `main` source-build installation.
 
-The repository packages one distributable action. The runtime contract is intentionally narrow: accept a version token, install the matching `jlo` binary, and place it on the GitHub Actions path with explicit failures when prerequisites or permissions are missing.
+The repository packages one distributable action. The runtime contract is intentionally narrow: accept a version ref, install the matching `jlo` binary, and place it on the GitHub Actions path with explicit failures when prerequisites or permissions are missing.
 
 ## Quick Start
 
@@ -15,7 +15,7 @@ The repository packages one distributable action. The runtime contract is intent
 
 ## Usage
 
-Usage centers on two install modes: semver tokens download `jlo` runtime release assets from `asterismhq/jlo` and the `main` token resolves the current `main` head, reuses a matching cached build when present, or builds `jlo` from source on the runner.
+Usage centers on two install modes: semver refs download `jlo` runtime release assets from `asterismhq/jlo` and the `main` ref resolves the current `main` head, reuses a matching cached build when present, or builds `jlo` from source on the runner.
 
 See [docs/usage.md](docs/usage.md) for the input surface, install modes, and workflow examples.
 
@@ -27,6 +27,6 @@ See [docs/architecture.md](docs/architecture.md) for ownership boundaries, depen
 
 ## Configuration
 
-Configuration consists of action inputs, runtime environment variables, token scopes, and private-action access settings. The action installs the version token supplied by the workflow and reads release assets and `main`-mode source from `asterismhq/jlo`.
+Configuration consists of action inputs, runtime environment variables, token scopes, and private-action access settings. The action installs the version ref supplied by the workflow and reads release assets and `main`-mode source from `asterismhq/jlo`.
 
 See [docs/README.md](docs/README.md) for inputs, environment overrides, and access requirements.
