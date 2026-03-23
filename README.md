@@ -17,13 +17,13 @@ The repository packages one distributable action. The runtime contract is intent
 
 Usage centers on two install modes: semver tokens download `jlo` runtime release assets from `asterismhq/jlo` and the `main` token resolves the current `main` head, reuses a matching cached build when present, or builds `jlo` from source on the runner.
 
-See [docs/usage.md](docs/usage.md) for the input surface, install modes, and workflow examples.
+See [docs/README.md](docs/README.md) for the input surface, install modes, and workflow examples.
 
 ## Architecture
 
 The repository contains one action runtime under `src/` with explicit ownership boundaries (`action`, `app`, `domain`, `adapters`, and `catalog`) and one committed distribution under `dist/` for release tags.
 
-See [docs/architecture.md](docs/architecture.md) for ownership boundaries, dependency direction, runtime flow, and failure invariants.
+See [docs/README.md](docs/README.md) for ownership boundaries, dependency direction, runtime flow, and failure invariants.
 
 ## Configuration
 
