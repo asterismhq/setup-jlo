@@ -8,9 +8,12 @@ export interface PlatformTuple {
   arch: InstallerArch
 }
 
-export function detectPlatformTuple(): PlatformTuple {
-  const os = normalizeOs(process.platform)
-  const arch = normalizeArch(process.arch)
+export function detectPlatformTuple(
+  platformStr = process.platform,
+  archStr = process.arch,
+): PlatformTuple {
+  const os = normalizeOs(platformStr)
+  const arch = normalizeArch(archStr)
 
   if (os === 'darwin' && arch === 'x86_64' && detectRosettaArm64()) {
     return { os, arch: 'aarch64' }
