@@ -26,7 +26,7 @@ Catching exceptions typed as `unknown` and applying an `instanceof Error` check,
 
 - source_event: "failure_semantics_typescripter.md"
   path: "src/adapters/process/github-source-git.ts"
-  loc: "107-111"
+  loc: "124-127"
   note: "`runGitHubCommand` relies on `throw new Error(...)` to signal a failed subprocess execution instead of returning a typed success/failure struct."
 
 - source_event: "failure_semantics_typescripter.md"
