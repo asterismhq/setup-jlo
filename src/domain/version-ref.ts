@@ -29,3 +29,13 @@ export function parseVersionRef(versionRef: string): ParsedVersionRef {
     `Invalid version input '${normalized}'. Expected semver or 'main'.`,
   )
 }
+
+export function extractFirstSemverTriplet(value: string): string | undefined {
+  for (const token of value.split(/\s+/)) {
+    const semverCore = extractSemver(token)
+    if (semverCore !== undefined) {
+      return semverCore
+    }
+  }
+  return undefined
+}
