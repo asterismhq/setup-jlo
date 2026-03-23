@@ -15,11 +15,11 @@ The GitHub API responses use type predicates with excessive `unknown` casting an
 
 - source_event: "github_api_type_validation_typescripter.md"
   path: "src/adapters/github/github-git-http-username.ts"
-  loc: "4-22"
+  loc: "4-23"
   note: "Manual type predicate `isGitHubUser` casts to `Record<string, unknown>` and checks properties loosely."
 - source_event: "github_api_type_validation_typescripter.md"
   path: "src/adapters/github/release-asset-api.ts"
-  loc: "3-24"
+  loc: "3-28"
   note: "Manual type predicate `isReleaseMetadata` casts to `Record<string, unknown>` and iterates arrays with loose runtime checks."
 - source_event: "uncovered_github_api_metadata_cov.md"
   path: "src/adapters/github/github-git-http-username.ts"
