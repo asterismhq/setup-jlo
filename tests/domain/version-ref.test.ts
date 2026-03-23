@@ -72,7 +72,9 @@ describe('setup-jlo extractFirstSemverTriplet behavior', () => {
   })
 
   it('ignores invalid tokens and finds the first valid semver', () => {
-    expect(extractFirstSemverTriplet('version unknown but maybe 1.2.3')).toBe('1.2.3')
+    expect(extractFirstSemverTriplet('version unknown but maybe 1.2.3')).toBe(
+      '1.2.3',
+    )
   })
 
   it('returns undefined if no valid semver is found', () => {
