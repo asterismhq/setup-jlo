@@ -13,11 +13,13 @@
 
 This default form installs the semver-pinned runtime binary for `23.0.0`.
 
+Examples use the bare semver form. A leading `v` is also accepted for semver releases and resolves to the same release tag.
+
 ## Install Modes
 
 The `version` input accepts two version ref classes:
 
-- semver (with an optional leading `v`) such as `22.0.1` or `v22.0.1`: downloads the matching `jlo-*` runtime release asset from `asterismhq/jlo`
+- semver such as `22.0.1`: downloads the matching `jlo-*` runtime release asset from `asterismhq/jlo`; a leading `v` is also accepted and resolves to the same release tag
 - `main`: resolves the current `main` head SHA, reuses a matching cached build when present, or clones the source repository, fetches required submodules, and builds `jlo` with `cargo`
 
 ## Main-mode Example

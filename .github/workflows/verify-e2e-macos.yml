@@ -41,7 +41,7 @@ jobs:
 
       - name: Verify Action Outputs
         run: |
-          test "${{ steps.setup_jlo.outputs.version-token }}" = "${{ inputs.release_version }}"
+          test "${{ steps.setup_jlo.outputs.version-ref }}" = "${{ inputs.release_version }}"
           test "${{ steps.setup_jlo.outputs.install-mode }}" = "release-tag"
 
       - name: Verify Installed jlo Binary
@@ -76,7 +76,7 @@ jobs:
 
       - name: Verify Action Outputs
         run: |
-          test "${{ steps.setup_jlo.outputs.version-token }}" = "main"
+          test "${{ steps.setup_jlo.outputs.version-ref }}" = "main"
           test "${{ steps.setup_jlo.outputs.install-mode }}" = "main"
 
       - name: Verify Installed jlo Binary
