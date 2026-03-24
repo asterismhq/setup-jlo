@@ -19,7 +19,12 @@ describe('detectPlatformTuple', () => {
     ['linux aarch64', 'linux', 'arm64', { os: 'linux', arch: 'aarch64' }],
     ['darwin aarch64', 'darwin', 'arm64', { os: 'darwin', arch: 'aarch64' }],
   ])('detects %s correctly', (_, platform, arch, expected) => {
-    expect(detectPlatformTuple(platform as NodeJS.Platform, arch as NodeJS.Architecture)).toEqual(expected)
+    expect(
+      detectPlatformTuple(
+        platform as NodeJS.Platform,
+        arch as NodeJS.Architecture,
+      ),
+    ).toEqual(expected)
   })
 
   it('detects darwin x86_64 correctly without rosetta', () => {
@@ -57,7 +62,12 @@ describe('detectPlatformTuple', () => {
       'Unsupported architecture for setup-jlo: ia32',
     ],
   ])('throws for %s', (_, platform, arch, message) => {
-    expect(() => detectPlatformTuple(platform as NodeJS.Platform, arch as NodeJS.Architecture)).toThrow(message)
+    expect(() =>
+      detectPlatformTuple(
+        platform as NodeJS.Platform,
+        arch as NodeJS.Architecture,
+      ),
+    ).toThrow(message)
   })
 })
 
