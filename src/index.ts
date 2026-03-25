@@ -4,25 +4,23 @@ import { resolveInstallRequest } from './action/install-request'
 import { emitInstallOutputs } from './action/outputs'
 import { installMainSource } from './app/install-main-source'
 import { installReleaseVersion } from './app/install-release'
-import { parseVersionToken } from './domain/version-token'
+import { parseVersionRef } from './domain/version-ref'
 
-export function resolveInstallMode(
-  versionToken: string,
-): 'release-tag' | 'main' {
-  return parseVersionToken(versionToken).kind
+export function resolveInstallMode(versionRef: string): 'release-tag' | 'main' {
+  return parseVersionRef(versionRef).kind
 }
 
 async function run(): Promise<void> {
   const token = readRequiredInput('token')
-  const versionToken = readRequiredInput('version')
+  const versionRef = readRequiredInput('version')
   const submoduleToken = readOptionalInput('submodule_token')
 
-  const parsedVersion = parseVersionToken(versionToken)
+  const parsedVersion = parseVersionRef(versionRef)
   const installMode = parsedVersion.kind
 
-  core.info(`Resolved version='${versionToken}' (${installMode}).`)
+  core.info(`Resolved version='${versionRef}' (${installMode}).`)
 
-  emitInstallOutputs(versionToken, installMode)
+  emitInstallOutputs(versionRef, installMode)
 
   const installRequest = resolveInstallRequest({
     token,

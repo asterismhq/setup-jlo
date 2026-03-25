@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { resolveGitHubHttpUsername } from '../../src/adapters/github/github-git-http-username'
+import { resolveGitHubHttpUsername } from '../../../src/adapters/github/github-git-http-username'
 
 afterEach(() => {
   vi.unstubAllGlobals()

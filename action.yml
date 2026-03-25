@@ -1,18 +1,18 @@
 name: setup-jlo
-description: Set up the jlo CLI for a specified jlo version token
+description: Set up the jlo CLI for a specified jlo version ref
 inputs:
   token:
     description: GitHub token with read access to asterismhq/jlo release assets and source
     required: true
   version:
-    description: jlo version token to install, such as 23.0.0 or main
+    description: jlo version ref to install, such as 23.0.0 or main; a leading v is also accepted for semver releases
     required: true
   submodule_token:
-    description: Token for required authenticated submodule fetch in main mode
+    description: Token for required authenticated submodule fetch in main mode. Required when version is main.
     required: false
 outputs:
-  version-token:
-    description: Raw token passed to the version input
+  version-ref:
+    description: Raw version ref passed to the version input
   install-mode:
     description: Resolved installation mode (release-tag or main)
 runs:

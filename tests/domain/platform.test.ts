@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import {
   buildReleaseAssetCandidates,
   detectPlatformTuple,
@@ -10,52 +10,47 @@ vi.mock('node:child_process', () => ({
 }))
 
 describe('detectPlatformTuple', () => {
-  let originalPlatform: NodeJS.Platform
-  let originalArch: NodeJS.Architecture
-
   beforeEach(() => {
-    originalPlatform = process.platform
-    originalArch = process.arch
     vi.clearAllMocks()
   })
-
-  afterEach(() => {
-    Object.defineProperty(process, 'platform', { value: originalPlatform })
-    Object.defineProperty(process, 'arch', { value: originalArch })
-  })
-
-  const mockProcess = (platform: string, arch: string) => {
-    Object.defineProperty(process, 'platform', { value: platform })
-    Object.defineProperty(process, 'arch', { value: arch })
-  }
 
   it.each([
     ['linux x86_64', 'linux', 'x64', { os: 'linux', arch: 'x86_64' }],
     ['linux aarch64', 'linux', 'arm64', { os: 'linux', arch: 'aarch64' }],
     ['darwin aarch64', 'darwin', 'arm64', { os: 'darwin', arch: 'aarch64' }],
   ])('detects %s correctly', (_, platform, arch, expected) => {
-    mockProcess(platform, arch)
-    expect(detectPlatformTuple()).toEqual(expected)
+    expect(
+      detectPlatformTuple(
+        platform as NodeJS.Platform,
+        arch as NodeJS.Architecture,
+      ),
+    ).toEqual(expected)
   })
 
   it('detects darwin x86_64 correctly without rosetta', () => {
-    mockProcess('darwin', 'x64')
     vi.mocked(child_process.execFileSync).mockReturnValue('0\n')
-    expect(detectPlatformTuple()).toEqual({ os: 'darwin', arch: 'x86_64' })
+    expect(detectPlatformTuple('darwin', 'x64')).toEqual({
+      os: 'darwin',
+      arch: 'x86_64',
+    })
   })
 
   it('detects darwin aarch64 correctly with rosetta', () => {
-    mockProcess('darwin', 'x64')
     vi.mocked(child_process.execFileSync).mockReturnValue('1\n')
-    expect(detectPlatformTuple()).toEqual({ os: 'darwin', arch: 'aarch64' })
+    expect(detectPlatformTuple('darwin', 'x64')).toEqual({
+      os: 'darwin',
+      arch: 'aarch64',
+    })
   })
 
   it('falls back to x86_64 on darwin if sysctl throws', () => {
-    mockProcess('darwin', 'x64')
     vi.mocked(child_process.execFileSync).mockImplementation(() => {
       throw new Error('sysctl not found')
     })
-    expect(detectPlatformTuple()).toEqual({ os: 'darwin', arch: 'x86_64' })
+    expect(detectPlatformTuple('darwin', 'x64')).toEqual({
+      os: 'darwin',
+      arch: 'x86_64',
+    })
   })
 
   it.each([
@@ -67,8 +62,12 @@ describe('detectPlatformTuple', () => {
       'Unsupported architecture for setup-jlo: ia32',
     ],
   ])('throws for %s', (_, platform, arch, message) => {
-    mockProcess(platform, arch)
-    expect(() => detectPlatformTuple()).toThrow(message)
+    expect(() =>
+      detectPlatformTuple(
+        platform as NodeJS.Platform,
+        arch as NodeJS.Architecture,
+      ),
+    ).toThrow(message)
   })
 })
 
