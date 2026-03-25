@@ -48,7 +48,9 @@ export async function installMainSource(
   try {
     // Keep source acquisition on the same authenticated clone path used by builds.
     // A separate ls-remote path previously broke main-mode auth in CI.
-    core.info(`Cloning ${JLO_REPOSITORY}@${sourceBranch} for source build.`)
+    core.info(
+      `Cloning ${JLO_REPOSITORY.owner}/${JLO_REPOSITORY.repo}@${sourceBranch} for source build.`,
+    )
 
     cloneGitHubBranch({
       repository: JLO_REPOSITORY,

@@ -20,7 +20,7 @@ describe('release-asset-api adapter', () => {
       await expect(
         fetchReleaseAsset({
           token: 'token',
-          releaseRepository: 'owner/repo',
+          releaseRepository: { owner: 'owner', repo: 'repo' },
           tagVersion: 'v1.0.0',
           candidates: ['jlo-linux-x86_64'],
         }),
@@ -44,7 +44,7 @@ describe('release-asset-api adapter', () => {
       await expect(
         fetchReleaseAsset({
           token: 'secret',
-          releaseRepository: 'owner/repo',
+          releaseRepository: { owner: 'owner', repo: 'repo' },
           tagVersion: 'v1.0.0',
           candidates: ['asset-linux'],
         }),
@@ -65,7 +65,7 @@ describe('release-asset-api adapter', () => {
       await expect(
         fetchReleaseAsset({
           token: 'secret',
-          releaseRepository: 'owner/repo',
+          releaseRepository: { owner: 'owner', repo: 'repo' },
           tagVersion: 'v1.0.0',
           candidates: ['asset-linux'],
         }),
@@ -86,7 +86,7 @@ describe('release-asset-api adapter', () => {
       await expect(
         fetchReleaseAsset({
           token: 'secret',
-          releaseRepository: 'owner/repo',
+          releaseRepository: { owner: 'owner', repo: 'repo' },
           tagVersion: 'v1.0.0',
           candidates: ['asset-linux'],
         }),
@@ -113,7 +113,7 @@ describe('release-asset-api adapter', () => {
       await expect(
         fetchReleaseAsset({
           token: 'secret',
-          releaseRepository: 'owner/repo',
+          releaseRepository: { owner: 'owner', repo: 'repo' },
           tagVersion: 'v1.0.0',
           candidates: ['asset-linux', 'fallback-linux'],
         }),
@@ -150,7 +150,7 @@ describe('release-asset-api adapter', () => {
       await expect(
         fetchReleaseAsset({
           token: 'secret',
-          releaseRepository: 'owner/repo',
+          releaseRepository: { owner: 'owner', repo: 'repo' },
           tagVersion: 'v1.0.0',
           candidates: ['asset-linux'],
         }),
@@ -190,7 +190,7 @@ describe('release-asset-api adapter', () => {
 
       const result = await fetchReleaseAsset({
         token: 'secret',
-        releaseRepository: 'owner/repo',
+        releaseRepository: { owner: 'owner', repo: 'repo' },
         tagVersion: 'v1.0.0',
         candidates: ['asset-linux', 'fallback-linux'],
       })
