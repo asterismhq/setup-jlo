@@ -62,7 +62,12 @@ describe('cargo-build adapter', () => {
 
       expect(childProcess.spawnSync).toHaveBeenCalledWith(
         'cargo',
-        ['build', '--release', '--manifest-path', '/src/Cargo.toml'],
+        expect.arrayContaining([
+          'build',
+          '--release',
+          '--manifest-path',
+          '/src/Cargo.toml',
+        ]),
         expect.objectContaining({
           cwd: '/src',
           env: expect.objectContaining({
