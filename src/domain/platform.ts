@@ -9,8 +9,8 @@ export interface PlatformTuple {
 }
 
 export function detectPlatformTuple(
-  platformStr = process.platform,
-  archStr = process.arch,
+  platformStr: NodeJS.Platform = process.platform,
+  archStr: NodeJS.Architecture = process.arch,
 ): PlatformTuple {
   const os = normalizeOs(platformStr)
   const arch = normalizeArch(archStr)
