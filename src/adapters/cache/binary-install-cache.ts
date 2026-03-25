@@ -10,7 +10,7 @@ import { spawnSync } from 'node:child_process'
 import { join } from 'node:path'
 import * as core from '@actions/core'
 import type { PlatformTuple } from '../../domain/platform'
-import { extractSemver } from '../../domain/version-ref'
+import { extractFirstSemverTriplet } from '../../domain/version-ref'
 
 export function resolvePlatformCacheDirectory(
   cacheRoot: string,
@@ -84,14 +84,4 @@ export function copyExecutableBinary(
 
 export function ensureExecutablePermissions(path: string): void {
   chmodSync(path, 0o755)
-}
-
-function extractFirstSemverTriplet(value: string): string | undefined {
-  for (const segment of value.split(/\s+/)) {
-    const semverCore = extractSemver(segment)
-    if (semverCore !== undefined) {
-      return semverCore
-    }
-  }
-  return undefined
 }

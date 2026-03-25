@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { extractSemver, parseVersionRef } from '../../src/domain/version-ref'
+import {
+  extractFirstSemverTriplet,
+  extractSemver,
+  parseVersionRef,
+} from '../../src/domain/version-ref'
 
 describe('setup-jlo extractSemver behavior', () => {
   it('extracts bare semver', () => {
@@ -50,5 +54,36 @@ describe('setup-jlo version ref behavior', () => {
     expect(() => parseVersionRef('latest')).toThrow(
       "Invalid version input 'latest'. Expected semver or 'main'.",
     )
+  })
+})
+
+describe('setup-jlo extractFirstSemverTriplet behavior', () => {
+  it('extracts semver from a single valid token', () => {
+    expect(extractFirstSemverTriplet('1.2.3')).toBe('1.2.3')
+  })
+
+  it('extracts semver from a valid v-prefixed token', () => {
+    expect(extractFirstSemverTriplet('v1.2.3')).toBe('1.2.3')
+  })
+
+  it('extracts the first valid semver from multiple tokens', () => {
+    expect(extractFirstSemverTriplet('jlo version 1.2.3')).toBe('1.2.3')
+    expect(extractFirstSemverTriplet('jlo v1.2.3 (abcdef)')).toBe('1.2.3')
+  })
+
+  it('ignores invalid tokens and finds the first valid semver', () => {
+    expect(extractFirstSemverTriplet('version unknown but maybe 1.2.3')).toBe(
+      '1.2.3',
+    )
+  })
+
+  it('returns undefined if no valid semver is found', () => {
+    expect(extractFirstSemverTriplet('version unknown')).toBeUndefined()
+    expect(extractFirstSemverTriplet('jlo 1.2')).toBeUndefined()
+    expect(extractFirstSemverTriplet('')).toBeUndefined()
+  })
+
+  it('handles irregular whitespace', () => {
+    expect(extractFirstSemverTriplet('  jlo   \t  v1.2.3 \n ')).toBe('1.2.3')
   })
 })
