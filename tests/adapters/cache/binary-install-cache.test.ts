@@ -22,7 +22,9 @@ describe('binary-install-cache adapter', () => {
   let tempDir: string
 
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'binary-install-cache-test-'))
+    tempDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'binary-install-cache-test-'),
+    )
   })
 
   afterEach(() => {
@@ -186,7 +188,7 @@ describe('binary-install-cache adapter', () => {
       expect(fs.readFileSync(destPath, 'utf8')).toBe('executable content')
       if (os.platform() !== 'win32') {
         const stats = fs.statSync(destPath)
-        expect((stats.mode & 0o777)).toBe(0o755)
+        expect(stats.mode & 0o777).toBe(0o755)
       }
     })
   })
@@ -203,7 +205,7 @@ describe('binary-install-cache adapter', () => {
 
       if (os.platform() !== 'win32') {
         const stats = fs.statSync(targetPath)
-        expect((stats.mode & 0o777)).toBe(0o755)
+        expect(stats.mode & 0o777).toBe(0o755)
       }
     })
   })
