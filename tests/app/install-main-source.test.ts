@@ -182,6 +182,36 @@ describe('app install main-source orchestration', () => {
     })
   })
 
+  it('fails when cargo is not installed on PATH', async () => {
+    commandExists.mockImplementation((cmd) => cmd !== 'cargo')
+
+    await expect(
+      installMainSource({
+        token: 'token',
+        submoduleToken: 'submodule-token',
+        allowDarwinX8664Fallback: false,
+        cacheRoot: '/cache',
+        tempDirectory: '/tmp',
+      }),
+    ).rejects.toThrow(
+      'main install requires cargo on PATH. Provision Rust toolchain on the runner.',
+    )
+  })
+
+  it('fails when git is not installed on PATH', async () => {
+    commandExists.mockImplementation((cmd) => cmd !== 'git')
+
+    await expect(
+      installMainSource({
+        token: 'token',
+        submoduleToken: 'submodule-token',
+        allowDarwinX8664Fallback: false,
+        cacheRoot: '/cache',
+        tempDirectory: '/tmp',
+      }),
+    ).rejects.toThrow('main install requires git on PATH.')
+  })
+
   it('safely wraps non-Error strings thrown during submodule updates', async () => {
     existsSync.mockReturnValue(false)
     updateGitHubSubmodules.mockImplementation(() => {
