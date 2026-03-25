@@ -47,12 +47,17 @@ export async function installReleaseVersion(
     platform,
     request.allowDarwinX8664Fallback,
   )
-  const releaseAsset = await fetchReleaseAsset({
+  const releaseAssetResult = await fetchReleaseAsset({
     token: request.token,
     releaseRepository: JLO_REPOSITORY,
     tagVersion: versionRef.tag,
     candidates,
   })
+
+  if (!releaseAssetResult.ok) {
+    throw releaseAssetResult.error
+  }
+  const releaseAsset = releaseAssetResult.value
 
   const tempDirectory = mkdtempSync(
     join(request.tempDirectory, 'setup-jlo-release-'),

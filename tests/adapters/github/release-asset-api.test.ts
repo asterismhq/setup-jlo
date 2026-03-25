@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, afterEach } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fetchReleaseAsset } from '../../../src/adapters/github/release-asset-api'
 
 describe('release-asset-api adapter', () => {
@@ -26,7 +26,7 @@ describe('release-asset-api adapter', () => {
       },
       { json: { assets: [{ name: 'missing-id' }] }, desc: 'asset missing id' },
       { json: { assets: [{ id: 123 }] }, desc: 'asset missing name' },
-    ])('handles unexpected JSON metadata shape: $desc', async ({ json }) => {
+    ])('returns error on unexpected JSON metadata shape: $desc', async ({ json }) => {
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
@@ -36,24 +36,25 @@ describe('release-asset-api adapter', () => {
         }),
       )
 
-      // "No matching release asset..." is expected when `assets` is optional and properly undefined,
-      // while "/Invalid release metadata structure/" indicates it failed the metadata type guard.
-      await expect(
-        fetchReleaseAsset({
-          token: 'token',
-          releaseRepository: { owner: 'owner', repo: 'repo' },
-          tagVersion: 'v1.0.0',
-          candidates: ['jlo-linux-x86_64'],
-        }),
-      ).rejects.toThrow(
-        /Invalid release metadata structure|No matching release asset/i,
-      )
+      const result = await fetchReleaseAsset({
+        token: 'token',
+        releaseRepository: { owner: 'owner', repo: 'repo' },
+        tagVersion: 'v1.0.0',
+        candidates: ['jlo-linux-x86_64'],
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.message).toMatch(
+          /Invalid release metadata structure|No matching release asset/i,
+        )
+      }
     })
 
     it.each([
       { status: 401, description: 'unauthorized' },
       { status: 403, description: 'forbidden' },
-    ])('throws error on $status $description metadata fetch', async ({
+    ])('returns error on $status $description metadata fetch', async ({
       status,
     }) => {
       vi.stubGlobal(
@@ -64,19 +65,22 @@ describe('release-asset-api adapter', () => {
         }),
       )
 
-      await expect(
-        fetchReleaseAsset({
-          token: 'secret',
-          releaseRepository: { owner: 'owner', repo: 'repo' },
-          tagVersion: 'v1.0.0',
-          candidates: ['asset-linux'],
-        }),
-      ).rejects.toThrowError(
-        "token cannot access release metadata in 'owner/repo'. Ensure contents:read and organization SSO authorization.",
-      )
+      const result = await fetchReleaseAsset({
+        token: 'secret',
+        releaseRepository: { owner: 'owner', repo: 'repo' },
+        tagVersion: 'v1.0.0',
+        candidates: ['asset-linux'],
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.message).toBe(
+          "token cannot access release metadata in 'owner/repo'. Ensure contents:read and organization SSO authorization.",
+        )
+      }
     })
 
-    it('throws error on 404 not found metadata fetch', async () => {
+    it('returns error on 404 not found metadata fetch', async () => {
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
@@ -85,19 +89,22 @@ describe('release-asset-api adapter', () => {
         }),
       )
 
-      await expect(
-        fetchReleaseAsset({
-          token: 'secret',
-          releaseRepository: { owner: 'owner', repo: 'repo' },
-          tagVersion: 'v1.0.0',
-          candidates: ['asset-linux'],
-        }),
-      ).rejects.toThrowError(
-        "Release 'v1.0.0' was not found (or is inaccessible) in 'owner/repo'.",
-      )
+      const result = await fetchReleaseAsset({
+        token: 'secret',
+        releaseRepository: { owner: 'owner', repo: 'repo' },
+        tagVersion: 'v1.0.0',
+        candidates: ['asset-linux'],
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.message).toBe(
+          "Release 'v1.0.0' was not found (or is inaccessible) in 'owner/repo'.",
+        )
+      }
     })
 
-    it('throws error on other non-ok metadata fetch', async () => {
+    it('returns error on other non-ok metadata fetch', async () => {
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
@@ -106,19 +113,22 @@ describe('release-asset-api adapter', () => {
         }),
       )
 
-      await expect(
-        fetchReleaseAsset({
-          token: 'secret',
-          releaseRepository: { owner: 'owner', repo: 'repo' },
-          tagVersion: 'v1.0.0',
-          candidates: ['asset-linux'],
-        }),
-      ).rejects.toThrowError(
-        "Failed to query release metadata for 'v1.0.0' in 'owner/repo' (HTTP 500).",
-      )
+      const result = await fetchReleaseAsset({
+        token: 'secret',
+        releaseRepository: { owner: 'owner', repo: 'repo' },
+        tagVersion: 'v1.0.0',
+        candidates: ['asset-linux'],
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.message).toBe(
+          "Failed to query release metadata for 'v1.0.0' in 'owner/repo' (HTTP 500).",
+        )
+      }
     })
 
-    it('throws error if no candidate matches', async () => {
+    it('returns error if no candidate matches', async () => {
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
@@ -133,19 +143,22 @@ describe('release-asset-api adapter', () => {
         }),
       )
 
-      await expect(
-        fetchReleaseAsset({
-          token: 'secret',
-          releaseRepository: { owner: 'owner', repo: 'repo' },
-          tagVersion: 'v1.0.0',
-          candidates: ['asset-linux', 'fallback-linux'],
-        }),
-      ).rejects.toThrowError(
-        "No matching release asset for asset-linux, fallback-linux in 'owner/repo'.",
-      )
+      const result = await fetchReleaseAsset({
+        token: 'secret',
+        releaseRepository: { owner: 'owner', repo: 'repo' },
+        tagVersion: 'v1.0.0',
+        candidates: ['asset-linux', 'fallback-linux'],
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.message).toBe(
+          "No matching release asset for asset-linux, fallback-linux in 'owner/repo'.",
+        )
+      }
     })
 
-    it('throws error if asset download fails', async () => {
+    it('returns error if asset download fails', async () => {
       vi.stubGlobal(
         'fetch',
         vi.fn().mockImplementation(async (url) => {
@@ -170,19 +183,22 @@ describe('release-asset-api adapter', () => {
         }),
       )
 
-      await expect(
-        fetchReleaseAsset({
-          token: 'secret',
-          releaseRepository: { owner: 'owner', repo: 'repo' },
-          tagVersion: 'v1.0.0',
-          candidates: ['asset-linux'],
-        }),
-      ).rejects.toThrowError(
-        "Failed to download release asset 'asset-linux' from 'owner/repo' (HTTP 500).",
-      )
+      const result = await fetchReleaseAsset({
+        token: 'secret',
+        releaseRepository: { owner: 'owner', repo: 'repo' },
+        tagVersion: 'v1.0.0',
+        candidates: ['asset-linux'],
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.message).toBe(
+          "Failed to download release asset 'asset-linux' from 'owner/repo' (HTTP 500).",
+        )
+      }
     })
 
-    it('succeeds and returns matched asset on valid response', async () => {
+    it('succeeds and returns ok result on valid response', async () => {
       vi.stubGlobal(
         'fetch',
         vi.fn().mockImplementation(async (url) => {
@@ -218,8 +234,11 @@ describe('release-asset-api adapter', () => {
         candidates: ['asset-linux', 'fallback-linux'],
       })
 
-      expect(result.name).toBe('fallback-linux')
-      expect(result.contents).toEqual(Buffer.from([1, 2, 3]))
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value.name).toBe('fallback-linux')
+        expect(result.value.contents).toEqual(Buffer.from([1, 2, 3]))
+      }
 
       expect(fetch).toHaveBeenCalledTimes(2)
       expect(fetch).toHaveBeenNthCalledWith(

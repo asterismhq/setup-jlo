@@ -1,3 +1,5 @@
+import { err, ok, type Result } from '../../domain/result'
+
 const GITHUB_API_USER_URL = 'https://api.github.com/user'
 const GITHUB_APP_INSTALLATION_TOKEN_PREFIX = 'ghs_'
 
@@ -29,10 +31,10 @@ function isGitHubUser(
 
 export async function resolveGitHubHttpUsername(
   token: string,
-): Promise<string> {
+): Promise<Result<string>> {
   // GitHub App installation tokens authenticate git over HTTPS as x-access-token.
   if (token.startsWith(GITHUB_APP_INSTALLATION_TOKEN_PREFIX)) {
-    return 'x-access-token'
+    return ok('x-access-token')
   }
 
   const response = await fetch(GITHUB_API_USER_URL, {
@@ -44,36 +46,44 @@ export async function resolveGitHubHttpUsername(
   })
 
   if (response.status === 401 || response.status === 403) {
-    throw new Error(
-      'token cannot resolve GitHub identity for HTTPS git authentication. Ensure the token remains valid and authorized.',
+    return err(
+      new Error(
+        'token cannot resolve GitHub identity for HTTPS git authentication. Ensure the token remains valid and authorized.',
+      ),
     )
   }
 
   if (!response.ok) {
-    throw new Error(
-      `Failed to resolve GitHub identity for HTTPS git authentication (HTTP ${response.status}).`,
+    return err(
+      new Error(
+        `Failed to resolve GitHub identity for HTTPS git authentication (HTTP ${response.status}).`,
+      ),
     )
   }
 
   const rawUser: unknown = await response.json()
   if (!isGitHubUser(rawUser)) {
-    throw new Error(
-      'Invalid user metadata structure received from GitHub API. Expected an object with optional string properties "login" and "type".',
+    return err(
+      new Error(
+        'Invalid user metadata structure received from GitHub API. Expected an object with optional string properties "login" and "type".',
+      ),
     )
   }
   const user = rawUser
   // Bot-owned tokens also require x-access-token rather than the reported login.
   if (user.type === 'Bot') {
-    return 'x-access-token'
+    return ok('x-access-token')
   }
 
   const username = user.login?.trim()
 
   if (!username) {
-    throw new Error(
-      'GitHub identity response did not include a usable login for HTTPS git authentication.',
+    return err(
+      new Error(
+        'GitHub identity response did not include a usable login for HTTPS git authentication.',
+      ),
     )
   }
 
-  return username
+  return ok(username)
 }

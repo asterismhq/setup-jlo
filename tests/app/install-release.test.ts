@@ -117,8 +117,11 @@ describe('app install release orchestration', () => {
     tmpdir.mockReturnValue(MOCK_TMP_DIR)
     mkdtempSync.mockReturnValue(MOCK_DOWNLOAD_PATH)
     fetchReleaseAsset.mockResolvedValue({
-      name: 'jlo-linux-x86_64',
-      contents: Buffer.from(''),
+      ok: true,
+      value: {
+        name: 'jlo-linux-x86_64',
+        contents: Buffer.from(''),
+      },
     })
     statSync.mockReturnValue({ size: 0 })
 
@@ -151,8 +154,11 @@ describe('app install release orchestration', () => {
     tmpdir.mockReturnValue(MOCK_TMP_DIR)
     mkdtempSync.mockReturnValue(MOCK_DOWNLOAD_PATH)
     fetchReleaseAsset.mockResolvedValue({
-      name: 'jlo-linux-x86_64',
-      contents: Buffer.from('binary-data'),
+      ok: true,
+      value: {
+        name: 'jlo-linux-x86_64',
+        contents: Buffer.from('binary-data'),
+      },
     })
     statSync.mockReturnValue({ size: 100 })
     ensureExecutablePermissions.mockImplementation(() => {
