@@ -24,7 +24,7 @@ describe('release-asset-api adapter', () => {
           tagVersion: 'v1.0.0',
           candidates: ['jlo-linux-x86_64'],
         }),
-      ).rejects.toThrow(/invalid/i)
+      ).rejects.toThrow(/Invalid release metadata structure/i)
     })
 
     it.each([
