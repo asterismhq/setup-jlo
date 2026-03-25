@@ -4,7 +4,6 @@ name: Jules Auto-merge
 on:
   push:
     branches:
-      - 'jules-narrator-*'
       - 'jules-observer-*'
       - 'jules-merger-*'
       - 'jules-dispatcher-*'
@@ -45,43 +44,25 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.JLO_BOT_PAT }}
 
-      - name: Discover open PR for pushed branch
-        id: discover
-        env:
-          GH_TOKEN: ${{ secrets.JLO_BOT_PAT }}
-        run: |
-          set -euo pipefail
-          pr_number=""
-          for attempt in $(seq 1 12); do
-            pr_number="$(gh pr list \
-              --state open \
-              --head "${GITHUB_REF_NAME}" \
-              --base "${JULES_WORKER_BRANCH}" \
-              --json number \
-              --jq '.[0].number')"
-            if [ -n "${pr_number}" ] && [ "${pr_number}" != "null" ]; then
-              break
-            fi
-
-            if [ "${attempt}" -eq 12 ]; then
-              echo "::error::No open PR found for branch '${GITHUB_REF_NAME}' into '${JULES_WORKER_BRANCH}' after 12 attempts."
-              exit 1
-            fi
-
-            case "${attempt}" in
-              1) sleep 1 ;;
-              2) sleep 2 ;;
-              *) sleep 5 ;;
-            esac
-          done
-          echo "pr_number=${pr_number}" >> "$GITHUB_OUTPUT"
-
       - name: Install jlo
         uses: asterismhq/setup-jlo@v1
         with:
           token: ${{ secrets.JLO_RELEASE_PAT }}
-          version: '23.2.0'
+          version: '24.2.0'
           submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
+
+      - name: Discover open PR for pushed branch
+        id: discover
+        uses: akitorahayashi/retry@v1
+        env:
+          GH_TOKEN: ${{ secrets.JLO_BOT_PAT }}
+        with:
+          command: >-
+            jlo workflow gh discover-pr "${GITHUB_REF_NAME}"
+          max_attempts: '12'
+          retry_on: error
+          retry_on_exit_codes: '11'
+          retry_delay_schedule_seconds: '1,2,5,5,5,5,5,5,5,5,5'
 
       - name: Validate branch contract
         run: |
@@ -91,10 +72,6 @@ jobs:
           mode=""
           layer=""
           case "${GITHUB_REF_NAME}" in
-            jules-narrator-*)
-              mode="layer"
-              layer="narrator"
-              ;;
             jules-observer-*)
               mode="layer"
               layer="observers"
@@ -136,59 +113,14 @@ jobs:
           echo "::endgroup::"
 
       - name: Process PR auto-merge
+        uses: akitorahayashi/retry@v1
         env:
           GH_TOKEN: ${{ secrets.JLO_BOT_PAT }}
-        run: |
-          set -euo pipefail
-
-          max_attempts=15
-          timeout_seconds=300
-          retry_wait_seconds=10
-          timeout_flag_dir=".tmp/jules-automerge-retry"
-          mkdir -p "${timeout_flag_dir}"
-
-          for attempt in $(seq 1 "${max_attempts}"); do
-            timeout_flag="${timeout_flag_dir}/attempt-${attempt}.timed-out"
-            rm -f "${timeout_flag}"
-
-            jlo workflow process pr \
-              automerge ${{ steps.discover.outputs.pr_number }} \
-              --fail-on-error &
-            command_pid=$!
-
-            (
-              sleep "${timeout_seconds}"
-              if kill -0 "${command_pid}" 2>/dev/null; then
-                : > "${timeout_flag}"
-                kill "${command_pid}" 2>/dev/null || true
-                sleep 5
-                kill -9 "${command_pid}" 2>/dev/null || true
-              fi
-            ) &
-            watchdog_pid=$!
-
-            if wait "${command_pid}"; then
-              kill "${watchdog_pid}" 2>/dev/null || true
-              wait "${watchdog_pid}" 2>/dev/null || true
-              rm -f "${timeout_flag}"
-              exit 0
-            fi
-
-            exit_code=$?
-            kill "${watchdog_pid}" 2>/dev/null || true
-            wait "${watchdog_pid}" 2>/dev/null || true
-
-            if [ -f "${timeout_flag}" ]; then
-              rm -f "${timeout_flag}"
-              echo "::warning::Auto-merge attempt ${attempt}/${max_attempts} timed out after ${timeout_seconds} seconds."
-            else
-              echo "::warning::Auto-merge attempt ${attempt}/${max_attempts} failed with exit code ${exit_code}."
-            fi
-
-            if [ "${attempt}" -eq "${max_attempts}" ]; then
-              echo "::error::Auto-merge failed after ${max_attempts} attempts."
-              exit "${exit_code}"
-            fi
-
-            sleep "${retry_wait_seconds}"
-          done
+        with:
+          command: >-
+            jlo workflow gh enable-pr-automerge ${{ steps.discover.outputs.pr_number }}
+          max_attempts: '7'
+          timeout_seconds: '300'
+          retry_delay_schedule_seconds: '1,2,4,8,16,32'
+          retry_on: any
+          termination_grace_seconds: '5'
