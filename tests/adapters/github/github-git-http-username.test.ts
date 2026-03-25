@@ -42,13 +42,20 @@ describe('github git http username resolution', () => {
     )
   })
 
-  it('throws on invalid JSON response structure', async () => {
+  it.each([
+    { json: null, desc: 'null payload' },
+    { json: 'string-payload', desc: 'primitive string payload' },
+    { json: 123, desc: 'primitive number payload' },
+    { json: { login: 123, type: 'User' }, desc: 'login is a number' },
+    { json: { login: 'jlo-user', type: null }, desc: 'type is null' },
+    { json: { login: 'jlo-user', type: 123 }, desc: 'type is a number' },
+  ])('throws on invalid JSON response structure: $desc', async ({ json }) => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
-        json: async () => ({ login: 123, type: null }),
+        json: async () => json,
       }),
     )
 

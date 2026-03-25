@@ -7,21 +7,26 @@ function isReleaseMetadata(
     return false
   }
 
-  const obj = data as Record<string, unknown>
+  if (!('assets' in data)) {
+    return true
+  }
 
-  if (obj.assets === undefined) {
+  if (data.assets === undefined) {
     return true
   }
 
   return (
-    Array.isArray(obj.assets) &&
-    obj.assets.every((asset: unknown) => {
+    Array.isArray(data.assets) &&
+    data.assets.every((asset: unknown) => {
       if (typeof asset !== 'object' || asset === null) {
         return false
       }
-      const assetObj = asset as Record<string, unknown>
+
       return (
-        typeof assetObj.id === 'number' && typeof assetObj.name === 'string'
+        'id' in asset &&
+        typeof asset.id === 'number' &&
+        'name' in asset &&
+        typeof asset.name === 'string'
       )
     })
   )

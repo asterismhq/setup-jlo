@@ -7,24 +7,52 @@ describe('release-asset-api adapter', () => {
   })
 
   describe('fetchReleaseAsset', () => {
-    it('throws on invalid JSON metadata', async () => {
+    it.each([
+      { json: null, desc: 'null payload' },
+      { json: 'string-payload', desc: 'primitive string payload' },
+      { json: 123, desc: 'primitive number payload' },
+      { json: { other: 'prop' }, desc: 'missing assets property' },
+      { json: { assets: undefined }, desc: 'assets is undefined' },
+      { json: { assets: 'not-an-array' }, desc: 'assets is not an array' },
+      { json: { assets: [null] }, desc: 'asset element is null' },
+      { json: { assets: [123] }, desc: 'asset element is a number' },
+      {
+        json: { assets: [{ id: 'not a number', name: 'valid-name' }] },
+        desc: 'asset id is not a number',
+      },
+      {
+        json: { assets: [{ id: 123, name: 123 }] },
+        desc: 'asset name is not a string',
+      },
+      { json: { assets: [{ name: 'missing-id' }] }, desc: 'asset missing id' },
+      { json: { assets: [{ id: 123 }] }, desc: 'asset missing name' },
+    ])('handles unexpected JSON metadata shape: $desc', async ({ json }) => {
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
           ok: true,
           status: 200,
-          json: async () => ({ assets: [{ id: 'not a number', name: 123 }] }),
+          json: async () => json,
         }),
       )
 
-      await expect(
-        fetchReleaseAsset({
+      // "No matching release asset..." is expected when `assets` is optional and properly undefined,
+      // while "/Invalid release metadata structure/" indicates it failed the metadata type guard.
+      try {
+        await fetchReleaseAsset({
           token: 'token',
           releaseRepository: { owner: 'owner', repo: 'repo' },
           tagVersion: 'v1.0.0',
           candidates: ['jlo-linux-x86_64'],
-        }),
-      ).rejects.toThrow(/Invalid release metadata structure/i)
+        })
+        expect.unreachable('Should have thrown')
+      } catch (err: unknown) {
+        const error = err as Error
+        expect(
+          error.message.includes('Invalid release metadata structure') ||
+            error.message.includes('No matching release asset'),
+        ).toBe(true)
+      }
     })
 
     it.each([

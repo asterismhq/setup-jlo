@@ -8,13 +8,19 @@ function isGitHubUser(
     return false
   }
 
-  const obj = data as Record<string, unknown>
-
-  if (obj.login !== undefined && typeof obj.login !== 'string') {
+  if (
+    'login' in data &&
+    data.login !== undefined &&
+    typeof data.login !== 'string'
+  ) {
     return false
   }
 
-  if (obj.type !== undefined && typeof obj.type !== 'string') {
+  if (
+    'type' in data &&
+    data.type !== undefined &&
+    typeof data.type !== 'string'
+  ) {
     return false
   }
 
