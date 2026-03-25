@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { mkdtempSync, rmSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs'
+import {
+  mkdtempSync,
+  rmSync,
+  readdirSync,
+  writeFileSync,
+  mkdirSync,
+} from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
@@ -50,7 +56,6 @@ vi.mock('../../src/adapters/github/release-asset-api', () => ({
 
 import { installReleaseVersion } from '../../src/app/install-release'
 import { isCachedBinaryForVersion } from '../../src/adapters/cache/binary-install-cache'
-
 
 describe('app install release orchestration', () => {
   let tempTestDir: string

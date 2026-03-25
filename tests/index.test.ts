@@ -77,7 +77,11 @@ describe('orchestrator (src/index.ts)', () => {
       expect(resolveInstallMode('main')).toBe('main')
       expect(parseVersionRef).toHaveBeenCalledWith('main')
 
-      parseVersionRef.mockReturnValue({ kind: 'release-tag', version: '1.0.0', tag: 'v1.0.0' })
+      parseVersionRef.mockReturnValue({
+        kind: 'release-tag',
+        version: '1.0.0',
+        tag: 'v1.0.0',
+      })
       expect(resolveInstallMode('1.0.0')).toBe('release-tag')
       expect(parseVersionRef).toHaveBeenCalledWith('1.0.0')
     })
@@ -114,7 +118,11 @@ describe('orchestrator (src/index.ts)', () => {
     })
 
     it('invokes installReleaseVersion when version kind is release-tag', async () => {
-      const mockParsedVersion = { kind: 'release-tag', version: '1.2.3', tag: 'v1.2.3' }
+      const mockParsedVersion = {
+        kind: 'release-tag',
+        version: '1.2.3',
+        tag: 'v1.2.3',
+      }
       parseVersionRef.mockReturnValue(mockParsedVersion)
       readRequiredInput.mockImplementation((name: string) => {
         if (name === 'token') return 'mock-token'
@@ -138,7 +146,10 @@ describe('orchestrator (src/index.ts)', () => {
       expect(parseVersionRef).toHaveBeenCalledWith('1.2.3')
       expect(emitInstallOutputs).toHaveBeenCalledWith('1.2.3', 'release-tag')
 
-      expect(installReleaseVersion).toHaveBeenCalledWith(mockRequest, mockParsedVersion)
+      expect(installReleaseVersion).toHaveBeenCalledWith(
+        mockRequest,
+        mockParsedVersion,
+      )
       expect(installMainSource).not.toHaveBeenCalled()
     })
 
