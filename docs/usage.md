@@ -1,6 +1,6 @@
 # Usage
 
-`setup-jlo` installs `jlo` for the version token passed by the workflow.
+`setup-jlo` installs `jlo` for the version ref passed by the workflow.
 
 ## Standard Workflow Usage
 
@@ -17,9 +17,9 @@ Examples use the bare semver form. A leading `v` is also accepted for semver rel
 
 ## Install Modes
 
-The `version` input accepts two version token classes:
+The `version` input accepts two version ref classes:
 
-- semver such as `22.0.1`: downloads the matching `jlo-*` runtime release asset from `asterismhq/jlo`
+- semver such as `22.0.1`: downloads the matching `jlo-*` runtime release asset from `asterismhq/jlo`; a leading `v` is also accepted and resolves to the same release tag
 - `main`: resolves the current `main` head SHA, reuses a matching cached build when present, or clones the source repository, fetches required submodules, and builds `jlo` with `cargo`
 
 ## Main-mode Example

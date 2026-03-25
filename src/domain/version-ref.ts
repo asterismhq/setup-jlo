@@ -1,11 +1,11 @@
-export type ParsedVersionToken =
+export type ParsedVersionRef =
   | { kind: 'release-tag'; version: string; tag: string }
-  | { kind: 'main'; token: 'main' }
+  | { kind: 'main'; ref: 'main' }
 
 const SEMVER_PATTERN = /^\d+\.\d+\.\d+$/
 
-export function extractSemver(token: string): string | undefined {
-  const normalized = token.trim()
+export function extractSemver(segment: string): string | undefined {
+  const normalized = segment.trim()
   const semverCore = normalized.replace(/^v/, '')
   if (SEMVER_PATTERN.test(semverCore)) {
     return semverCore
@@ -13,11 +13,11 @@ export function extractSemver(token: string): string | undefined {
   return undefined
 }
 
-export function parseVersionToken(versionToken: string): ParsedVersionToken {
-  const normalized = versionToken.trim()
+export function parseVersionRef(versionRef: string): ParsedVersionRef {
+  const normalized = versionRef.trim()
 
   if (normalized === 'main') {
-    return { kind: 'main', token: 'main' }
+    return { kind: 'main', ref: 'main' }
   }
 
   const semverCore = extractSemver(normalized)

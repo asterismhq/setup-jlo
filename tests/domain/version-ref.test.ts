@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  extractSemver,
-  parseVersionToken,
-} from '../../src/domain/version-token'
+import { extractSemver, parseVersionRef } from '../../src/domain/version-ref'
 
 describe('setup-jlo extractSemver behavior', () => {
   it('extracts bare semver', () => {
@@ -25,32 +22,32 @@ describe('setup-jlo extractSemver behavior', () => {
   })
 })
 
-describe('setup-jlo version token behavior', () => {
-  it('parses semver token to release payload', () => {
-    expect(parseVersionToken('0.5.2')).toEqual({
+describe('setup-jlo version ref behavior', () => {
+  it('parses semver ref to release payload', () => {
+    expect(parseVersionRef('0.5.2')).toEqual({
       kind: 'release-tag',
       version: '0.5.2',
       tag: 'v0.5.2',
     })
   })
 
-  it('accepts v-prefixed semver token', () => {
-    expect(parseVersionToken('v0.5.2')).toEqual({
+  it('accepts v-prefixed semver ref', () => {
+    expect(parseVersionRef('v0.5.2')).toEqual({
       kind: 'release-tag',
       version: '0.5.2',
       tag: 'v0.5.2',
     })
   })
 
-  it('parses main token to main payload', () => {
-    expect(parseVersionToken('main')).toEqual({
+  it('parses main ref to main payload', () => {
+    expect(parseVersionRef('main')).toEqual({
       kind: 'main',
-      token: 'main',
+      ref: 'main',
     })
   })
 
-  it('rejects invalid token values', () => {
-    expect(() => parseVersionToken('latest')).toThrow(
+  it('rejects invalid ref values', () => {
+    expect(() => parseVersionRef('latest')).toThrow(
       "Invalid version input 'latest'. Expected semver or 'main'.",
     )
   })

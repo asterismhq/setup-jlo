@@ -23,21 +23,21 @@ import {
   buildReleaseAssetCandidates,
   detectPlatformTuple,
 } from '../domain/platform'
-import type { ParsedVersionToken } from '../domain/version-token'
+import type { ParsedVersionRef } from '../domain/version-ref'
 
 export async function installReleaseVersion(
   request: InstallRequest,
-  versionToken: Extract<ParsedVersionToken, { kind: 'release-tag' }>,
+  versionRef: Extract<ParsedVersionRef, { kind: 'release-tag' }>,
 ): Promise<void> {
   const platform = detectPlatformTuple()
   const cacheRoot = request.cacheRoot
   const platformDir = resolvePlatformCacheDirectory(cacheRoot, platform)
-  const installDir = ensureInstallDirectory(platformDir, versionToken.tag)
+  const installDir = ensureInstallDirectory(platformDir, versionRef.tag)
   const binaryPath = join(installDir, 'jlo')
 
-  if (isCachedBinaryForVersion(binaryPath, versionToken.version)) {
-    core.info(`jlo ${versionToken.version} already cached; skipping download.`)
-    pruneSiblingInstallDirectories(platformDir, versionToken.tag)
+  if (isCachedBinaryForVersion(binaryPath, versionRef.version)) {
+    core.info(`jlo ${versionRef.version} already cached; skipping download.`)
+    pruneSiblingInstallDirectories(platformDir, versionRef.tag)
     installBinaryOnPath(installDir)
     core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
     return
@@ -50,7 +50,7 @@ export async function installReleaseVersion(
   const releaseAsset = await fetchReleaseAsset({
     token: request.token,
     releaseRepository: JLO_REPOSITORY,
-    tagVersion: versionToken.tag,
+    tagVersion: versionRef.tag,
     candidates,
   })
 
@@ -63,7 +63,7 @@ export async function installReleaseVersion(
     writeFileSync(downloadPath, releaseAsset.contents)
     if (statSync(downloadPath).size === 0) {
       throw new Error(
-        `Downloaded release asset '${releaseAsset.name}' is missing or empty in '${JLO_REPOSITORY}' (${versionToken.tag}).`,
+        `Downloaded release asset '${releaseAsset.name}' is missing or empty in '${JLO_REPOSITORY}' (${versionRef.tag}).`,
       )
     }
 
@@ -73,7 +73,7 @@ export async function installReleaseVersion(
     rmSync(tempDirectory, { recursive: true, force: true })
   }
 
-  pruneSiblingInstallDirectories(platformDir, versionToken.tag)
+  pruneSiblingInstallDirectories(platformDir, versionRef.tag)
   installBinaryOnPath(installDir)
   core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
 }
