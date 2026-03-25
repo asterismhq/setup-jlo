@@ -7,9 +7,11 @@ afterEach(() => {
 
 describe('github git http username resolution', () => {
   it('uses x-access-token for GitHub App installation tokens', async () => {
-    await expect(resolveGitHubHttpUsername('ghs_example')).resolves.toBe(
-      'x-access-token',
-    )
+    const result = await resolveGitHubHttpUsername('ghs_example')
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.value).toBe('x-access-token')
+    }
   })
 
   it('resolves the authenticated login for personal access tokens', async () => {
@@ -22,9 +24,11 @@ describe('github git http username resolution', () => {
       }),
     )
 
-    await expect(resolveGitHubHttpUsername('github_pat_example')).resolves.toBe(
-      'jlo-user',
-    )
+    const result = await resolveGitHubHttpUsername('github_pat_example')
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.value).toBe('jlo-user')
+    }
   })
 
   it('uses x-access-token for bot-owned tokens', async () => {
@@ -37,12 +41,14 @@ describe('github git http username resolution', () => {
       }),
     )
 
-    await expect(resolveGitHubHttpUsername('github_pat_bot')).resolves.toBe(
-      'x-access-token',
-    )
+    const result = await resolveGitHubHttpUsername('github_pat_bot')
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.value).toBe('x-access-token')
+    }
   })
 
-  it('throws on invalid JSON response structure', async () => {
+  it('returns error on invalid JSON response structure', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -52,15 +58,17 @@ describe('github git http username resolution', () => {
       }),
     )
 
-    await expect(
-      resolveGitHubHttpUsername('github_pat_invalid'),
-    ).rejects.toThrow(/invalid/i)
+    const result = await resolveGitHubHttpUsername('github_pat_invalid')
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error.message).toMatch(/invalid/i)
+    }
   })
 
   it.each([
     { status: 401, description: 'unauthorized' },
     { status: 403, description: 'forbidden' },
-  ])('throws error on $status $description', async ({ status }) => {
+  ])('returns error on $status $description', async ({ status }) => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -69,14 +77,16 @@ describe('github git http username resolution', () => {
       }),
     )
 
-    await expect(
-      resolveGitHubHttpUsername('github_pat_invalid'),
-    ).rejects.toThrowError(
-      'token cannot resolve GitHub identity for HTTPS git authentication. Ensure the token remains valid and authorized.',
-    )
+    const result = await resolveGitHubHttpUsername('github_pat_invalid')
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error.message).toBe(
+        'token cannot resolve GitHub identity for HTTPS git authentication. Ensure the token remains valid and authorized.',
+      )
+    }
   })
 
-  it('throws error on other non-ok status', async () => {
+  it('returns error on other non-ok status', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -85,14 +95,16 @@ describe('github git http username resolution', () => {
       }),
     )
 
-    await expect(
-      resolveGitHubHttpUsername('github_pat_error'),
-    ).rejects.toThrowError(
-      'Failed to resolve GitHub identity for HTTPS git authentication (HTTP 500).',
-    )
+    const result = await resolveGitHubHttpUsername('github_pat_error')
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error.message).toBe(
+        'Failed to resolve GitHub identity for HTTPS git authentication (HTTP 500).',
+      )
+    }
   })
 
-  it('throws error if login is missing from successful response', async () => {
+  it('returns error if login is missing from successful response', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -102,14 +114,16 @@ describe('github git http username resolution', () => {
       }),
     )
 
-    await expect(
-      resolveGitHubHttpUsername('github_pat_missing_login'),
-    ).rejects.toThrowError(
-      'GitHub identity response did not include a usable login for HTTPS git authentication.',
-    )
+    const result = await resolveGitHubHttpUsername('github_pat_missing_login')
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error.message).toBe(
+        'GitHub identity response did not include a usable login for HTTPS git authentication.',
+      )
+    }
   })
 
-  it('throws error if login is empty from successful response', async () => {
+  it('returns error if login is empty from successful response', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -119,10 +133,12 @@ describe('github git http username resolution', () => {
       }),
     )
 
-    await expect(
-      resolveGitHubHttpUsername('github_pat_empty_login'),
-    ).rejects.toThrowError(
-      'GitHub identity response did not include a usable login for HTTPS git authentication.',
-    )
+    const result = await resolveGitHubHttpUsername('github_pat_empty_login')
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error.message).toBe(
+        'GitHub identity response did not include a usable login for HTTPS git authentication.',
+      )
+    }
   })
 })

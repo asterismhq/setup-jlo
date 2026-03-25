@@ -38,10 +38,21 @@ export async function installMainSource(
     throw new Error('main install requires submodule_token.')
   }
 
-  const sourceAuthUsername = await resolveGitHubHttpUsername(request.token)
-  const submoduleAuthUsername = await resolveGitHubHttpUsername(
+  const sourceAuthUsernameResult = await resolveGitHubHttpUsername(
+    request.token,
+  )
+  if (!sourceAuthUsernameResult.ok) {
+    throw sourceAuthUsernameResult.error
+  }
+  const sourceAuthUsername = sourceAuthUsernameResult.value
+
+  const submoduleAuthUsernameResult = await resolveGitHubHttpUsername(
     request.submoduleToken,
   )
+  if (!submoduleAuthUsernameResult.ok) {
+    throw submoduleAuthUsernameResult.error
+  }
+  const submoduleAuthUsername = submoduleAuthUsernameResult.value
 
   const clonePath = mkdtempSync(join(request.tempDirectory, 'setup-jlo-main-'))
 
@@ -50,15 +61,23 @@ export async function installMainSource(
     // A separate ls-remote path previously broke main-mode auth in CI.
     core.info(`Cloning ${JLO_REPOSITORY}@${sourceBranch} for source build.`)
 
-    cloneGitHubBranch({
+    const cloneResult = cloneGitHubBranch({
       repository: JLO_REPOSITORY,
       branch: sourceBranch,
       destination: clonePath,
       token: request.token,
       username: sourceAuthUsername,
     })
+    if (!cloneResult.ok) {
+      throw cloneResult.error
+    }
 
-    const sha = resolveGitWorktreeHeadSha({ cwd: clonePath })
+    const shaResult = resolveGitWorktreeHeadSha({ cwd: clonePath })
+    if (!shaResult.ok) {
+      throw shaResult.error
+    }
+    const sha = shaResult.value
+
     const platform = detectPlatformTuple()
     const shortSha = sha.slice(0, 12)
     const installKey = `main-${shortSha}`
@@ -77,15 +96,15 @@ export async function installMainSource(
 
     core.info('Using submodule_token for required submodule fetch.')
 
-    try {
-      updateGitHubSubmodules({
-        cwd: clonePath,
-        token: request.submoduleToken,
-        username: submoduleAuthUsername,
-      })
-    } catch (error) {
+    const updateResult = updateGitHubSubmodules({
+      cwd: clonePath,
+      token: request.submoduleToken,
+      username: submoduleAuthUsername,
+    })
+
+    if (!updateResult.ok) {
       throw new Error(
-        `Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): ${updateResult.error.message}`,
       )
     }
 

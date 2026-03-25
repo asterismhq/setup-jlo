@@ -95,11 +95,14 @@ describe('app install main-source orchestration', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    resolveGitHubHttpUsername.mockResolvedValue('jlo-user')
+    resolveGitHubHttpUsername.mockResolvedValue({ ok: true, value: 'jlo-user' })
     commandExists.mockReturnValue(true)
-    resolveGitWorktreeHeadSha.mockReturnValue(
-      '0123456789abcdef0123456789abcdef01234567',
-    )
+    cloneGitHubBranch.mockReturnValue({ ok: true, value: undefined })
+    updateGitHubSubmodules.mockReturnValue({ ok: true, value: undefined })
+    resolveGitWorktreeHeadSha.mockReturnValue({
+      ok: true,
+      value: '0123456789abcdef0123456789abcdef01234567',
+    })
     detectPlatformTuple.mockReturnValue({ os: 'linux', arch: 'x86_64' })
     resolvePlatformCacheDirectory.mockReturnValue('/cache/linux-x86_64')
     ensureInstallDirectory.mockReturnValue(
@@ -160,8 +163,9 @@ describe('app install main-source orchestration', () => {
 
   it('fails and cleans up temp directory if submodule update fails', async () => {
     existsSync.mockReturnValue(false)
-    updateGitHubSubmodules.mockImplementation(() => {
-      throw new Error('Git fetch failed')
+    updateGitHubSubmodules.mockReturnValue({
+      ok: false,
+      error: new Error('Git fetch failed'),
     })
 
     await expect(
@@ -210,24 +214,5 @@ describe('app install main-source orchestration', () => {
         tempDirectory: '/tmp',
       }),
     ).rejects.toThrow('main install requires git on PATH.')
-  })
-
-  it('safely wraps non-Error strings thrown during submodule updates', async () => {
-    existsSync.mockReturnValue(false)
-    updateGitHubSubmodules.mockImplementation(() => {
-      throw 'fatal: repository not found'
-    })
-
-    await expect(
-      installMainSource({
-        token: 'token',
-        submoduleToken: 'submodule-token',
-        allowDarwinX8664Fallback: false,
-        cacheRoot: '/cache',
-        tempDirectory: '/tmp',
-      }),
-    ).rejects.toThrow(
-      /Failed to fetch required git submodules.*: fatal: repository not found/,
-    )
   })
 })

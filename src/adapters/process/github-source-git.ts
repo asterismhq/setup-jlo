@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process'
+import { err, ok, type Result } from '../../domain/result'
 
 const GITHUB_HTTPS_BASE = 'https://github.com/'
 
@@ -15,8 +16,8 @@ export function cloneGitHubBranch(options: {
   destination: string
   token: string
   username: string
-}): void {
-  runGitHubCommand({
+}): Result<void> {
+  const result = runGitHubCommand({
     args: [
       'clone',
       '--quiet',
@@ -33,28 +34,42 @@ export function cloneGitHubBranch(options: {
     ],
     operation: `clone ${options.repository}@${options.branch}`,
   })
+
+  if (!result.ok) {
+    return err(result.error)
+  }
+
+  return ok(undefined)
 }
 
-export function resolveGitWorktreeHeadSha(options: { cwd: string }): string {
-  const output = runGitHubCommand({
+export function resolveGitWorktreeHeadSha(options: {
+  cwd: string
+}): Result<string> {
+  const result = runGitHubCommand({
     cwd: options.cwd,
     args: ['rev-parse', 'HEAD'],
     operation: 'resolve cloned source head SHA',
-  }).trim()
+  })
 
-  if (!isFullGitSha(output)) {
-    throw new Error('Failed to resolve cloned source head SHA.')
+  if (!result.ok) {
+    return err(result.error)
   }
 
-  return output
+  const output = result.value.trim()
+
+  if (!isFullGitSha(output)) {
+    return err(new Error('Failed to resolve cloned source head SHA.'))
+  }
+
+  return ok(output)
 }
 
 export function updateGitHubSubmodules(options: {
   cwd: string
   token: string
   username: string
-}): void {
-  runGitHubCommand({
+}): Result<void> {
+  const syncResult = runGitHubCommand({
     cwd: options.cwd,
     token: options.token,
     username: options.username,
@@ -62,13 +77,23 @@ export function updateGitHubSubmodules(options: {
     operation: 'sync git submodule configuration for source build',
   })
 
-  runGitHubCommand({
+  if (!syncResult.ok) {
+    return err(syncResult.error)
+  }
+
+  const updateResult = runGitHubCommand({
     cwd: options.cwd,
     token: options.token,
     username: options.username,
     args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
     operation: 'fetch git submodules for source build',
   })
+
+  if (!updateResult.ok) {
+    return err(updateResult.error)
+  }
+
+  return ok(undefined)
 }
 
 function runGitHubCommand(options: {
@@ -77,7 +102,7 @@ function runGitHubCommand(options: {
   username?: string
   args: string[]
   operation: string
-}): string {
+}): Result<string> {
   const gitArgs = [
     '-c',
     'credential.helper=',
@@ -116,15 +141,17 @@ function runGitHubCommand(options: {
   })
 
   if (result.status === 0) {
-    return result.stdout
+    return ok(result.stdout)
   }
 
   const stderr = result.stderr.trim()
   if (stderr.length > 0) {
-    throw new Error(`Failed to ${options.operation}: ${stderr}`)
+    return err(new Error(`Failed to ${options.operation}: ${stderr}`))
   }
 
-  throw new Error(`Failed to ${options.operation}: ${result.stdout.trim()}`)
+  return err(
+    new Error(`Failed to ${options.operation}: ${result.stdout.trim()}`),
+  )
 }
 
 function buildGitHubRepositoryUrl(repository: string): string {

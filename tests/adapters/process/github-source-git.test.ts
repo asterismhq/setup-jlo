@@ -31,42 +31,50 @@ describe('github-source-git adapter', () => {
   })
 
   describe('cloneGitHubBranch', () => {
-    it('throws error if clone fails due to stderr', () => {
+    it('returns error if clone fails due to stderr', () => {
       vi.mocked(childProcess.spawnSync).mockReturnValue({
         status: 1,
         stderr: 'fatal: Authentication failed',
         stdout: '',
       } as ReturnType<typeof childProcess.spawnSync>)
 
-      expect(() =>
-        cloneGitHubBranch({
-          repository: 'owner/repo',
-          branch: 'main',
-          destination: '/dest',
-          token: 'secret',
-          username: 'jlo-bot',
-        }),
-      ).toThrowError(
-        'Failed to clone owner/repo@main: fatal: Authentication failed',
-      )
+      const result = cloneGitHubBranch({
+        repository: 'owner/repo',
+        branch: 'main',
+        destination: '/dest',
+        token: 'secret',
+        username: 'jlo-bot',
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.message).toBe(
+          'Failed to clone owner/repo@main: fatal: Authentication failed',
+        )
+      }
     })
 
-    it('throws error if clone fails and stderr is empty but stdout exists', () => {
+    it('returns error if clone fails and stderr is empty but stdout exists', () => {
       vi.mocked(childProcess.spawnSync).mockReturnValue({
         status: 1,
         stderr: '  ',
         stdout: 'Error message in stdout',
       } as ReturnType<typeof childProcess.spawnSync>)
 
-      expect(() =>
-        cloneGitHubBranch({
-          repository: 'owner/repo',
-          branch: 'main',
-          destination: '/dest',
-          token: 'secret',
-          username: 'jlo-bot',
-        }),
-      ).toThrowError('Failed to clone owner/repo@main: Error message in stdout')
+      const result = cloneGitHubBranch({
+        repository: 'owner/repo',
+        branch: 'main',
+        destination: '/dest',
+        token: 'secret',
+        username: 'jlo-bot',
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.message).toBe(
+          'Failed to clone owner/repo@main: Error message in stdout',
+        )
+      }
     })
 
     it('succeeds on successful clone', () => {
@@ -102,28 +110,36 @@ describe('github-source-git adapter', () => {
   })
 
   describe('resolveGitWorktreeHeadSha', () => {
-    it('throws error if command fails', () => {
+    it('returns error if command fails', () => {
       vi.mocked(childProcess.spawnSync).mockReturnValue({
         status: 1,
         stderr: 'Not a git repository',
         stdout: '',
       } as ReturnType<typeof childProcess.spawnSync>)
 
-      expect(() => resolveGitWorktreeHeadSha({ cwd: '/src' })).toThrowError(
-        'Failed to resolve cloned source head SHA: Not a git repository',
-      )
+      const result = resolveGitWorktreeHeadSha({ cwd: '/src' })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.message).toBe(
+          'Failed to resolve cloned source head SHA: Not a git repository',
+        )
+      }
     })
 
-    it('throws error if sha format is invalid', () => {
+    it('returns error if sha format is invalid', () => {
       vi.mocked(childProcess.spawnSync).mockReturnValue({
         status: 0,
         stdout: 'shortsha',
         stderr: '',
       } as ReturnType<typeof childProcess.spawnSync>)
 
-      expect(() => resolveGitWorktreeHeadSha({ cwd: '/src' })).toThrowError(
-        'Failed to resolve cloned source head SHA.',
-      )
+      const result = resolveGitWorktreeHeadSha({ cwd: '/src' })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.message).toBe(
+          'Failed to resolve cloned source head SHA.',
+        )
+      }
     })
 
     it('returns sha if format is valid', () => {
@@ -134,30 +150,37 @@ describe('github-source-git adapter', () => {
         stderr: '',
       } as ReturnType<typeof childProcess.spawnSync>)
 
-      expect(resolveGitWorktreeHeadSha({ cwd: '/src' })).toBe(sha)
+      const result = resolveGitWorktreeHeadSha({ cwd: '/src' })
+      expect(result.ok).toBe(true)
+      if (result.ok) {
+        expect(result.value).toBe(sha)
+      }
     })
   })
 
   describe('updateGitHubSubmodules', () => {
-    it('throws error if sync fails', () => {
+    it('returns error if sync fails', () => {
       vi.mocked(childProcess.spawnSync).mockReturnValueOnce({
         status: 1,
         stderr: 'fatal: no submodule mapping found',
         stdout: '',
       } as ReturnType<typeof childProcess.spawnSync>)
 
-      expect(() =>
-        updateGitHubSubmodules({
-          cwd: '/src',
-          token: 'secret',
-          username: 'jlo-bot',
-        }),
-      ).toThrowError(
-        'Failed to sync git submodule configuration for source build: fatal: no submodule mapping found',
-      )
+      const result = updateGitHubSubmodules({
+        cwd: '/src',
+        token: 'secret',
+        username: 'jlo-bot',
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.message).toBe(
+          'Failed to sync git submodule configuration for source build: fatal: no submodule mapping found',
+        )
+      }
     })
 
-    it('throws error if update fails', () => {
+    it('returns error if update fails', () => {
       vi.mocked(childProcess.spawnSync)
         .mockReturnValueOnce({
           status: 0,
@@ -170,15 +193,18 @@ describe('github-source-git adapter', () => {
           stdout: '',
         } as ReturnType<typeof childProcess.spawnSync>)
 
-      expect(() =>
-        updateGitHubSubmodules({
-          cwd: '/src',
-          token: 'secret',
-          username: 'jlo-bot',
-        }),
-      ).toThrowError(
-        'Failed to fetch git submodules for source build: fatal: update failed',
-      )
+      const result = updateGitHubSubmodules({
+        cwd: '/src',
+        token: 'secret',
+        username: 'jlo-bot',
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.message).toBe(
+          'Failed to fetch git submodules for source build: fatal: update failed',
+        )
+      }
     })
 
     it('succeeds on sync and update', () => {
