@@ -7,6 +7,26 @@ describe('release-asset-api adapter', () => {
   })
 
   describe('fetchReleaseAsset', () => {
+    it('throws on invalid JSON metadata', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          json: async () => ({ assets: [{ id: 'not a number', name: 123 }] }),
+        }),
+      )
+
+      await expect(
+        fetchReleaseAsset({
+          token: 'token',
+          releaseRepository: 'owner/repo',
+          tagVersion: 'v1.0.0',
+          candidates: ['jlo-linux-x86_64'],
+        }),
+      ).rejects.toThrow(/Invalid release metadata structure/i)
+    })
+
     it.each([
       { status: 401, description: 'unauthorized' },
       { status: 403, description: 'forbidden' },
