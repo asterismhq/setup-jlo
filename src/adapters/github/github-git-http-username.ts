@@ -3,10 +3,12 @@ import { z } from 'zod'
 const GITHUB_API_USER_URL = 'https://api.github.com/user'
 const GITHUB_APP_INSTALLATION_TOKEN_PREFIX = 'ghs_'
 
-const GitHubUserSchema = z.object({
-  login: z.string().optional(),
-  type: z.string().optional(),
-}).passthrough()
+const GitHubUserSchema = z
+  .object({
+    login: z.string().optional(),
+    type: z.string().optional(),
+  })
+  .passthrough()
 
 export async function resolveGitHubHttpUsername(
   token: string,

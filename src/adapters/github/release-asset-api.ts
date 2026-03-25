@@ -1,14 +1,20 @@
 import { parseRepositorySlug } from '../../domain/repository-slug'
 import { z } from 'zod'
 
-const ReleaseMetadataSchema = z.object({
-  assets: z.array(
-    z.object({
-      id: z.number(),
-      name: z.string(),
-    }).passthrough()
-  ).optional(),
-}).passthrough()
+const ReleaseMetadataSchema = z
+  .object({
+    assets: z
+      .array(
+        z
+          .object({
+            id: z.number(),
+            name: z.string(),
+          })
+          .passthrough(),
+      )
+      .optional(),
+  })
+  .passthrough()
 
 export async function fetchReleaseAsset(options: {
   token: string
