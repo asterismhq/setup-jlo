@@ -8,7 +8,7 @@ inputs:
     description: jlo version token to install, such as 23.0.0 or main; a leading v is also accepted for semver releases
     required: true
   submodule_token:
-    description: Token for required authenticated submodule fetch in main mode
+    description: Token for required authenticated submodule fetch in main mode. Required when version is main.
     required: false
 outputs:
   version-token:
