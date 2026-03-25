@@ -38,7 +38,6 @@ jobs:
   # Phase 0: Bootstrap runtime repository on worker branch
   # ============================================================
 
-
   bootstrap:
     
     if: >-
@@ -80,7 +79,7 @@ jobs:
         uses: asterismhq/setup-jlo@v1
         with:
           token: ${{ secrets.JLO_RELEASE_PAT }}
-          version: '23.2.0'
+          version: '24.2.0'
           submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 
       - name: Sync worker branch
@@ -114,21 +113,10 @@ jobs:
         id: sync_pr
         run: |
           set -euo pipefail
-          pr_body=$(cat <<EOF
-          Automated bootstrap update for the runtime workspace.
-
-          - synchronize ${JLO_TARGET_BRANCH} into ${JULES_WORKER_BRANCH} via \`jlo workflow bootstrap worker-branch\`
-          - bootstrap managed files via \`jlo workflow bootstrap managed-files\`
-          - reset exchange state via \`jlo workflow bootstrap clean-exchange\`
-          EOF
-          )
           jlo_version="$(jlo --version | cut -d ' ' -f 2)"
           jlo workflow create-sync-pr \
             --change-token "bootstrap" \
-            --commit-message "chore: bootstrap .jules/ runtime repository [jlo ${jlo_version}]" \
-            --pr-title "chore: bootstrap runtime workspace" \
-            --pr-body "${pr_body}"
-
+            --commit-message "chore: bootstrap .jules/ runtime repository [jlo ${jlo_version}]"
 
       - name: Wait for bootstrap sync PR merge
         id: wait_for_sync_pr
@@ -136,27 +124,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.JLO_BOT_PAT }}
           PR_NUMBER: ${{ fromJSON(steps.sync_pr.outputs.json || '{}').pr_number }}
-          REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          for _ in $(seq 1 60); do
-            merged_at="$(gh pr view "$PR_NUMBER" --repo "$REPO" --json mergedAt -q '.mergedAt')"
-            if [ -n "${merged_at}" ] && [ "${merged_at}" != "null" ]; then
-              echo "Bootstrap sync PR #$PR_NUMBER merged at ${merged_at}."
-              exit 0
-            fi
-
-            state="$(gh pr view "$PR_NUMBER" --repo "$REPO" --json state -q '.state')"
-            if [ "${state}" = "CLOSED" ]; then
-              echo "::error::Bootstrap sync PR #$PR_NUMBER closed without merge."
-              exit 1
-            fi
-
-            sleep 5
-          done
-
-          echo "::error::Timed out waiting for bootstrap sync pr #$PR_NUMBER to merge."
-          exit 1
+        uses: akitorahayashi/retry@v1
+        with:
+          command: >-
+            jlo workflow gh inspect-pr-merge "$PR_NUMBER"
+          max_attempts: '8'
+          retry_on: error
+          retry_on_exit_codes: '11'
+          # Sync PR merge state has an initial GitHub visibility lag after publication. The first retry waits 3s; later retries use 1,2,4,8,16,32s.
+          retry_delay_schedule_seconds: '3,1,2,4,8,16,32'
 
 
   # ============================================================
@@ -165,16 +141,21 @@ jobs:
 
   
   
-  request-scribe-run:
+  
+  
+  run-scribe:
     needs: ["bootstrap"]
+    
     if: |
       !cancelled() &&
+
+
       needs.bootstrap.result == 'success'
 
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     outputs:
-      json: ${{ steps.run.outputs.json }}
+      json: ${{ steps.report.outputs.json }}
     env:
       JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
       GH_TOKEN: ${{ secrets.JLO_BOT_PAT }}
@@ -196,63 +177,39 @@ jobs:
         uses: asterismhq/setup-jlo@v1
         with:
           token: ${{ secrets.JLO_RELEASE_PAT }}
-          version: '23.2.0'
+          version: '24.2.0'
           submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
       - name: Run scribe
         id: run
-        run: |
-          set -euo pipefail
-          result=$(jlo run --json scribe ${{ env.JLO_RUN_FLAGS }})
-          echo "${result}"
-          echo "json=${result}" >> "$GITHUB_OUTPUT"
-
-  report-scribe-status:
-    needs: ["bootstrap", "request-scribe-run"]
-    if: |
-      !cancelled() &&
-      always() &&
-      needs.bootstrap.result == 'success'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      json: ${{ steps.report.outputs.json }}
-    steps:
+        if: ${{ needs.bootstrap.result == 'success' }}
+        continue-on-error: true
+        uses: akitorahayashi/retry@v1
+        with:
+          command: >-
+            jlo run --json scribe ${{ env.JLO_RUN_FLAGS }}
+          max_attempts: '7'
+          retry_delay_schedule_seconds: '1,2,4,8,16,32'
       - name: Report Run scribe status
         id: report
-        shell: bash
+        if: ${{ always() }}
+        env:
+          REQUESTED_FLAG: ${{ true }}
+          REQUEST_RESULT: ${{ steps.run.outcome }}
+          RUN_JSON: ${{ steps.run.outputs.final_stdout || '{}' }}
         run: |
           set -euo pipefail
-          requested_flag='${{ true }}'
-          request_result='${{ needs.request-scribe-run.result }}'
-          request_count='${{ fromJSON(needs.request-scribe-run.outputs.json || '{}').number_of_api_requests_succeeded || 0 }}'
-          should_wait='${{ fromJSON(needs.request-scribe-run.outputs.json || '{}').should_wait == true }}'
-          if [ "${requested_flag}" = "true" ]; then
-            if [ "${request_result}" != "success" ]; then
-              echo "::error::Expected successful run request for 'scribe' but got '${request_result}'."
-              exit 1
-            fi
-            requested=false
-            if [ "${should_wait}" = "true" ]; then
-              requested=true
-            fi
-          else
-            if [ "${request_result}" != "skipped" ]; then
-              echo "::error::Expected skipped run request for 'scribe' but got '${request_result}'."
-              exit 1
-            fi
-            requested=false
-          fi
+          jlo workflow resolve run-status \
+            --requested "${REQUESTED_FLAG}" \
+            --result "${REQUEST_RESULT}" \
+            --run-json "${RUN_JSON}"
 
-          json="$(printf '{"requested":%s,"count":%s}\n' "${requested}" "${request_count}")"
-          echo "${json}"
-          echo "json=${json}" >> "$GITHUB_OUTPUT"
   # ============================================================
   # Phase 2: Cleanup mock artifacts
   # ============================================================
 
 
   cleanup-mock-artifacts:
-    needs: ["report-scribe-status"]
+    needs: ["run-scribe"]
     if: |
       !cancelled() &&
       always() &&
@@ -295,7 +252,7 @@ jobs:
         uses: asterismhq/setup-jlo@v1
         with:
           token: ${{ secrets.JLO_RELEASE_PAT }}
-          version: '23.2.0'
+          version: '24.2.0'
           submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 
       - name: Cleanup mock artifacts for this run
@@ -314,7 +271,5 @@ jobs:
           fi
           jlo workflow create-sync-pr \
             --change-token "mock-cleanup-${JULES_MOCK_TAG}" \
-            --commit-message "jules: cleanup mock artifacts ${JULES_MOCK_TAG}" \
-            --pr-title "chore: cleanup mock artifacts ${JULES_MOCK_TAG}" \
-            --pr-body "Automated cleanup for mock run ${JULES_MOCK_TAG}."
+            --commit-message "jules: cleanup mock artifacts ${JULES_MOCK_TAG}"
 

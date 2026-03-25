@@ -39,43 +39,28 @@ jobs:
           fetch-depth: 1
           token: ${{ secrets.JLO_BOT_PAT }}
 
-      - name: Discover PR number
-        id: discover
-        env:
-          GH_TOKEN: ${{ secrets.JLO_BOT_PAT }}
-          BRANCH_NAME: ${{ github.ref_name }}
-          REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          PR_NUMBER=""
-          # Poll for up to 2 minutes (24 * 5s) for the PR to be created, as there can be a
-          # delay between the push event and the PR being available via the API.
-          ATTEMPTS=24
-          for _ in $(seq 1 "$ATTEMPTS"); do
-            PR_NUMBER=$(gh pr list --head "$BRANCH_NAME" --repo "$REPO" --json number -q '.[0].number')
-            if [ -n "$PR_NUMBER" ]; then
-              break
-            fi
-            sleep 5
-          done
-          if [ -z "$PR_NUMBER" ]; then
-            echo "::notice::No PR found yet for branch $BRANCH_NAME. Skipping metadata sync."
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "found=true" >> "$GITHUB_OUTPUT"
-
       - name: Install jlo
-        if: steps.discover.outputs.found == 'true'
         uses: asterismhq/setup-jlo@v1
         with:
           token: ${{ secrets.JLO_RELEASE_PAT }}
-          version: '23.2.0'
+          version: '24.2.0'
           submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 
+      - name: Discover PR number
+        id: discover
+        uses: akitorahayashi/retry@v1
+        env:
+          GH_TOKEN: ${{ secrets.JLO_BOT_PAT }}
+          BRANCH_NAME: ${{ github.ref_name }}
+        with:
+          command: >-
+            jlo workflow gh discover-pr "${BRANCH_NAME}"
+          max_attempts: '7'
+          retry_on: error
+          retry_on_exit_codes: '11'
+          retry_delay_schedule_seconds: '1,2,4,8,16,32'
+
       - name: Sync PR metadata label
-        if: steps.discover.outputs.found == 'true'
         env:
           GH_TOKEN: ${{ secrets.JLO_BOT_PAT }}
           PR_NUMBER: ${{ steps.discover.outputs.pr_number }}
@@ -84,14 +69,14 @@ jobs:
           set -euo pipefail
           case "${GITHUB_REF_NAME}" in
             jules-implementer-*)
-              jlo workflow process pr sync-category-label "$PR_NUMBER" --fail-on-error
+              jlo workflow gh sync-pr-category-label "$PR_NUMBER"
               ;;
             jules-integrator-*)
               gh label create "integration" --color "000000" --description "Integration PR merging multiple implementer branches" --repo "$REPO" --force
               gh pr edit "$PR_NUMBER" --add-label "integration" --repo "$REPO"
               ;;
             jules-scribe-*)
-              jlo workflow process pr sync-category-label "$PR_NUMBER" --fail-on-error
+              jlo workflow gh sync-pr-category-label "$PR_NUMBER"
               ;;
             *)
               echo "::error::Unknown PR metadata branch '${GITHUB_REF_NAME}'."
@@ -100,7 +85,6 @@ jobs:
           esac
 
       - name: Validate linked GitHub token
-        if: steps.discover.outputs.found == 'true'
         env:
           LINKED_GH_TOKEN: ${{ secrets.JULES_LINKED_GH_PAT }}
         run: |
@@ -111,9 +95,8 @@ jobs:
           fi
 
       - name: Post summary request comment
-        if: steps.discover.outputs.found == 'true'
         env:
           GH_TOKEN: ${{ secrets.JULES_LINKED_GH_PAT }}
         run: |
           set -euo pipefail
-          jlo workflow process pr comment-summary-request ${{ steps.discover.outputs.pr_number }} --fail-on-error
+          jlo workflow gh post-pr-summary-request ${{ steps.discover.outputs.pr_number }}
