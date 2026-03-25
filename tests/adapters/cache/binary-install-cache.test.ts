@@ -1,5 +1,7 @@
-import { describe, expect, it, vi, afterEach } from 'vitest'
+import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
 import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
 import * as childProcess from 'node:child_process'
 import * as core from '@actions/core'
 import {
@@ -13,14 +15,22 @@ import {
   ensureExecutablePermissions,
 } from '../../../src/adapters/cache/binary-install-cache'
 
-vi.mock('node:fs')
 vi.mock('node:child_process')
 vi.mock('@actions/core')
 
 describe('binary-install-cache adapter', () => {
+  let tempDir: string
+
+  beforeEach(() => {
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'binary-install-cache-test-'))
+  })
+
   afterEach(() => {
     vi.clearAllMocks()
     vi.unstubAllEnvs()
+    if (tempDir) {
+      fs.rmSync(tempDir, { recursive: true, force: true })
+    }
   })
 
   describe('resolvePlatformCacheDirectory', () => {
@@ -36,15 +46,15 @@ describe('binary-install-cache adapter', () => {
 
   describe('ensureInstallDirectory', () => {
     it('creates and returns install directory', () => {
-      expect(ensureInstallDirectory('/cache/linux-x86_64', 'key')).toBe(
-        '/cache/linux-x86_64/key',
-      )
-      expect(fs.mkdirSync).toHaveBeenCalledWith('/cache/linux-x86_64', {
-        recursive: true,
-      })
-      expect(fs.mkdirSync).toHaveBeenCalledWith('/cache/linux-x86_64/key', {
-        recursive: true,
-      })
+      const platformDir = path.join(tempDir, 'linux-x86_64')
+      const installKey = 'key'
+      const expectedDir = path.join(platformDir, installKey)
+
+      expect(ensureInstallDirectory(platformDir, installKey)).toBe(expectedDir)
+
+      expect(fs.existsSync(platformDir)).toBe(true)
+      expect(fs.existsSync(expectedDir)).toBe(true)
+      expect(fs.statSync(expectedDir).isDirectory()).toBe(true)
     })
   })
 
@@ -57,84 +67,85 @@ describe('binary-install-cache adapter', () => {
 
   describe('pruneSiblingInstallDirectories', () => {
     it('does nothing if platform directory does not exist', () => {
-      vi.mocked(fs.existsSync).mockReturnValue(false)
-      pruneSiblingInstallDirectories('/cache', 'keep')
-      expect(fs.readdirSync).not.toHaveBeenCalled()
+      const platformDir = path.join(tempDir, 'non-existent')
+      // Shouldn't throw
+      pruneSiblingInstallDirectories(platformDir, 'keep')
     })
 
     it('removes sibling directories', () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true)
-      vi.mocked(fs.readdirSync).mockReturnValue([
-        { name: 'keep', isDirectory: () => true },
-        { name: 'remove1', isDirectory: () => true },
-        { name: 'remove2', isDirectory: () => false },
-      ] as unknown as ReturnType<typeof fs.readdirSync>)
+      const platformDir = path.join(tempDir, 'cache')
+      fs.mkdirSync(platformDir)
 
-      pruneSiblingInstallDirectories('/cache', 'keep')
+      const keepDir = path.join(platformDir, 'keep')
+      fs.mkdirSync(keepDir)
 
-      expect(fs.rmSync).toHaveBeenCalledWith('/cache/remove1', {
-        recursive: true,
-        force: true,
-      })
-      expect(fs.rmSync).not.toHaveBeenCalledWith(
-        '/cache/keep',
-        expect.anything(),
-      )
-      expect(fs.rmSync).not.toHaveBeenCalledWith(
-        '/cache/remove2',
-        expect.anything(),
-      )
+      const removeDir1 = path.join(platformDir, 'remove1')
+      fs.mkdirSync(removeDir1)
+
+      const removeFile = path.join(platformDir, 'remove2')
+      fs.writeFileSync(removeFile, 'data')
+
+      pruneSiblingInstallDirectories(platformDir, 'keep')
+
+      expect(fs.existsSync(removeDir1)).toBe(false)
+      expect(fs.existsSync(keepDir)).toBe(true)
+      expect(fs.existsSync(removeFile)).toBe(true) // it only removes directories
     })
   })
 
   describe('isCachedBinaryForVersion', () => {
     it('returns false if binary does not exist', () => {
-      vi.mocked(fs.existsSync).mockReturnValue(false)
-      expect(isCachedBinaryForVersion('/bin', '1.0.0')).toBe(false)
+      const nonExistentBin = path.join(tempDir, 'missing-bin')
+      expect(isCachedBinaryForVersion(nonExistentBin, '1.0.0')).toBe(false)
     })
 
     it('returns false if binary execution fails', () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true)
+      const binPath = path.join(tempDir, 'bin1')
+      fs.writeFileSync(binPath, '')
       vi.mocked(childProcess.spawnSync).mockReturnValue({
         status: 1,
       } as ReturnType<typeof childProcess.spawnSync>)
-      expect(isCachedBinaryForVersion('/bin', '1.0.0')).toBe(false)
+      expect(isCachedBinaryForVersion(binPath, '1.0.0')).toBe(false)
     })
 
     it('returns true if binary execution succeeds and version matches', () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true)
+      const binPath = path.join(tempDir, 'bin2')
+      fs.writeFileSync(binPath, '')
       vi.mocked(childProcess.spawnSync).mockReturnValue({
         status: 0,
         stdout: 'jlo 1.0.0',
       } as ReturnType<typeof childProcess.spawnSync>)
-      expect(isCachedBinaryForVersion('/bin', '1.0.0')).toBe(true)
+      expect(isCachedBinaryForVersion(binPath, '1.0.0')).toBe(true)
     })
 
     it('returns true if binary execution succeeds and version matches with v prefix', () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true)
+      const binPath = path.join(tempDir, 'bin3')
+      fs.writeFileSync(binPath, '')
       vi.mocked(childProcess.spawnSync).mockReturnValue({
         status: 0,
         stdout: 'jlo v1.0.0',
       } as ReturnType<typeof childProcess.spawnSync>)
-      expect(isCachedBinaryForVersion('/bin', '1.0.0')).toBe(true)
+      expect(isCachedBinaryForVersion(binPath, '1.0.0')).toBe(true)
     })
 
     it('returns false if binary execution succeeds and version mismatches', () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true)
+      const binPath = path.join(tempDir, 'bin4')
+      fs.writeFileSync(binPath, '')
       vi.mocked(childProcess.spawnSync).mockReturnValue({
         status: 0,
         stdout: 'jlo 2.0.0',
       } as ReturnType<typeof childProcess.spawnSync>)
-      expect(isCachedBinaryForVersion('/bin', '1.0.0')).toBe(false)
+      expect(isCachedBinaryForVersion(binPath, '1.0.0')).toBe(false)
     })
 
     it('returns false if version format is unrecognized', () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true)
+      const binPath = path.join(tempDir, 'bin5')
+      fs.writeFileSync(binPath, '')
       vi.mocked(childProcess.spawnSync).mockReturnValue({
         status: 0,
         stdout: 'jlo unknown',
       } as ReturnType<typeof childProcess.spawnSync>)
-      expect(isCachedBinaryForVersion('/bin', '1.0.0')).toBe(false)
+      expect(isCachedBinaryForVersion(binPath, '1.0.0')).toBe(false)
     })
   })
 
@@ -165,16 +176,35 @@ describe('binary-install-cache adapter', () => {
 
   describe('copyExecutableBinary', () => {
     it('copies file and sets permissions', () => {
-      copyExecutableBinary('/src', '/dest')
-      expect(fs.copyFileSync).toHaveBeenCalledWith('/src', '/dest')
-      expect(fs.chmodSync).toHaveBeenCalledWith('/dest', 0o755)
+      const srcPath = path.join(tempDir, 'src-bin')
+      fs.writeFileSync(srcPath, 'executable content')
+      const destPath = path.join(tempDir, 'dest-bin')
+
+      copyExecutableBinary(srcPath, destPath)
+
+      expect(fs.existsSync(destPath)).toBe(true)
+      expect(fs.readFileSync(destPath, 'utf8')).toBe('executable content')
+      if (os.platform() !== 'win32') {
+        const stats = fs.statSync(destPath)
+        expect((stats.mode & 0o777)).toBe(0o755)
+      }
     })
   })
 
   describe('ensureExecutablePermissions', () => {
     it('sets permissions', () => {
-      ensureExecutablePermissions('/dest')
-      expect(fs.chmodSync).toHaveBeenCalledWith('/dest', 0o755)
+      const targetPath = path.join(tempDir, 'target-bin')
+      fs.writeFileSync(targetPath, 'content')
+      if (os.platform() !== 'win32') {
+        fs.chmodSync(targetPath, 0o644) // start with rw-r--r--
+      }
+
+      ensureExecutablePermissions(targetPath)
+
+      if (os.platform() !== 'win32') {
+        const stats = fs.statSync(targetPath)
+        expect((stats.mode & 0o777)).toBe(0o755)
+      }
     })
   })
 })
