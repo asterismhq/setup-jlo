@@ -1,15 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { existsSync, mkdtempSync, rmSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs'
+import {
+  existsSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+  mkdirSync,
+  readdirSync,
+} from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import type { SpawnSyncReturns } from 'node:child_process'
 
-const { info, addPath, resolveGitHubHttpUsername, spawnSync } = vi.hoisted(() => ({
-  info: vi.fn(),
-  addPath: vi.fn(),
-  resolveGitHubHttpUsername: vi.fn(),
-  spawnSync: vi.fn(),
-}))
+const { info, addPath, resolveGitHubHttpUsername, spawnSync } = vi.hoisted(
+  () => ({
+    info: vi.fn(),
+    addPath: vi.fn(),
+    resolveGitHubHttpUsername: vi.fn(),
+    spawnSync: vi.fn(),
+  }),
+)
 
 vi.mock('@actions/core', () => ({
   info,
@@ -21,7 +30,10 @@ vi.mock('../../src/adapters/github/github-git-http-username', () => ({
 }))
 
 vi.mock('node:child_process', async () => {
-  const actual = await vi.importActual<typeof import('node:child_process')>('node:child_process')
+  const actual =
+    await vi.importActual<typeof import('node:child_process')>(
+      'node:child_process',
+    )
   return {
     ...actual,
     spawnSync,
@@ -56,32 +68,64 @@ describe('app install main-source orchestration', () => {
     resolveGitHubHttpUsername.mockResolvedValue('jlo-user')
 
     // Base mock for spawnSync covering git, cargo, and binary execution
-    spawnSync.mockImplementation((command: string, args: string[], options: any) => {
-      if (command === 'git') {
-        if (args.includes('--version')) return { status: 0 } as SpawnSyncReturns<string>
-        if (args.includes('clone')) return { status: 0, stdout: '', stderr: '' } as SpawnSyncReturns<string>
-        if (args.includes('rev-parse') && args.includes('HEAD')) return { status: 0, stdout: mockSha + '\n', stderr: '' } as SpawnSyncReturns<string>
-        if (args.includes('submodule')) return { status: 0, stdout: '', stderr: '' } as SpawnSyncReturns<string>
-      }
-
-      if (command === 'cargo') {
-        if (args.includes('--version')) return { status: 0 } as SpawnSyncReturns<string>
-        if (args.includes('build')) {
-          const targetDir = options?.env?.CARGO_TARGET_DIR || join(options?.cwd, 'target')
-          const binaryPath = join(targetDir, 'release', 'jlo')
-          mkdirSync(join(targetDir, 'release'), { recursive: true })
-          writeFileSync(binaryPath, 'mock-binary')
-          return { status: 0, stdout: '', stderr: '' } as SpawnSyncReturns<string>
+    spawnSync.mockImplementation(
+      (command: string, args: string[], options: any) => {
+        if (command === 'git') {
+          if (args.includes('--version'))
+            return { status: 0 } as SpawnSyncReturns<string>
+          if (args.includes('clone'))
+            return {
+              status: 0,
+              stdout: '',
+              stderr: '',
+            } as SpawnSyncReturns<string>
+          if (args.includes('rev-parse') && args.includes('HEAD'))
+            return {
+              status: 0,
+              stdout: mockSha + '\n',
+              stderr: '',
+            } as SpawnSyncReturns<string>
+          if (args.includes('submodule'))
+            return {
+              status: 0,
+              stdout: '',
+              stderr: '',
+            } as SpawnSyncReturns<string>
         }
-      }
 
-      // Check if it's the jlo binary being executed
-      if (command.endsWith('jlo') && args.includes('--version')) {
-        return { status: 0, stdout: 'jlo main', stderr: '' } as SpawnSyncReturns<string>
-      }
+        if (command === 'cargo') {
+          if (args.includes('--version'))
+            return { status: 0 } as SpawnSyncReturns<string>
+          if (args.includes('build')) {
+            const targetDir =
+              options?.env?.CARGO_TARGET_DIR || join(options?.cwd, 'target')
+            const binaryPath = join(targetDir, 'release', 'jlo')
+            mkdirSync(join(targetDir, 'release'), { recursive: true })
+            writeFileSync(binaryPath, 'mock-binary')
+            return {
+              status: 0,
+              stdout: '',
+              stderr: '',
+            } as SpawnSyncReturns<string>
+          }
+        }
 
-      return { status: 1, stdout: '', stderr: `Command not found or handled: ${command} ${args.join(' ')}` } as SpawnSyncReturns<string>
-    })
+        // Check if it's the jlo binary being executed
+        if (command.endsWith('jlo') && args.includes('--version')) {
+          return {
+            status: 0,
+            stdout: 'jlo main',
+            stderr: '',
+          } as SpawnSyncReturns<string>
+        }
+
+        return {
+          status: 1,
+          stdout: '',
+          stderr: `Command not found or handled: ${command} ${args.join(' ')}`,
+        } as SpawnSyncReturns<string>
+      },
+    )
   })
 
   afterEach(() => {
@@ -106,8 +150,16 @@ describe('app install main-source orchestration', () => {
 
     // Verify it didn't call cargo build or submodule updates
     const spawnCalls = spawnSync.mock.calls
-    expect(spawnCalls.some(call => call[0] === 'cargo' && call[1].includes('build'))).toBe(false)
-    expect(spawnCalls.some(call => call[0] === 'git' && call[1].includes('submodule'))).toBe(false)
+    expect(
+      spawnCalls.some(
+        (call) => call[0] === 'cargo' && call[1].includes('build'),
+      ),
+    ).toBe(false)
+    expect(
+      spawnCalls.some(
+        (call) => call[0] === 'git' && call[1].includes('submodule'),
+      ),
+    ).toBe(false)
 
     expect(info).toHaveBeenCalledWith(
       `jlo main@${shortSha} already cached; skipping build.`,
@@ -126,9 +178,27 @@ describe('app install main-source orchestration', () => {
     })
 
     const spawnCalls = spawnSync.mock.calls
-    expect(spawnCalls.some(call => call[0] === 'git' && call[1].includes('submodule') && call[1].includes('sync'))).toBe(true)
-    expect(spawnCalls.some(call => call[0] === 'git' && call[1].includes('submodule') && call[1].includes('update'))).toBe(true)
-    expect(spawnCalls.some(call => call[0] === 'cargo' && call[1].includes('build'))).toBe(true)
+    expect(
+      spawnCalls.some(
+        (call) =>
+          call[0] === 'git' &&
+          call[1].includes('submodule') &&
+          call[1].includes('sync'),
+      ),
+    ).toBe(true)
+    expect(
+      spawnCalls.some(
+        (call) =>
+          call[0] === 'git' &&
+          call[1].includes('submodule') &&
+          call[1].includes('update'),
+      ),
+    ).toBe(true)
+    expect(
+      spawnCalls.some(
+        (call) => call[0] === 'cargo' && call[1].includes('build'),
+      ),
+    ).toBe(true)
 
     expect(info).toHaveBeenCalledWith(
       'Using submodule_token for required submodule fetch.',
@@ -154,21 +224,39 @@ describe('app install main-source orchestration', () => {
   })
 
   it('fails and cleans up temp directory if submodule update fails', async () => {
-    spawnSync.mockImplementation((command: string, args: string[], options: any) => {
-      if (command === 'git' && args.includes('submodule')) {
-        return { status: 1, stdout: '', stderr: 'Git fetch failed' } as SpawnSyncReturns<string>
-      }
+    spawnSync.mockImplementation(
+      (command: string, args: string[], options: any) => {
+        if (command === 'git' && args.includes('submodule')) {
+          return {
+            status: 1,
+            stdout: '',
+            stderr: 'Git fetch failed',
+          } as SpawnSyncReturns<string>
+        }
 
-      // Default success for others to reach the submodule call
-      if (command === 'git') {
-        if (args.includes('--version')) return { status: 0 } as SpawnSyncReturns<string>
-        if (args.includes('clone')) return { status: 0, stdout: '', stderr: '' } as SpawnSyncReturns<string>
-        if (args.includes('rev-parse') && args.includes('HEAD')) return { status: 0, stdout: mockSha + '\n', stderr: '' } as SpawnSyncReturns<string>
-      }
-      if (command === 'cargo' && args.includes('--version')) return { status: 0 } as SpawnSyncReturns<string>
+        // Default success for others to reach the submodule call
+        if (command === 'git') {
+          if (args.includes('--version'))
+            return { status: 0 } as SpawnSyncReturns<string>
+          if (args.includes('clone'))
+            return {
+              status: 0,
+              stdout: '',
+              stderr: '',
+            } as SpawnSyncReturns<string>
+          if (args.includes('rev-parse') && args.includes('HEAD'))
+            return {
+              status: 0,
+              stdout: mockSha + '\n',
+              stderr: '',
+            } as SpawnSyncReturns<string>
+        }
+        if (command === 'cargo' && args.includes('--version'))
+          return { status: 0 } as SpawnSyncReturns<string>
 
-      return { status: 1, stdout: '', stderr: '' } as SpawnSyncReturns<string>
-    })
+        return { status: 1, stdout: '', stderr: '' } as SpawnSyncReturns<string>
+      },
+    )
 
     await expect(
       installMainSource({
@@ -188,12 +276,18 @@ describe('app install main-source orchestration', () => {
   })
 
   it('fails when cargo is not installed on PATH', async () => {
-    spawnSync.mockImplementation((command: string, args: string[], options: any) => {
-      if (command === 'cargo' && args.includes('--version')) {
-        return { status: 1, stdout: '', stderr: 'command not found' } as SpawnSyncReturns<string>
-      }
-      return { status: 0, stdout: '', stderr: '' } as SpawnSyncReturns<string>
-    })
+    spawnSync.mockImplementation(
+      (command: string, args: string[], options: any) => {
+        if (command === 'cargo' && args.includes('--version')) {
+          return {
+            status: 1,
+            stdout: '',
+            stderr: 'command not found',
+          } as SpawnSyncReturns<string>
+        }
+        return { status: 0, stdout: '', stderr: '' } as SpawnSyncReturns<string>
+      },
+    )
 
     await expect(
       installMainSource({
@@ -209,15 +303,25 @@ describe('app install main-source orchestration', () => {
   })
 
   it('fails when git is not installed on PATH', async () => {
-    spawnSync.mockImplementation((command: string, args: string[], options: any) => {
-      if (command === 'cargo' && args.includes('--version')) {
+    spawnSync.mockImplementation(
+      (command: string, args: string[], options: any) => {
+        if (command === 'cargo' && args.includes('--version')) {
+          return {
+            status: 0,
+            stdout: '',
+            stderr: '',
+          } as SpawnSyncReturns<string>
+        }
+        if (command === 'git' && args.includes('--version')) {
+          return {
+            status: 1,
+            stdout: '',
+            stderr: 'command not found',
+          } as SpawnSyncReturns<string>
+        }
         return { status: 0, stdout: '', stderr: '' } as SpawnSyncReturns<string>
-      }
-      if (command === 'git' && args.includes('--version')) {
-        return { status: 1, stdout: '', stderr: 'command not found' } as SpawnSyncReturns<string>
-      }
-      return { status: 0, stdout: '', stderr: '' } as SpawnSyncReturns<string>
-    })
+      },
+    )
 
     await expect(
       installMainSource({
@@ -231,20 +335,38 @@ describe('app install main-source orchestration', () => {
   })
 
   it('safely wraps non-Error strings thrown during submodule updates', async () => {
-    spawnSync.mockImplementation((command: string, args: string[], options: any) => {
-      if (command === 'git' && args.includes('submodule')) {
-        return { status: 1, stdout: '', stderr: 'fatal: repository not found' } as SpawnSyncReturns<string>
-      }
+    spawnSync.mockImplementation(
+      (command: string, args: string[], options: any) => {
+        if (command === 'git' && args.includes('submodule')) {
+          return {
+            status: 1,
+            stdout: '',
+            stderr: 'fatal: repository not found',
+          } as SpawnSyncReturns<string>
+        }
 
-      if (command === 'git') {
-        if (args.includes('--version')) return { status: 0 } as SpawnSyncReturns<string>
-        if (args.includes('clone')) return { status: 0, stdout: '', stderr: '' } as SpawnSyncReturns<string>
-        if (args.includes('rev-parse') && args.includes('HEAD')) return { status: 0, stdout: mockSha + '\n', stderr: '' } as SpawnSyncReturns<string>
-      }
-      if (command === 'cargo' && args.includes('--version')) return { status: 0 } as SpawnSyncReturns<string>
+        if (command === 'git') {
+          if (args.includes('--version'))
+            return { status: 0 } as SpawnSyncReturns<string>
+          if (args.includes('clone'))
+            return {
+              status: 0,
+              stdout: '',
+              stderr: '',
+            } as SpawnSyncReturns<string>
+          if (args.includes('rev-parse') && args.includes('HEAD'))
+            return {
+              status: 0,
+              stdout: mockSha + '\n',
+              stderr: '',
+            } as SpawnSyncReturns<string>
+        }
+        if (command === 'cargo' && args.includes('--version'))
+          return { status: 0 } as SpawnSyncReturns<string>
 
-      return { status: 1, stdout: '', stderr: '' } as SpawnSyncReturns<string>
-    })
+        return { status: 1, stdout: '', stderr: '' } as SpawnSyncReturns<string>
+      },
+    )
 
     await expect(
       installMainSource({

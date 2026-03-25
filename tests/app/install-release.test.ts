@@ -1,16 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { existsSync, mkdtempSync, rmSync, statSync, writeFileSync, mkdirSync, chmodSync, readdirSync } from 'node:fs'
+import {
+  existsSync,
+  mkdtempSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+  mkdirSync,
+  chmodSync,
+  readdirSync,
+} from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import type { SpawnSyncReturns } from 'node:child_process'
 
-const { info, addPath, spawnSync, fetchReleaseAsset, chmodSyncMock } = vi.hoisted(() => ({
-  info: vi.fn(),
-  addPath: vi.fn(),
-  spawnSync: vi.fn(),
-  fetchReleaseAsset: vi.fn(),
-  chmodSyncMock: vi.fn(),
-}))
+const { info, addPath, spawnSync, fetchReleaseAsset, chmodSyncMock } =
+  vi.hoisted(() => ({
+    info: vi.fn(),
+    addPath: vi.fn(),
+    spawnSync: vi.fn(),
+    fetchReleaseAsset: vi.fn(),
+    chmodSyncMock: vi.fn(),
+  }))
 
 vi.mock('@actions/core', () => ({
   info,
@@ -18,7 +28,10 @@ vi.mock('@actions/core', () => ({
 }))
 
 vi.mock('node:child_process', async () => {
-  const actual = await vi.importActual<typeof import('node:child_process')>('node:child_process')
+  const actual =
+    await vi.importActual<typeof import('node:child_process')>(
+      'node:child_process',
+    )
   return {
     ...actual,
     spawnSync,
@@ -41,7 +54,7 @@ vi.mock('node:fs', async () => {
     chmodSync: (...args: any[]) => {
       chmodSyncMock(...args)
       actual.chmodSync(args[0], args[1])
-    }
+    },
   }
 })
 
@@ -63,12 +76,22 @@ describe('app install release orchestration', () => {
     cacheRoot = mkdtempSync(join(baseTemp, 'setup-jlo-cache-'))
     tempDirectory = mkdtempSync(join(baseTemp, 'setup-jlo-tmp-'))
 
-    spawnSync.mockImplementation((command: string, args: string[], options: any) => {
-      if (command.endsWith('jlo') && args.includes('--version')) {
-        return { status: 0, stdout: 'jlo 1.2.3', stderr: '' } as SpawnSyncReturns<string>
-      }
-      return { status: 1, stdout: '', stderr: 'Command not found' } as SpawnSyncReturns<string>
-    })
+    spawnSync.mockImplementation(
+      (command: string, args: string[], options: any) => {
+        if (command.endsWith('jlo') && args.includes('--version')) {
+          return {
+            status: 0,
+            stdout: 'jlo 1.2.3',
+            stderr: '',
+          } as SpawnSyncReturns<string>
+        }
+        return {
+          status: 1,
+          stdout: '',
+          stderr: 'Command not found',
+        } as SpawnSyncReturns<string>
+      },
+    )
   })
 
   afterEach(() => {
@@ -130,7 +153,10 @@ describe('app install release orchestration', () => {
 
     expect(existsSync(installedBinary)).toBe(true)
     expect(statSync(installedBinary).size).toBeGreaterThan(0)
-    expect(chmodSyncMock).toHaveBeenCalledWith(expect.stringContaining('jlo-linux-x86_64'), 0o755)
+    expect(chmodSyncMock).toHaveBeenCalledWith(
+      expect.stringContaining('jlo-linux-x86_64'),
+      0o755,
+    )
 
     expect(info).toHaveBeenCalledWith('jlo installed: jlo 1.2.3')
     expect(addPath).toHaveBeenCalledWith(installDir)
