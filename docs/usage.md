@@ -13,6 +13,8 @@
 
 This default form installs the semver-pinned runtime binary for `23.0.0`.
 
+Examples use the bare semver form. A leading `v` is also accepted for semver releases and resolves to the same release tag.
+
 ## Install Modes
 
 The `version` input accepts two version token classes:
