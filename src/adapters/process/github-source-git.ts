@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process'
+import type { RepositorySlug } from '../../domain/repository-slug'
 
 const GITHUB_HTTPS_BASE = 'https://github.com/'
 
@@ -10,7 +11,7 @@ export function commandExists(program: string): boolean {
 }
 
 export function cloneGitHubBranch(options: {
-  repository: string
+  repository: RepositorySlug
   branch: string
   destination: string
   token: string
@@ -31,7 +32,7 @@ export function cloneGitHubBranch(options: {
       }),
       options.destination,
     ],
-    operation: `clone ${options.repository}@${options.branch}`,
+    operation: `clone ${options.repository.owner}/${options.repository.repo}@${options.branch}`,
   })
 }
 
@@ -127,12 +128,12 @@ function runGitHubCommand(options: {
   throw new Error(`Failed to ${options.operation}: ${result.stdout.trim()}`)
 }
 
-function buildGitHubRepositoryUrl(repository: string): string {
-  return `${GITHUB_HTTPS_BASE}${repository}.git`
+function buildGitHubRepositoryUrl(repository: RepositorySlug): string {
+  return `${GITHUB_HTTPS_BASE}${repository.owner}/${repository.repo}.git`
 }
 
 function buildAuthenticatedGitHubRepositoryUrl(options: {
-  repository: string
+  repository: RepositorySlug
   username: string
   token: string
 }): string {

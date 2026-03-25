@@ -1,4 +1,4 @@
-import { parseRepositorySlug } from '../../domain/repository-slug'
+import type { RepositorySlug } from '../../domain/repository-slug'
 
 function isReleaseMetadata(
   data: unknown,
@@ -29,11 +29,11 @@ function isReleaseMetadata(
 
 export async function fetchReleaseAsset(options: {
   token: string
-  releaseRepository: string
+  releaseRepository: RepositorySlug
   tagVersion: string
   candidates: string[]
 }): Promise<{ name: string; contents: Buffer }> {
-  const { owner, repo } = parseRepositorySlug(options.releaseRepository)
+  const { owner, repo } = options.releaseRepository
   const headers = {
     Authorization: `Bearer ${options.token}`,
     Accept: 'application/vnd.github+json',
@@ -47,24 +47,24 @@ export async function fetchReleaseAsset(options: {
 
   if (metadataResponse.status === 401 || metadataResponse.status === 403) {
     throw new Error(
-      `token cannot access release metadata in '${options.releaseRepository}'. Ensure contents:read and organization SSO authorization.`,
+      `token cannot access release metadata in '${owner}/${repo}'. Ensure contents:read and organization SSO authorization.`,
     )
   }
   if (metadataResponse.status === 404) {
     throw new Error(
-      `Release '${options.tagVersion}' was not found (or is inaccessible) in '${options.releaseRepository}'.`,
+      `Release '${options.tagVersion}' was not found (or is inaccessible) in '${owner}/${repo}'.`,
     )
   }
   if (!metadataResponse.ok) {
     throw new Error(
-      `Failed to query release metadata for '${options.tagVersion}' in '${options.releaseRepository}' (HTTP ${metadataResponse.status}).`,
+      `Failed to query release metadata for '${options.tagVersion}' in '${owner}/${repo}' (HTTP ${metadataResponse.status}).`,
     )
   }
 
   const rawMetadata: unknown = await metadataResponse.json()
   if (!isReleaseMetadata(rawMetadata)) {
     throw new Error(
-      `Invalid release metadata structure received from GitHub API for '${options.tagVersion}' in '${options.releaseRepository}'. Expected an object with an optional 'assets' array containing 'id' (number) and 'name' (string).`,
+      `Invalid release metadata structure received from GitHub API for '${options.tagVersion}' in '${owner}/${repo}'. Expected an object with an optional 'assets' array containing 'id' (number) and 'name' (string).`,
     )
   }
   const metadata = rawMetadata
@@ -76,7 +76,7 @@ export async function fetchReleaseAsset(options: {
 
   if (!matchedAsset) {
     throw new Error(
-      `No matching release asset for ${options.candidates.join(', ')} in '${options.releaseRepository}'.`,
+      `No matching release asset for ${options.candidates.join(', ')} in '${owner}/${repo}'.`,
     )
   }
 
@@ -92,7 +92,7 @@ export async function fetchReleaseAsset(options: {
 
   if (!downloadResponse.ok) {
     throw new Error(
-      `Failed to download release asset '${matchedAsset.name}' from '${options.releaseRepository}' (HTTP ${downloadResponse.status}).`,
+      `Failed to download release asset '${matchedAsset.name}' from '${owner}/${repo}' (HTTP ${downloadResponse.status}).`,
     )
   }
 

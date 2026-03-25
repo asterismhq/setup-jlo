@@ -63,7 +63,7 @@ export async function installReleaseVersion(
     writeFileSync(downloadPath, releaseAsset.contents)
     if (statSync(downloadPath).size === 0) {
       throw new Error(
-        `Downloaded release asset '${releaseAsset.name}' is missing or empty in '${JLO_REPOSITORY}' (${versionRef.tag}).`,
+        `Downloaded release asset '${releaseAsset.name}' is missing or empty in '${JLO_REPOSITORY.owner}/${JLO_REPOSITORY.repo}' (${versionRef.tag}).`,
       )
     }
 

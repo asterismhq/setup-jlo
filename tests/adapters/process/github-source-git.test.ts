@@ -40,7 +40,7 @@ describe('github-source-git adapter', () => {
 
       expect(() =>
         cloneGitHubBranch({
-          repository: 'owner/repo',
+          repository: { owner: 'owner', repo: 'repo' },
           branch: 'main',
           destination: '/dest',
           token: 'secret',
@@ -60,7 +60,7 @@ describe('github-source-git adapter', () => {
 
       expect(() =>
         cloneGitHubBranch({
-          repository: 'owner/repo',
+          repository: { owner: 'owner', repo: 'repo' },
           branch: 'main',
           destination: '/dest',
           token: 'secret',
@@ -77,7 +77,7 @@ describe('github-source-git adapter', () => {
       } as ReturnType<typeof childProcess.spawnSync>)
 
       cloneGitHubBranch({
-        repository: 'owner/repo',
+        repository: { owner: 'owner', repo: 'repo' },
         branch: 'main',
         destination: '/dest',
         token: 'secret',
