@@ -10,7 +10,7 @@ export function resolveInstallMode(versionRef: string): 'release-tag' | 'main' {
   return parseVersionRef(versionRef).kind
 }
 
-async function run(): Promise<void> {
+export async function run(): Promise<void> {
   const token = readRequiredInput('token')
   const versionRef = readRequiredInput('version')
   const submoduleToken = readOptionalInput('submodule_token')
