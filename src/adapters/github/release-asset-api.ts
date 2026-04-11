@@ -10,11 +10,11 @@ const ReleaseMetadataSchema = z
             id: z.number(),
             name: z.string(),
           })
-          .passthrough(),
+          .loose(),
       )
       .optional(),
   })
-  .passthrough()
+  .loose()
 
 export async function fetchReleaseAsset(options: {
   token: string

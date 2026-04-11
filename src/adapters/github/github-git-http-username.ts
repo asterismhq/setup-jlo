@@ -8,7 +8,7 @@ const GitHubUserSchema = z
     login: z.string().optional(),
     type: z.string().optional(),
   })
-  .passthrough()
+  .loose()
 
 export async function resolveGitHubHttpUsername(
   token: string,
