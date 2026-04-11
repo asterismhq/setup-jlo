@@ -20,6 +20,12 @@ export function buildCargoRelease(options: {
     },
   )
 
+  if (buildResult.error) {
+    throw new Error(
+      `Failed to build jlo from source: ${buildResult.error.message}`,
+    )
+  }
+
   if (buildResult.status !== 0) {
     throw new Error(
       `Failed to build jlo from source: ${buildResult.stderr.trim()}`,

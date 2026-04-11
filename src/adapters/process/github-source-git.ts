@@ -140,6 +140,12 @@ function runGitHubCommand(options: {
     },
   })
 
+  if (result.error) {
+    return err(
+      new Error(`Failed to ${options.operation}: ${result.error.message}`),
+    )
+  }
+
   if (result.status === 0) {
     return ok(result.stdout)
   }

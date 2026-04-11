@@ -241,4 +241,28 @@ describe('github-source-git adapter', () => {
       )
     })
   })
+
+  describe('runGitHubCommand error handling', () => {
+    it('returns error if spawnSync itself fails (e.g. binary not found)', () => {
+      vi.mocked(childProcess.spawnSync).mockReturnValue({
+        error: new Error('spawn git ENOENT'),
+        status: null,
+      } as ReturnType<typeof childProcess.spawnSync>)
+
+      const result = cloneGitHubBranch({
+        repository: 'owner/repo',
+        branch: 'main',
+        destination: '/dest',
+        token: 'secret',
+        username: 'jlo-bot',
+      })
+
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.error.message).toBe(
+          'Failed to clone owner/repo@main: spawn git ENOENT',
+        )
+      }
+    })
+  })
 })
