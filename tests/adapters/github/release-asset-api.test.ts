@@ -38,21 +38,16 @@ describe('release-asset-api adapter', () => {
 
       // "No matching release asset..." is expected when `assets` is optional and properly undefined,
       // while "/Invalid release metadata structure/" indicates it failed the metadata type guard.
-      try {
-        await fetchReleaseAsset({
+      await expect(
+        fetchReleaseAsset({
           token: 'token',
           releaseRepository: { owner: 'owner', repo: 'repo' },
           tagVersion: 'v1.0.0',
           candidates: ['jlo-linux-x86_64'],
-        })
-        expect.unreachable('Should have thrown')
-      } catch (err: unknown) {
-        const error = err as Error
-        expect(
-          error.message.includes('Invalid release metadata structure') ||
-            error.message.includes('No matching release asset'),
-        ).toBe(true)
-      }
+        }),
+      ).rejects.toThrow(
+        /Invalid release metadata structure|No matching release asset/i,
+      )
     })
 
     it.each([
