@@ -1,1 +1,3 @@
-export const JLO_REPOSITORY = 'asterismhq/jlo'
+import { parseRepositorySlug } from '../domain/repository-slug'
+
+export const JLO_REPOSITORY = parseRepositorySlug('asterismhq/jlo')

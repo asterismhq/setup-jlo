@@ -10,7 +10,7 @@ export function resolveInstallMode(versionRef: string): 'release-tag' | 'main' {
   return parseVersionRef(versionRef).kind
 }
 
-async function run(): Promise<void> {
+export async function run(): Promise<void> {
   const token = readRequiredInput('token')
   const versionRef = readRequiredInput('version')
   const submoduleToken = readOptionalInput('submodule_token')
@@ -38,9 +38,20 @@ async function run(): Promise<void> {
 if (require.main === module) {
   run().catch((error: unknown) => {
     if (error instanceof Error) {
+      core.setFailed(error.stack || error.message)
+      return
+    }
+
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'message' in error &&
+      typeof error.message === 'string'
+    ) {
       core.setFailed(error.message)
       return
     }
-    core.setFailed(String(error))
+
+    core.setFailed(`Unhandled rejection: ${JSON.stringify(error)}`)
   })
 }

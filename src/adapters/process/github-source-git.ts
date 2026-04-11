@@ -1,4 +1,6 @@
 import { spawnSync } from 'node:child_process'
+import type { RepositorySlug } from '../../domain/repository-slug'
+import { err, ok, type Result } from '../../domain/result'
 
 const GITHUB_HTTPS_BASE = 'https://github.com/'
 
@@ -10,13 +12,14 @@ export function commandExists(program: string): boolean {
 }
 
 export function cloneGitHubBranch(options: {
-  repository: string
+  repository: RepositorySlug
   branch: string
   destination: string
   token: string
   username: string
-}): void {
-  runGitHubCommand({
+}): Result<void> {
+  const { owner, repo } = options.repository
+  const result = runGitHubCommand({
     args: [
       'clone',
       '--quiet',
@@ -31,30 +34,44 @@ export function cloneGitHubBranch(options: {
       }),
       options.destination,
     ],
-    operation: `clone ${options.repository}@${options.branch}`,
+    operation: `clone ${owner}/${repo}@${options.branch}`,
   })
+
+  if (!result.ok) {
+    return err(result.error)
+  }
+
+  return ok(undefined)
 }
 
-export function resolveGitWorktreeHeadSha(options: { cwd: string }): string {
-  const output = runGitHubCommand({
+export function resolveGitWorktreeHeadSha(options: {
+  cwd: string
+}): Result<string> {
+  const result = runGitHubCommand({
     cwd: options.cwd,
     args: ['rev-parse', 'HEAD'],
     operation: 'resolve cloned source head SHA',
-  }).trim()
+  })
 
-  if (!isFullGitSha(output)) {
-    throw new Error('Failed to resolve cloned source head SHA.')
+  if (!result.ok) {
+    return err(result.error)
   }
 
-  return output
+  const output = result.value.trim()
+
+  if (!isFullGitSha(output)) {
+    return err(new Error('Failed to resolve cloned source head SHA.'))
+  }
+
+  return ok(output)
 }
 
 export function updateGitHubSubmodules(options: {
   cwd: string
   token: string
   username: string
-}): void {
-  runGitHubCommand({
+}): Result<void> {
+  const syncResult = runGitHubCommand({
     cwd: options.cwd,
     token: options.token,
     username: options.username,
@@ -62,13 +79,23 @@ export function updateGitHubSubmodules(options: {
     operation: 'sync git submodule configuration for source build',
   })
 
-  runGitHubCommand({
+  if (!syncResult.ok) {
+    return err(syncResult.error)
+  }
+
+  const updateResult = runGitHubCommand({
     cwd: options.cwd,
     token: options.token,
     username: options.username,
     args: ['submodule', 'update', '--init', '--recursive', '--depth=1'],
     operation: 'fetch git submodules for source build',
   })
+
+  if (!updateResult.ok) {
+    return err(updateResult.error)
+  }
+
+  return ok(undefined)
 }
 
 function runGitHubCommand(options: {
@@ -77,7 +104,7 @@ function runGitHubCommand(options: {
   username?: string
   args: string[]
   operation: string
-}): string {
+}): Result<string> {
   const gitArgs = [
     '-c',
     'credential.helper=',
@@ -115,24 +142,39 @@ function runGitHubCommand(options: {
     },
   })
 
+  const spawnError = (result as { error?: unknown }).error
+  if (spawnError !== undefined) {
+    const spawnErrorMessage =
+      spawnError instanceof Error ? spawnError.message : String(spawnError)
+    return err(
+      new Error(`Failed to ${options.operation}: ${spawnErrorMessage}`),
+    )
+  }
+
   if (result.status === 0) {
-    return result.stdout
+    return ok(result.stdout)
   }
 
-  const stderr = result.stderr.trim()
+  const stderr = typeof result.stderr === 'string' ? result.stderr.trim() : ''
   if (stderr.length > 0) {
-    throw new Error(`Failed to ${options.operation}: ${stderr}`)
+    return err(new Error(`Failed to ${options.operation}: ${stderr}`))
   }
 
-  throw new Error(`Failed to ${options.operation}: ${result.stdout.trim()}`)
+  const stdout = typeof result.stdout === 'string' ? result.stdout.trim() : ''
+  if (stdout.length > 0) {
+    return err(new Error(`Failed to ${options.operation}: ${stdout}`))
+  }
+
+  return err(new Error(`Failed to ${options.operation}.`))
 }
 
-function buildGitHubRepositoryUrl(repository: string): string {
-  return `${GITHUB_HTTPS_BASE}${repository}.git`
+function buildGitHubRepositoryUrl(repository: RepositorySlug): string {
+  const { owner, repo } = repository
+  return `${GITHUB_HTTPS_BASE}${owner}/${repo}.git`
 }
 
 function buildAuthenticatedGitHubRepositoryUrl(options: {
-  repository: string
+  repository: RepositorySlug
   username: string
   token: string
 }): string {

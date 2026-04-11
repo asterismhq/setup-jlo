@@ -47,12 +47,17 @@ export async function installReleaseVersion(
     platform,
     request.allowDarwinX8664Fallback,
   )
-  const releaseAsset = await fetchReleaseAsset({
+  const releaseAssetResult = await fetchReleaseAsset({
     token: request.token,
     releaseRepository: JLO_REPOSITORY,
     tagVersion: versionRef.tag,
     candidates,
   })
+
+  if (!releaseAssetResult.ok) {
+    throw releaseAssetResult.error
+  }
+  const releaseAsset = releaseAssetResult.value
 
   const tempDirectory = mkdtempSync(
     join(request.tempDirectory, 'setup-jlo-release-'),
@@ -63,7 +68,7 @@ export async function installReleaseVersion(
     writeFileSync(downloadPath, releaseAsset.contents)
     if (statSync(downloadPath).size === 0) {
       throw new Error(
-        `Downloaded release asset '${releaseAsset.name}' is missing or empty in '${JLO_REPOSITORY}' (${versionRef.tag}).`,
+        `Downloaded release asset '${releaseAsset.name}' is missing or empty in '${JLO_REPOSITORY.owner}/${JLO_REPOSITORY.repo}' (${versionRef.tag}).`,
       )
     }
 
