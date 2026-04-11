@@ -142,18 +142,17 @@ function runGitHubCommand(options: {
     },
   })
 
-  if (result.error) {
+  const spawnError = (result as { error?: unknown }).error
+  if (spawnError !== undefined) {
+    const spawnErrorMessage =
+      spawnError instanceof Error ? spawnError.message : String(spawnError)
     return err(
-      new Error(`Failed to ${options.operation}: ${result.error.message}`),
+      new Error(`Failed to ${options.operation}: ${spawnErrorMessage}`),
     )
   }
 
   if (result.status === 0) {
     return ok(result.stdout)
-  }
-
-  if (result.error) {
-    return err(new Error(`Failed to ${options.operation}: ${result.error.message}`))
   }
 
   const stderr = typeof result.stderr === 'string' ? result.stderr.trim() : ''

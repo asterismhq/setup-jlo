@@ -26,7 +26,9 @@ describe('release-asset-api adapter', () => {
       },
       { json: { assets: [{ name: 'missing-id' }] }, desc: 'asset missing id' },
       { json: { assets: [{ id: 123 }] }, desc: 'asset missing name' },
-    ])('returns error on unexpected JSON metadata shape: $desc', async ({ json }) => {
+    ])('returns error on unexpected JSON metadata shape: $desc', async ({
+      json,
+    }) => {
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
