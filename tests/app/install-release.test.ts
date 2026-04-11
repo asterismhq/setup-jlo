@@ -2,25 +2,31 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   existsSync,
   mkdtempSync,
+  readFileSync,
   rmSync,
   statSync,
   writeFileSync,
   mkdirSync,
-  chmodSync,
   readdirSync,
 } from 'node:fs'
 import { join } from 'node:path'
-import { tmpdir } from 'node:os'
 import type { SpawnSyncReturns } from 'node:child_process'
 
-const { info, addPath, spawnSync, fetchReleaseAsset, chmodSyncMock } =
-  vi.hoisted(() => ({
-    info: vi.fn(),
-    addPath: vi.fn(),
-    spawnSync: vi.fn(),
-    fetchReleaseAsset: vi.fn(),
-    chmodSyncMock: vi.fn(),
-  }))
+const {
+  info,
+  addPath,
+  spawnSync,
+  fetchReleaseAsset,
+  chmodSyncMock,
+  detectPlatformTuple,
+} = vi.hoisted(() => ({
+  info: vi.fn(),
+  addPath: vi.fn(),
+  spawnSync: vi.fn(),
+  fetchReleaseAsset: vi.fn(),
+  chmodSyncMock: vi.fn(),
+  detectPlatformTuple: vi.fn(() => ({ os: 'linux', arch: 'x86_64' })),
+}))
 
 vi.mock('@actions/core', () => ({
   info,
@@ -38,12 +44,13 @@ vi.mock('node:child_process', async () => {
   }
 })
 
-vi.mock('node:os', async () => {
-  const actual = await vi.importActual<typeof import('node:os')>('node:os')
+vi.mock('../../src/domain/platform', async () => {
+  const actual = await vi.importActual<
+    typeof import('../../src/domain/platform')
+  >('../../src/domain/platform')
   return {
     ...actual,
-    platform: () => 'linux',
-    arch: () => 'x64',
+    detectPlatformTuple,
   }
 })
 
@@ -51,9 +58,9 @@ vi.mock('node:fs', async () => {
   const actual = await vi.importActual<typeof import('node:fs')>('node:fs')
   return {
     ...actual,
-    chmodSync: (...args: any[]) => {
-      chmodSyncMock(...args)
-      actual.chmodSync(args[0], args[1])
+    chmodSync: (path: string, mode: number) => {
+      chmodSyncMock(path, mode)
+      actual.chmodSync(path, mode)
     },
   }
 })
@@ -67,31 +74,31 @@ import { installReleaseVersion } from '../../src/app/install-release'
 describe('app install release orchestration', () => {
   let cacheRoot: string
   let tempDirectory: string
+  let tempRoot: string
+  const platformDirName = 'linux-x86_64'
 
   beforeEach(() => {
     vi.clearAllMocks()
 
-    // Set up real temp directories for the tests
-    const baseTemp = tmpdir()
-    cacheRoot = mkdtempSync(join(baseTemp, 'setup-jlo-cache-'))
-    tempDirectory = mkdtempSync(join(baseTemp, 'setup-jlo-tmp-'))
+    tempRoot = join(process.cwd(), '.tmp')
+    mkdirSync(tempRoot, { recursive: true })
+    cacheRoot = mkdtempSync(join(tempRoot, 'setup-jlo-cache-'))
+    tempDirectory = mkdtempSync(join(tempRoot, 'setup-jlo-tmp-'))
 
-    spawnSync.mockImplementation(
-      (command: string, args: string[], options: any) => {
-        if (command.endsWith('jlo') && args.includes('--version')) {
-          return {
-            status: 0,
-            stdout: 'jlo 1.2.3',
-            stderr: '',
-          } as SpawnSyncReturns<string>
-        }
+    spawnSync.mockImplementation((command: string, args: string[]) => {
+      if (command.endsWith('jlo') && args.includes('--version')) {
         return {
-          status: 1,
-          stdout: '',
-          stderr: 'Command not found',
+          status: 0,
+          stdout: 'jlo 1.2.3',
+          stderr: '',
         } as SpawnSyncReturns<string>
-      },
-    )
+      }
+      return {
+        status: 1,
+        stdout: '',
+        stderr: 'Command not found',
+      } as SpawnSyncReturns<string>
+    })
   })
 
   afterEach(() => {
@@ -100,7 +107,7 @@ describe('app install release orchestration', () => {
   })
 
   it('reuses cached release binary and skips release download', async () => {
-    const platformDir = join(cacheRoot, 'linux-x86_64')
+    const platformDir = join(cacheRoot, platformDirName)
     const installDir = join(platformDir, 'v1.2.3')
     mkdirSync(installDir, { recursive: true })
     writeFileSync(join(installDir, 'jlo'), 'cached-binary')
@@ -125,12 +132,15 @@ describe('app install release orchestration', () => {
     )
     expect(info).toHaveBeenCalledWith('jlo installed: jlo 1.2.3')
     expect(addPath).toHaveBeenCalledWith(installDir)
+    expect(readFileSync(join(installDir, 'jlo'), 'utf8')).toBe('cached-binary')
+    expect(readdirSync(tempDirectory)).toHaveLength(0)
   })
 
   it('downloads release asset and places it in cache', async () => {
+    const downloadedBinary = 'mock-downloaded-binary'
     fetchReleaseAsset.mockResolvedValue({
       name: 'jlo-linux-x86_64',
-      contents: Buffer.from('mock-downloaded-binary'),
+      contents: Buffer.from(downloadedBinary),
     })
 
     await installReleaseVersion(
@@ -147,19 +157,17 @@ describe('app install release orchestration', () => {
       },
     )
 
-    const platformDir = join(cacheRoot, 'linux-x86_64')
+    const platformDir = join(cacheRoot, platformDirName)
     const installDir = join(platformDir, 'v1.2.3')
     const installedBinary = join(installDir, 'jlo')
 
     expect(existsSync(installedBinary)).toBe(true)
     expect(statSync(installedBinary).size).toBeGreaterThan(0)
-    expect(chmodSyncMock).toHaveBeenCalledWith(
-      expect.stringContaining('jlo-linux-x86_64'),
-      0o755,
-    )
-
+    expect(readFileSync(installedBinary, 'utf8')).toBe(downloadedBinary)
+    expect(statSync(installedBinary).mode & 0o777).toBe(0o755)
     expect(info).toHaveBeenCalledWith('jlo installed: jlo 1.2.3')
     expect(addPath).toHaveBeenCalledWith(installDir)
+    expect(readdirSync(tempDirectory)).toHaveLength(0)
   })
 
   it('fails and cleans up temp directory if downloaded asset is empty', async () => {
