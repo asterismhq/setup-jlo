@@ -7,11 +7,7 @@ function isReleaseMetadata(
     return false
   }
 
-  if (!('assets' in data)) {
-    return true
-  }
-
-  if (data.assets === undefined) {
+  if (!('assets' in data) || data.assets === undefined) {
     return true
   }
 
