@@ -112,8 +112,11 @@ describe('app install release orchestration', () => {
 
   it('downloads release asset and places it in cache', async () => {
     fetchReleaseAsset.mockResolvedValue({
-      name: 'jlo-linux-x86_64',
-      contents: Buffer.from('binary-data'),
+      ok: true,
+      value: {
+        name: 'jlo-linux-x86_64',
+        contents: Buffer.from('binary-data'),
+      },
     })
 
     await installReleaseVersion(
