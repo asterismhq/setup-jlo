@@ -17,6 +17,7 @@ export function cloneGitHubBranch(options: {
   token: string
   username: string
 }): void {
+  const { owner, repo } = options.repository
   runGitHubCommand({
     args: [
       'clone',
@@ -32,7 +33,7 @@ export function cloneGitHubBranch(options: {
       }),
       options.destination,
     ],
-    operation: `clone ${options.repository.owner}/${options.repository.repo}@${options.branch}`,
+    operation: `clone ${owner}/${repo}@${options.branch}`,
   })
 }
 
@@ -129,7 +130,8 @@ function runGitHubCommand(options: {
 }
 
 function buildGitHubRepositoryUrl(repository: RepositorySlug): string {
-  return `${GITHUB_HTTPS_BASE}${repository.owner}/${repository.repo}.git`
+  const { owner, repo } = repository
+  return `${GITHUB_HTTPS_BASE}${owner}/${repo}.git`
 }
 
 function buildAuthenticatedGitHubRepositoryUrl(options: {
