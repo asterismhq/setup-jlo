@@ -4,6 +4,7 @@ import {
   mkdtempSync,
   rmSync,
   readdirSync,
+  readFileSync,
   writeFileSync,
   mkdirSync,
 } from 'node:fs'
@@ -139,6 +140,7 @@ describe('app install release orchestration', () => {
 
     const installDir = join(mockCacheRoot, 'linux-x86_64', 'v1.2.3')
     expect(readdirSync(installDir)).toContain('jlo')
+    expect(readFileSync(join(installDir, 'jlo'), 'utf8')).toBe('binary-data')
     expect(readdirSync(mockTempDirectory)).toEqual([])
   })
 

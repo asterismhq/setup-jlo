@@ -120,13 +120,15 @@ describe('app install main-source orchestration', () => {
       'jlo main@0123456789ab already cached; skipping build.',
     )
     expect(info).toHaveBeenCalledWith('jlo installed: jlo main')
+    expect(installBinaryOnPath).toHaveBeenCalledWith(installDir)
 
     expect(readdirSync(mockTempDirectory)).toEqual([])
   })
 
   it('fetches required submodules and builds when not cached', async () => {
-    buildCargoRelease.mockImplementation(() => {
-      const mockBuiltBinary = join(mockTempDirectory, 'mock-built-binary')
+    buildCargoRelease.mockImplementation((options) => {
+      const mockBuiltBinary = join(options.buildTargetDir, 'release', 'jlo')
+      mkdirSync(join(options.buildTargetDir, 'release'), { recursive: true })
       writeFileSync(mockBuiltBinary, 'built-data')
       return mockBuiltBinary
     })
@@ -147,7 +149,8 @@ describe('app install main-source orchestration', () => {
 
     const installDir = join(mockCacheRoot, 'linux-x86_64', 'main-0123456789ab')
     expect(readdirSync(installDir)).toContain('jlo')
-    expect(readdirSync(mockTempDirectory)).toEqual(['mock-built-binary'])
+    expect(installBinaryOnPath).toHaveBeenCalledWith(installDir)
+    expect(readdirSync(mockTempDirectory)).toEqual([])
   })
 
   it('fails when main install omits submodule token', async () => {
