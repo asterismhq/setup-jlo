@@ -70,8 +70,8 @@ describe('binary-install-cache adapter', () => {
   describe('pruneSiblingInstallDirectories', () => {
     it('does nothing if platform directory does not exist', () => {
       const platformDir = path.join(tempDir, 'non-existent')
-      // Shouldn't throw
       pruneSiblingInstallDirectories(platformDir, 'keep')
+      expect(fs.readdirSync(tempDir)).toHaveLength(0)
     })
 
     it('removes sibling directories', () => {
