@@ -58,7 +58,7 @@ export function isCachedBinaryForVersion(
   }
 
   const result = spawnSync(binaryPath, ['--version'], { encoding: 'utf8' })
-  if (result.status !== 0) {
+  if (result.error || result.status !== 0) {
     return false
   }
 
@@ -67,7 +67,7 @@ export function isCachedBinaryForVersion(
 
 export function detectBinaryVersion(binaryPath: string): string {
   const result = spawnSync(binaryPath, ['--version'], { encoding: 'utf8' })
-  if (result.status !== 0) {
+  if (result.error || result.status !== 0) {
     return 'version unknown'
   }
   const rendered = result.stdout.trim()
