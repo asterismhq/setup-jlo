@@ -153,7 +153,7 @@ describe('orchestrator (src/index.ts)', () => {
       expect(installMainSource).not.toHaveBeenCalled()
     })
 
-    it('throws errors directly, leaving setFailed to the caller (if require.main block catches it)', async () => {
+    it('propagates errors to the caller', async () => {
       parseVersionRef.mockImplementation(() => {
         throw new Error('Invalid version')
       })

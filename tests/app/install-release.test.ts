@@ -136,7 +136,7 @@ describe('app install release orchestration', () => {
 
     const installDir = join(mockCacheRoot, 'linux-x86_64', 'v1.2.3')
     expect(readdirSync(installDir)).toContain('jlo')
-    expect(readdirSync(mockTempDirectory).length).toBe(0) // Download temp dir cleaned up
+    expect(readdirSync(mockTempDirectory)).toEqual([])
   })
 
   it('fails and cleans up temp directory if downloaded asset is empty', async () => {
@@ -166,7 +166,7 @@ describe('app install release orchestration', () => {
       "Downloaded release asset 'jlo-linux-x86_64' is missing or empty in 'asterismhq/jlo' (v1.2.3).",
     )
 
-    expect(readdirSync(mockTempDirectory).length).toBe(0)
+    expect(readdirSync(mockTempDirectory)).toEqual([])
   })
 
   it('cleans up temp directory if ensureExecutablePermissions throws', async () => {
@@ -197,6 +197,6 @@ describe('app install release orchestration', () => {
       ),
     ).rejects.toThrow('Permission denied')
 
-    expect(readdirSync(mockTempDirectory).length).toBe(0)
+    expect(readdirSync(mockTempDirectory)).toEqual([])
   })
 })
