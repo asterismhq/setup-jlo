@@ -118,7 +118,7 @@ describe('app install main-source orchestration', () => {
     )
     expect(info).toHaveBeenCalledWith('jlo installed: jlo main')
 
-    expect(readdirSync(mockTempDirectory).length).toBe(0) // Temporary clone dir cleaned up
+    expect(readdirSync(mockTempDirectory)).toEqual([])
   })
 
   it('fetches required submodules and builds when not cached', async () => {
@@ -144,7 +144,7 @@ describe('app install main-source orchestration', () => {
 
     const installDir = join(mockCacheRoot, 'linux-x86_64', 'main-0123456789ab')
     expect(readdirSync(installDir)).toContain('jlo')
-    expect(readdirSync(mockTempDirectory).length).toBe(1) // Only mockBuiltBinary remains
+    expect(readdirSync(mockTempDirectory)).toEqual(['mock-built-binary'])
   })
 
   it('fails when main install omits submodule token', async () => {
@@ -175,7 +175,7 @@ describe('app install main-source orchestration', () => {
       'Failed to fetch required git submodules for source build (verify submodule_token can read submodule repositories): Git fetch failed',
     )
 
-    expect(readdirSync(mockTempDirectory).length).toBe(0)
+    expect(readdirSync(mockTempDirectory)).toEqual([])
   })
 
   it('fails when cargo is not installed on PATH', async () => {
@@ -225,6 +225,6 @@ describe('app install main-source orchestration', () => {
       /Failed to fetch required git submodules.*: fatal: repository not found/,
     )
 
-    expect(readdirSync(mockTempDirectory).length).toBe(0)
+    expect(readdirSync(mockTempDirectory)).toEqual([])
   })
 })
