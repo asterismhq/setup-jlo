@@ -6,9 +6,6 @@ bot_name = "aria"
 bot_email = "aria67323@gmail.com"
 jules_api_worker_max_parallel = 10
 
-[schedule]
-cron = ["0 19 * * *"]
-
 [run]
 jlo_target_branch = "main"
 jules_worker_branch = "jules"

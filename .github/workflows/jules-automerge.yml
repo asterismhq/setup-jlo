@@ -47,8 +47,8 @@ jobs:
       - name: Install jlo
         uses: asterismhq/setup-jlo@v1
         with:
-          token: ${{ secrets.JLO_RELEASE_PAT }}
-          version: '24.2.0'
+          token: ${{ secrets.JLO_INSTALL_PAT }}
+          version: '25.0.1'
           submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 
       - name: Discover open PR for pushed branch
@@ -67,7 +67,7 @@ jobs:
       - name: Validate branch contract
         run: |
           set -euo pipefail
-          echo "::group::Doctor check"
+          echo "::group::Validate check"
 
           mode=""
           layer=""
@@ -106,9 +106,9 @@ jobs:
           esac
 
           if [ "${mode}" = "structure" ]; then
-            jlo workflow doctor structure
+            jlo workflow validate
           else
-            jlo workflow doctor layer "${layer}"
+            jlo workflow validate --after-layer "${layer}"
           fi
           echo "::endgroup::"
 

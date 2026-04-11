@@ -1,21 +1,11 @@
 # This file is auto-generated. Do not edit manually.
-name: Jules Innovators
+name: Jules Doctors
 
 on:
   workflow_dispatch:
     inputs:
       wait_minutes:
-        description: 'Minutes to wait for Jules async processing'
-        type: number
-        default: 30
-      mock:
-        description: 'Run in mock mode (creates branches/PRs without Jules API)'
-        type: boolean
-        default: false
-  workflow_call:
-    inputs:
-      wait_minutes:
-        description: 'Minutes to wait for Jules async processing'
+        description: 'Minutes to wait between layers (Jules async processing time)'
         type: number
         default: 30
       mock:
@@ -30,12 +20,13 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  WAIT_MINUTES: ${{ github.event_name == 'workflow_call' && (inputs.wait_minutes || 30) || github.event.inputs.wait_minutes || 30 }}
-  MOCK_MODE: ${{ github.event_name == 'workflow_call' && inputs.mock == true || github.event.inputs.mock == 'true' }}
+  WAIT_MINUTES: ${{ github.event.inputs.wait_minutes || 30 }}
+  MOCK_MODE: ${{ github.event.inputs.mock == 'true' }}
   JULES_MOCK_TAG: ${{ format('mock_run_{0}', github.run_id) }}
-  JLO_RUN_FLAGS: ${{ ((github.event_name == 'workflow_call' && inputs.mock == true) || github.event.inputs.mock == 'true') && '--mock' || '' }}
+  JLO_RUN_FLAGS: ${{ github.event.inputs.mock == 'true' && '--mock' || '' }}
   JLO_TARGET_BRANCH: 'main'
   JULES_WORKER_BRANCH: 'jules'
+
 
 
 jobs:
@@ -136,10 +127,10 @@ jobs:
 
 
   # ============================================================
-  # Phase 1: Resolve innovators matrix
+  # Phase 1: Resolve observers matrix
   # ============================================================
 
-  resolve-innovators-matrix:
+  resolve-observers-matrix:
     needs: ["bootstrap"]
     if: |
       !cancelled() &&
@@ -173,17 +164,17 @@ jobs:
           version: '25.0.1'
           submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 
-      - name: Resolve innovators targets
+      - name: Resolve observers targets
         id: resolve
         run: |
           set -euo pipefail
           if [ "${MOCK_MODE}" = "true" ]; then
-            jlo workflow resolve matrix --layer innovators --mock
+            jlo workflow resolve matrix --layer observers --mock
           else
-            jlo workflow resolve matrix --layer innovators
+            jlo workflow resolve matrix --layer observers
           fi
   # ============================================================
-  # Phase 2: Run innovators (matrix)
+  # Phase 2: Run observers (matrix)
   # ============================================================
 
   
@@ -191,8 +182,8 @@ jobs:
   
   
   
-  request-innovators-run:
-    needs: ["bootstrap", "resolve-innovators-matrix"]
+  request-observers-run:
+    needs: ["bootstrap", "resolve-observers-matrix"]
     
     if: |
       !cancelled() &&
@@ -201,10 +192,10 @@ jobs:
 
       needs.bootstrap.result == 'success' &&
 
-      needs.resolve-innovators-matrix.result == 'success' &&
+      needs.resolve-observers-matrix.result == 'success' &&
 
-      fromJSON(needs.resolve-innovators-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').count > 0 &&
-      fromJSON(needs.resolve-innovators-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').count > 0
+      fromJSON(needs.resolve-observers-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').count > 0 &&
+      fromJSON(needs.resolve-observers-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').count > 0
     runs-on: ubuntu-latest
     timeout-minutes: 30
     # Jules API session creation requests must run strictly one-by-one.
@@ -212,7 +203,7 @@ jobs:
     # The matrix is kept for visibility of resolved target count in the GitHub Actions GUI.
     strategy:
       matrix:
-        include: ${{ fromJSON(needs.resolve-innovators-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').matrix }}
+        include: ${{ fromJSON(needs.resolve-observers-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').matrix }}
       max-parallel: 1
       fail-fast: false
     outputs:
@@ -241,22 +232,22 @@ jobs:
           version: '25.0.1'
           submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 
-      - name: Run innovator (${{ matrix.target }})
+      - name: Run observers (${{ matrix.target }})
         id: run
         uses: akitorahayashi/retry@v1
         with:
           command: >-
-            jlo run --json innovators --role "${{ matrix.target }}" ${{ env.JLO_RUN_FLAGS }} --task create_proposals
+            jlo run --json observers --role "${{ matrix.target }}" ${{ env.JLO_RUN_FLAGS }} --task assess_necessity
           max_attempts: '8'
           retry_delay_schedule_seconds: '1,2,4,8,16,32,64'
 
-  report-innovators-status:
-    needs: ["bootstrap", "resolve-innovators-matrix", "request-innovators-run"]
+  report-observers-status:
+    needs: ["bootstrap", "resolve-observers-matrix", "request-observers-run"]
     if: |
       !cancelled() &&
       always() &&
-      needs.resolve-innovators-matrix.result == 'success' &&
-      needs.resolve-innovators-matrix.result == 'success'
+      needs.resolve-observers-matrix.result == 'success' &&
+      needs.resolve-observers-matrix.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 70
     outputs:
@@ -282,12 +273,12 @@ jobs:
           version: '25.0.1'
           submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 
-      - name: Report Run innovator status
+      - name: Report Run observers status
         id: report
         env:
-          REQUESTED_FLAG: ${{ fromJSON(needs.resolve-innovators-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').count > 0 }}
-          TARGET_COUNT: ${{ fromJSON(needs.resolve-innovators-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').count }}
-          REQUEST_RESULT: ${{ needs.request-innovators-run.result }}
+          REQUESTED_FLAG: ${{ fromJSON(needs.resolve-observers-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').count > 0 }}
+          TARGET_COUNT: ${{ fromJSON(needs.resolve-observers-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').count }}
+          REQUEST_RESULT: ${{ needs.request-observers-run.result }}
         run: |
           set -euo pipefail
           jlo workflow resolve matrix-run-status \
@@ -302,20 +293,24 @@ jobs:
           enabled: ${{ fromJSON(steps.report.outputs.json || '{}').requested == true }}
           minutes: ${{ env.WAIT_MINUTES }}
           seconds: ${{ env.MOCK_MODE == 'true' && '15' || '' }}
-          label: 'Jules async processing for innovators'
+          label: 'Jules async processing for observers'
 
   # ============================================================
-  # Phase 3: Publish innovators proposals
+  # Phase 3: Upload doctors reports (matrix)
   # ============================================================
-
-  publish-innovator-issues:
-    needs: [report-innovators-status]
+  upload-doctors-reports:
+    needs: [resolve-observers-matrix, report-observers-status]
     if: |
-      needs.report-innovators-status.result == 'success'
+      !cancelled() &&
+      needs.resolve-observers-matrix.result == 'success' &&
+      needs.report-observers-status.result == 'success' &&
+      fromJSON(needs.resolve-observers-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').count > 0
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      GH_TOKEN: ${{ secrets.JLO_BOT_PAT }}
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        include: ${{ fromJSON(needs.resolve-observers-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').matrix }}
+      fail-fast: false
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
@@ -323,69 +318,39 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.JLO_BOT_PAT }}
 
-
-      - name: Configure Git
+      - name: Check doctors report (${{ matrix.target }})
+        id: check_report
         run: |
           set -euo pipefail
-          git config user.name "aria"
-          git config user.email "aria67323@gmail.com"
-
-      - name: Install jlo
-        uses: asterismhq/setup-jlo@v1
-        with:
-          token: ${{ secrets.JLO_INSTALL_PAT }}
-          version: '25.0.1'
-          submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
-
-      - name: Publish innovator issues
-        run: jlo workflow publish innovator-issues
-
-      - name: Validate structure
-        run: jlo workflow validate
-
-      - name: Create published proposal cleanup sync PR
-        run: |
-          set -euo pipefail
-          if [ -z "$(git status --porcelain .jules)" ]; then
-            echo "No proposal cleanup changes detected."
-            exit 0
+          report_path=".jules/exchange/reports/doctors_${{ matrix.target }}.md"
+          if [ -f "${report_path}" ]; then
+            echo "exists=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "::warning::Missing doctors report ${report_path}"
+            echo "exists=false" >> "${GITHUB_OUTPUT}"
           fi
-          jlo workflow create-sync-pr \
-            --preset "publish-innovator-issues"
 
+      - name: Upload doctors report (${{ matrix.target }})
+        if: ${{ steps.check_report.outputs.exists == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ format('jules-doctors-{0}.md', matrix.target) }}
+          path: ${{ format('.jules/exchange/reports/doctors_{0}.md', matrix.target) }}
+          retention-days: 3
 
   # ============================================================
-  # Phase 4: Cleanup mock artifacts
+  # Phase 4: Cleanup doctors reports
   # ============================================================
-
-
-  cleanup-mock-artifacts:
-    needs: ["publish-innovator-issues"]
+  cleanup-doctors-reports:
+    needs: [upload-doctors-reports]
     if: |
       !cancelled() &&
-      always() &&
-      (
-        (github.event_name == 'workflow_dispatch' && github.event.inputs.mock == 'true') ||
-        (github.event_name == 'workflow_call' && inputs.mock == true)
-      )
+      (needs.upload-doctors-reports.result == 'success' || needs.upload-doctors-reports.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       GH_TOKEN: ${{ secrets.JLO_BOT_PAT }}
-      GITHUB_REPOSITORY: ${{ github.repository }}
     steps:
-      - name: Validate branch variables
-        run: |
-          set -euo pipefail
-          if [ -z "${JLO_TARGET_BRANCH:-}" ]; then
-            echo "::error::JLO_TARGET_BRANCH is required."
-            exit 1
-          fi
-          if [ -z "${JULES_WORKER_BRANCH:-}" ]; then
-            echo "::error::JULES_WORKER_BRANCH is required."
-            exit 1
-          fi
-
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           ref: 'jules'
@@ -406,20 +371,33 @@ jobs:
           version: '25.0.1'
           submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 
-      - name: Cleanup mock artifacts for this run
+      - name: Detect doctors reports
+        id: detect_reports
         run: |
-          jlo workflow clean-mock --mock-tag "$JULES_MOCK_TAG"
+          set -euo pipefail
+          if ls .jules/exchange/reports/doctors_*.md >/dev/null 2>&1; then
+            echo "found=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "found=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Remove doctors reports
+        if: ${{ steps.detect_reports.outputs.found == 'true' }}
+        run: |
+          set -euo pipefail
+          rm -f .jules/exchange/reports/doctors_*.md
 
       - name: Validate repository structure
+        if: ${{ steps.detect_reports.outputs.found == 'true' }}
         run: jlo workflow validate
 
-      - name: Create mock cleanup sync PR
+      - name: Create doctors cleanup sync PR
+        if: ${{ steps.detect_reports.outputs.found == 'true' }}
         run: |
           set -euo pipefail
           if [ -z "$(git status --porcelain .jules)" ]; then
-            echo "No mock cleanup changes detected."
+            echo "No doctors cleanup changes detected."
             exit 0
           fi
           jlo workflow create-sync-pr \
-            --preset "mock-cleanup-${JULES_MOCK_TAG}"
-
+            --preset "doctors-cleanup"

@@ -41,7 +41,7 @@ jobs:
   bootstrap:
     
     if: >-
-      (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') &&
+      (github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') &&
       
       true
       
@@ -78,8 +78,8 @@ jobs:
       - name: Install jlo
         uses: asterismhq/setup-jlo@v1
         with:
-          token: ${{ secrets.JLO_RELEASE_PAT }}
-          version: '24.2.0'
+          token: ${{ secrets.JLO_INSTALL_PAT }}
+          version: '25.0.1'
           submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 
       - name: Sync worker branch
@@ -107,16 +107,11 @@ jobs:
           fi
 
       - name: Validate repository structure
-        run: jlo workflow doctor structure
+        run: jlo workflow validate
 
       - name: Create bootstrap sync PR to worker branch
         id: sync_pr
-        run: |
-          set -euo pipefail
-          jlo_version="$(jlo --version | cut -d ' ' -f 2)"
-          jlo workflow create-sync-pr \
-            --change-token "bootstrap" \
-            --commit-message "chore: bootstrap .jules/ runtime repository [jlo ${jlo_version}]"
+        run: jlo workflow create-sync-pr --preset "bootstrap"
 
       - name: Wait for bootstrap sync PR merge
         id: wait_for_sync_pr
@@ -132,7 +127,7 @@ jobs:
           retry_on: error
           retry_on_exit_codes: '11'
           # Sync PR merge state has an initial GitHub visibility lag after publication. The first retry waits 3s; later retries use 1,2,4,8,16,32s.
-          retry_delay_schedule_seconds: '3,1,2,4,8,16,32'
+          retry_delay_schedule_seconds: '10,1,2,4,8,16,32'
 
 
   # ============================================================
@@ -176,8 +171,8 @@ jobs:
       - name: Install jlo
         uses: asterismhq/setup-jlo@v1
         with:
-          token: ${{ secrets.JLO_RELEASE_PAT }}
-          version: '24.2.0'
+          token: ${{ secrets.JLO_INSTALL_PAT }}
+          version: '25.0.1'
           submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
       - name: Run scribe
         id: run
@@ -187,8 +182,8 @@ jobs:
         with:
           command: >-
             jlo run --json scribe ${{ env.JLO_RUN_FLAGS }}
-          max_attempts: '7'
-          retry_delay_schedule_seconds: '1,2,4,8,16,32'
+          max_attempts: '8'
+          retry_delay_schedule_seconds: '1,2,4,8,16,32,64'
       - name: Report Run scribe status
         id: report
         if: ${{ always() }}
@@ -251,8 +246,8 @@ jobs:
       - name: Install jlo
         uses: asterismhq/setup-jlo@v1
         with:
-          token: ${{ secrets.JLO_RELEASE_PAT }}
-          version: '24.2.0'
+          token: ${{ secrets.JLO_INSTALL_PAT }}
+          version: '25.0.1'
           submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 
       - name: Cleanup mock artifacts for this run
@@ -260,7 +255,7 @@ jobs:
           jlo workflow clean-mock --mock-tag "$JULES_MOCK_TAG"
 
       - name: Validate repository structure
-        run: jlo workflow doctor structure
+        run: jlo workflow validate
 
       - name: Create mock cleanup sync PR
         run: |
@@ -270,6 +265,5 @@ jobs:
             exit 0
           fi
           jlo workflow create-sync-pr \
-            --change-token "mock-cleanup-${JULES_MOCK_TAG}" \
-            --commit-message "jules: cleanup mock artifacts ${JULES_MOCK_TAG}"
+            --preset "mock-cleanup-${JULES_MOCK_TAG}"
 
