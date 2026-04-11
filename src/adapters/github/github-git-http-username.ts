@@ -1,33 +1,15 @@
 import { err, ok, type Result } from '../../domain/result'
+import { z } from 'zod'
 
 const GITHUB_API_USER_URL = 'https://api.github.com/user'
 const GITHUB_APP_INSTALLATION_TOKEN_PREFIX = 'ghs_'
 
-function isGitHubUser(
-  data: unknown,
-): data is { login?: string; type?: string } {
-  if (typeof data !== 'object' || data === null) {
-    return false
-  }
-
-  if (
-    'login' in data &&
-    data.login !== undefined &&
-    typeof data.login !== 'string'
-  ) {
-    return false
-  }
-
-  if (
-    'type' in data &&
-    data.type !== undefined &&
-    typeof data.type !== 'string'
-  ) {
-    return false
-  }
-
-  return true
-}
+const GitHubUserSchema = z
+  .object({
+    login: z.string().optional(),
+    type: z.string().optional(),
+  })
+  .loose()
 
 export async function resolveGitHubHttpUsername(
   token: string,
@@ -62,14 +44,15 @@ export async function resolveGitHubHttpUsername(
   }
 
   const rawUser: unknown = await response.json()
-  if (!isGitHubUser(rawUser)) {
+  const userParseResult = GitHubUserSchema.safeParse(rawUser)
+  if (!userParseResult.success) {
     return err(
       new Error(
         'Invalid user metadata structure received from GitHub API. Expected an object with optional string properties "login" and "type".',
       ),
     )
   }
-  const user = rawUser
+  const user = userParseResult.data
   // Bot-owned tokens also require x-access-token rather than the reported login.
   if (user.type === 'Bot') {
     return ok('x-access-token')
