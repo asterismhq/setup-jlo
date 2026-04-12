@@ -115,7 +115,7 @@ describe('binary-install-cache adapter', () => {
       fs.writeFileSync(binPath, '')
       vi.mocked(childProcess.spawnSync).mockReturnValue({
         status: 0,
-        stdout: 'jlo 1.0.0',
+        stdout: 'astm 1.0.0',
       } as ReturnType<typeof childProcess.spawnSync>)
       expect(isCachedBinaryForVersion(binPath, '1.0.0')).toBe(true)
     })
@@ -125,7 +125,7 @@ describe('binary-install-cache adapter', () => {
       fs.writeFileSync(binPath, '')
       vi.mocked(childProcess.spawnSync).mockReturnValue({
         status: 0,
-        stdout: 'jlo v1.0.0',
+        stdout: 'astm v1.0.0',
       } as ReturnType<typeof childProcess.spawnSync>)
       expect(isCachedBinaryForVersion(binPath, '1.0.0')).toBe(true)
     })
@@ -135,7 +135,7 @@ describe('binary-install-cache adapter', () => {
       fs.writeFileSync(binPath, '')
       vi.mocked(childProcess.spawnSync).mockReturnValue({
         status: 0,
-        stdout: 'jlo 2.0.0',
+        stdout: 'astm 2.0.0',
       } as ReturnType<typeof childProcess.spawnSync>)
       expect(isCachedBinaryForVersion(binPath, '1.0.0')).toBe(false)
     })
@@ -145,7 +145,7 @@ describe('binary-install-cache adapter', () => {
       fs.writeFileSync(binPath, '')
       vi.mocked(childProcess.spawnSync).mockReturnValue({
         status: 0,
-        stdout: 'jlo unknown',
+        stdout: 'astm unknown',
       } as ReturnType<typeof childProcess.spawnSync>)
       expect(isCachedBinaryForVersion(binPath, '1.0.0')).toBe(false)
     })
@@ -170,9 +170,9 @@ describe('binary-install-cache adapter', () => {
     it('returns output if execution succeeds', () => {
       vi.mocked(childProcess.spawnSync).mockReturnValue({
         status: 0,
-        stdout: 'jlo 1.0.0\n',
+        stdout: 'astm 1.0.0\n',
       } as ReturnType<typeof childProcess.spawnSync>)
-      expect(detectBinaryVersion('/bin')).toBe('jlo 1.0.0')
+      expect(detectBinaryVersion('/bin')).toBe('astm 1.0.0')
     })
   })
 

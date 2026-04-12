@@ -54,12 +54,12 @@ describe('detectPlatformTuple', () => {
   })
 
   it.each([
-    ['unsupported OS', 'win32', 'x64', 'Unsupported OS for setup-jlo: win32'],
+    ['unsupported OS', 'win32', 'x64', 'Unsupported OS for setup-astm: win32'],
     [
       'unsupported Architecture',
       'linux',
       'ia32',
-      'Unsupported architecture for setup-jlo: ia32',
+      'Unsupported architecture for setup-astm: ia32',
     ],
   ])('throws for %s', (_, platform, arch, message) => {
     expect(() =>
@@ -71,7 +71,7 @@ describe('detectPlatformTuple', () => {
   })
 })
 
-describe('setup-jlo release asset candidates', () => {
+describe('setup-astm release asset candidates', () => {
   it('builds linux x86_64 runtime asset candidates', () => {
     expect(
       buildReleaseAssetCandidates(
@@ -81,7 +81,7 @@ describe('setup-jlo release asset candidates', () => {
         },
         false,
       ),
-    ).toEqual(['jlo-linux-x86_64', 'jlo-linux-amd64'])
+    ).toEqual(['astm-linux-x86_64', 'astm-linux-amd64'])
   })
 
   it('builds darwin arm64 candidates with x86_64 fallback', () => {
@@ -93,6 +93,10 @@ describe('setup-jlo release asset candidates', () => {
         },
         true,
       ),
-    ).toEqual(['jlo-darwin-aarch64', 'jlo-darwin-arm64', 'jlo-darwin-x86_64'])
+    ).toEqual([
+      'astm-darwin-aarch64',
+      'astm-darwin-arm64',
+      'astm-darwin-x86_64',
+    ])
   })
 })

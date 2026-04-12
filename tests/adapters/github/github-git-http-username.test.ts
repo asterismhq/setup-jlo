@@ -20,14 +20,14 @@ describe('github git http username resolution', () => {
       vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
-        json: async () => ({ login: 'jlo-user', type: 'User' }),
+        json: async () => ({ login: 'astm-user', type: 'User' }),
       }),
     )
 
     const result = await resolveGitHubHttpUsername('github_pat_example')
     expect(result.ok).toBe(true)
     if (result.ok) {
-      expect(result.value).toBe('jlo-user')
+      expect(result.value).toBe('astm-user')
     }
   })
 
@@ -37,7 +37,7 @@ describe('github git http username resolution', () => {
       vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
-        json: async () => ({ login: 'jlo-bot', type: 'Bot' }),
+        json: async () => ({ login: 'astm-bot', type: 'Bot' }),
       }),
     )
 
@@ -53,8 +53,8 @@ describe('github git http username resolution', () => {
     { json: 'string-payload', desc: 'primitive string payload' },
     { json: 123, desc: 'primitive number payload' },
     { json: { login: 123, type: 'User' }, desc: 'login is a number' },
-    { json: { login: 'jlo-user', type: null }, desc: 'type is null' },
-    { json: { login: 'jlo-user', type: 123 }, desc: 'type is a number' },
+    { json: { login: 'astm-user', type: null }, desc: 'type is null' },
+    { json: { login: 'astm-user', type: 123 }, desc: 'type is a number' },
   ])('returns error on invalid JSON response structure: $desc', async ({
     json,
   }) => {

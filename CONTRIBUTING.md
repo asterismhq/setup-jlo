@@ -2,7 +2,7 @@
 
 ## Scope
 
-`setup-jlo` is a single-action repository. The active product surface is the GitHub Action defined by `action.yml` and the TypeScript runtime in `src/`.
+`setup-astm` is a single-action repository. The active product surface is the GitHub Action defined by `action.yml` and the TypeScript runtime in `src/`.
 
 ## Local Verification
 

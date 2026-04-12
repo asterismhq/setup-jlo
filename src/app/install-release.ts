@@ -18,7 +18,7 @@ import {
   resolvePlatformCacheDirectory,
 } from '../adapters/cache/binary-install-cache'
 import { fetchReleaseAsset } from '../adapters/github/release-asset-api'
-import { JLO_REPOSITORY } from '../catalog/jlo'
+import { ASTM_REPOSITORY } from '../catalog/astm'
 import {
   buildReleaseAssetCandidates,
   detectPlatformTuple,
@@ -33,13 +33,13 @@ export async function installReleaseVersion(
   const cacheRoot = request.cacheRoot
   const platformDir = resolvePlatformCacheDirectory(cacheRoot, platform)
   const installDir = ensureInstallDirectory(platformDir, versionRef.tag)
-  const binaryPath = join(installDir, 'jlo')
+  const binaryPath = join(installDir, 'astm')
 
   if (isCachedBinaryForVersion(binaryPath, versionRef.version)) {
-    core.info(`jlo ${versionRef.version} already cached; skipping download.`)
+    core.info(`astm ${versionRef.version} already cached; skipping download.`)
     pruneSiblingInstallDirectories(platformDir, versionRef.tag)
     installBinaryOnPath(installDir)
-    core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
+    core.info(`astm installed: ${detectBinaryVersion(binaryPath)}`)
     return
   }
 
@@ -49,7 +49,7 @@ export async function installReleaseVersion(
   )
   const releaseAssetResult = await fetchReleaseAsset({
     token: request.token,
-    releaseRepository: JLO_REPOSITORY,
+    releaseRepository: ASTM_REPOSITORY,
     tagVersion: versionRef.tag,
     candidates,
   })
@@ -60,7 +60,7 @@ export async function installReleaseVersion(
   const releaseAsset = releaseAssetResult.value
 
   const tempDirectory = mkdtempSync(
-    join(request.tempDirectory, 'setup-jlo-release-'),
+    join(request.tempDirectory, 'setup-astm-release-'),
   )
   const downloadPath = join(tempDirectory, releaseAsset.name)
 
@@ -68,7 +68,7 @@ export async function installReleaseVersion(
     writeFileSync(downloadPath, releaseAsset.contents)
     if (statSync(downloadPath).size === 0) {
       throw new Error(
-        `Downloaded release asset '${releaseAsset.name}' is missing or empty in '${JLO_REPOSITORY.owner}/${JLO_REPOSITORY.repo}' (${versionRef.tag}).`,
+        `Downloaded release asset '${releaseAsset.name}' is missing or empty in '${ASTM_REPOSITORY.owner}/${ASTM_REPOSITORY.repo}' (${versionRef.tag}).`,
       )
     }
 
@@ -80,5 +80,5 @@ export async function installReleaseVersion(
 
   pruneSiblingInstallDirectories(platformDir, versionRef.tag)
   installBinaryOnPath(installDir)
-  core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
+  core.info(`astm installed: ${detectBinaryVersion(binaryPath)}`)
 }

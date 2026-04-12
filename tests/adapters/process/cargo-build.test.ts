@@ -24,7 +24,7 @@ describe('cargo-build adapter', () => {
           manifestPath: '/src/Cargo.toml',
           buildTargetDir: '/target',
         }),
-      ).toThrowError('Failed to build jlo from source: compilation error')
+      ).toThrowError('Failed to build astm from source: compilation error')
     })
 
     it('throws error if binary is not found after successful build', () => {
@@ -40,7 +40,7 @@ describe('cargo-build adapter', () => {
           buildTargetDir: '/target',
         }),
       ).toThrowError(
-        "Source build completed but binary not found at '/target/release/jlo'.",
+        "Source build completed but binary not found at '/target/release/astm'.",
       )
     })
 
@@ -49,7 +49,7 @@ describe('cargo-build adapter', () => {
         status: 0,
       } as ReturnType<typeof childProcess.spawnSync>)
       vi.mocked(fs.existsSync).mockImplementation(
-        (path) => path === '/target/release/jlo',
+        (path) => path === '/target/release/astm',
       )
 
       const result = buildCargoRelease({
@@ -58,7 +58,7 @@ describe('cargo-build adapter', () => {
         buildTargetDir: '/target',
       })
 
-      expect(result).toBe('/target/release/jlo')
+      expect(result).toBe('/target/release/astm')
 
       expect(childProcess.spawnSync).toHaveBeenCalledWith(
         'cargo',

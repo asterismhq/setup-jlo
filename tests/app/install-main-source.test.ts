@@ -77,13 +77,16 @@ describe('app install main-source orchestration', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    tempTestDir = mkdtempSync(join(tmpdir(), 'vitest-setup-jlo-main-source-'))
+    tempTestDir = mkdtempSync(join(tmpdir(), 'vitest-setup-astm-main-source-'))
     mockCacheRoot = join(tempTestDir, 'cache')
     mockTempDirectory = join(tempTestDir, 'runner-temp')
     mkdirSync(mockCacheRoot, { recursive: true })
     mkdirSync(mockTempDirectory, { recursive: true })
 
-    resolveGitHubHttpUsername.mockResolvedValue({ ok: true, value: 'jlo-user' })
+    resolveGitHubHttpUsername.mockResolvedValue({
+      ok: true,
+      value: 'astm-user',
+    })
     commandExists.mockReturnValue(true)
     cloneGitHubBranch.mockReturnValue({ ok: true, value: undefined })
     updateGitHubSubmodules.mockReturnValue({ ok: true, value: undefined })
@@ -92,7 +95,7 @@ describe('app install main-source orchestration', () => {
       value: '0123456789abcdef0123456789abcdef01234567',
     })
     detectPlatformTuple.mockReturnValue({ os: 'linux', arch: 'x86_64' })
-    detectBinaryVersion.mockReturnValue('jlo main')
+    detectBinaryVersion.mockReturnValue('astm main')
   })
 
   afterEach(() => {
@@ -104,7 +107,7 @@ describe('app install main-source orchestration', () => {
   it('reuses cached main binary and skips build', async () => {
     const installDir = join(mockCacheRoot, 'linux-x86_64', 'main-0123456789ab')
     mkdirSync(installDir, { recursive: true })
-    writeFileSync(join(installDir, 'jlo'), 'mock-cached-binary')
+    writeFileSync(join(installDir, 'astm'), 'mock-cached-binary')
 
     await installMainSource({
       token: 'token',
@@ -117,9 +120,9 @@ describe('app install main-source orchestration', () => {
     expect(updateGitHubSubmodules).not.toHaveBeenCalled()
     expect(buildCargoRelease).not.toHaveBeenCalled()
     expect(info).toHaveBeenCalledWith(
-      'jlo main@0123456789ab already cached; skipping build.',
+      'astm main@0123456789ab already cached; skipping build.',
     )
-    expect(info).toHaveBeenCalledWith('jlo installed: jlo main')
+    expect(info).toHaveBeenCalledWith('astm installed: astm main')
     expect(installBinaryOnPath).toHaveBeenCalledWith(installDir)
 
     expect(readdirSync(mockTempDirectory)).toEqual([])
@@ -127,7 +130,7 @@ describe('app install main-source orchestration', () => {
 
   it('fetches required submodules and builds when not cached', async () => {
     buildCargoRelease.mockImplementation((options) => {
-      const mockBuiltBinary = join(options.buildTargetDir, 'release', 'jlo')
+      const mockBuiltBinary = join(options.buildTargetDir, 'release', 'astm')
       mkdirSync(join(options.buildTargetDir, 'release'), { recursive: true })
       writeFileSync(mockBuiltBinary, 'built-data')
       return mockBuiltBinary
@@ -144,11 +147,11 @@ describe('app install main-source orchestration', () => {
     expect(info).toHaveBeenCalledWith(
       'Using submodule_token for required submodule fetch.',
     )
-    expect(info).toHaveBeenCalledWith('jlo installed: jlo main')
+    expect(info).toHaveBeenCalledWith('astm installed: astm main')
     expect(buildCargoRelease).toHaveBeenCalled()
 
     const installDir = join(mockCacheRoot, 'linux-x86_64', 'main-0123456789ab')
-    expect(readdirSync(installDir)).toContain('jlo')
+    expect(readdirSync(installDir)).toContain('astm')
     expect(installBinaryOnPath).toHaveBeenCalledWith(installDir)
     expect(readdirSync(mockTempDirectory)).toEqual([])
   })

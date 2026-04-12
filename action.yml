@@ -1,11 +1,11 @@
-name: setup-jlo
-description: Set up the jlo CLI for a specified jlo version ref
+name: setup-astm
+description: Set up the Asterism (astm) CLI for a specified version ref
 inputs:
   token:
-    description: GitHub token with read access to asterismhq/jlo release assets and source
+    description: GitHub token with read access to asterismhq/asterism release assets and source
     required: true
   version:
-    description: jlo version ref to install, such as 23.0.0 or main; a leading v is also accepted for semver releases
+    description: astm version ref to install, such as 23.0.0 or main; a leading v is also accepted for semver releases
     required: true
   submodule_token:
     description: Token for required authenticated submodule fetch in main mode. Required when version is main.

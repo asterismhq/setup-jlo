@@ -5,7 +5,7 @@ import {
   parseVersionRef,
 } from '../../src/domain/version-ref'
 
-describe('setup-jlo extractSemver behavior', () => {
+describe('setup-astm extractSemver behavior', () => {
   it('extracts bare semver', () => {
     expect(extractSemver('0.5.2')).toBe('0.5.2')
   })
@@ -26,7 +26,7 @@ describe('setup-jlo extractSemver behavior', () => {
   })
 })
 
-describe('setup-jlo version ref behavior', () => {
+describe('setup-astm version ref behavior', () => {
   it('parses semver ref to release payload', () => {
     expect(parseVersionRef('0.5.2')).toEqual({
       kind: 'release-tag',
@@ -57,7 +57,7 @@ describe('setup-jlo version ref behavior', () => {
   })
 })
 
-describe('setup-jlo extractFirstSemverTriplet behavior', () => {
+describe('setup-astm extractFirstSemverTriplet behavior', () => {
   it('extracts semver from a single valid token', () => {
     expect(extractFirstSemverTriplet('1.2.3')).toBe('1.2.3')
   })
@@ -67,8 +67,8 @@ describe('setup-jlo extractFirstSemverTriplet behavior', () => {
   })
 
   it('extracts the first valid semver from multiple tokens', () => {
-    expect(extractFirstSemverTriplet('jlo version 1.2.3')).toBe('1.2.3')
-    expect(extractFirstSemverTriplet('jlo v1.2.3 (abcdef)')).toBe('1.2.3')
+    expect(extractFirstSemverTriplet('astm version 1.2.3')).toBe('1.2.3')
+    expect(extractFirstSemverTriplet('astm v1.2.3 (abcdef)')).toBe('1.2.3')
   })
 
   it('ignores invalid tokens and finds the first valid semver', () => {
@@ -79,11 +79,11 @@ describe('setup-jlo extractFirstSemverTriplet behavior', () => {
 
   it('returns undefined if no valid semver is found', () => {
     expect(extractFirstSemverTriplet('version unknown')).toBeUndefined()
-    expect(extractFirstSemverTriplet('jlo 1.2')).toBeUndefined()
+    expect(extractFirstSemverTriplet('astm 1.2')).toBeUndefined()
     expect(extractFirstSemverTriplet('')).toBeUndefined()
   })
 
   it('handles irregular whitespace', () => {
-    expect(extractFirstSemverTriplet('  jlo   \t  v1.2.3 \n ')).toBe('1.2.3')
+    expect(extractFirstSemverTriplet('  astm   \t  v1.2.3 \n ')).toBe('1.2.3')
   })
 })

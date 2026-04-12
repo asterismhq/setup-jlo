@@ -18,7 +18,7 @@ import {
   resolveGitWorktreeHeadSha,
   updateGitHubSubmodules,
 } from '../adapters/process/github-source-git'
-import { JLO_REPOSITORY } from '../catalog/jlo'
+import { ASTM_REPOSITORY } from '../catalog/astm'
 import { detectPlatformTuple } from '../domain/platform'
 
 export async function installMainSource(
@@ -54,17 +54,17 @@ export async function installMainSource(
   }
   const submoduleAuthUsername = submoduleAuthUsernameResult.value
 
-  const clonePath = mkdtempSync(join(request.tempDirectory, 'setup-jlo-main-'))
+  const clonePath = mkdtempSync(join(request.tempDirectory, 'setup-astm-main-'))
 
   try {
     // Keep source acquisition on the same authenticated clone path used by builds.
     // A separate ls-remote path previously broke main-mode auth in CI.
     core.info(
-      `Cloning ${JLO_REPOSITORY.owner}/${JLO_REPOSITORY.repo}@${sourceBranch} for source build.`,
+      `Cloning ${ASTM_REPOSITORY.owner}/${ASTM_REPOSITORY.repo}@${sourceBranch} for source build.`,
     )
 
     const cloneResult = cloneGitHubBranch({
-      repository: JLO_REPOSITORY,
+      repository: ASTM_REPOSITORY,
       branch: sourceBranch,
       destination: clonePath,
       token: request.token,
@@ -86,13 +86,13 @@ export async function installMainSource(
     const cacheRoot = request.cacheRoot
     const platformDir = resolvePlatformCacheDirectory(cacheRoot, platform)
     const installDir = ensureInstallDirectory(platformDir, installKey)
-    const binaryPath = join(installDir, 'jlo')
+    const binaryPath = join(installDir, 'astm')
 
     if (existsSync(binaryPath)) {
-      core.info(`jlo main@${shortSha} already cached; skipping build.`)
+      core.info(`astm main@${shortSha} already cached; skipping build.`)
       pruneSiblingInstallDirectories(platformDir, installKey)
       installBinaryOnPath(installDir)
-      core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
+      core.info(`astm installed: ${detectBinaryVersion(binaryPath)}`)
       return
     }
 
@@ -122,7 +122,7 @@ export async function installMainSource(
 
     pruneSiblingInstallDirectories(platformDir, installKey)
     installBinaryOnPath(installDir)
-    core.info(`jlo installed: ${detectBinaryVersion(binaryPath)}`)
+    core.info(`astm installed: ${detectBinaryVersion(binaryPath)}`)
   } finally {
     rmSync(clonePath, { recursive: true, force: true })
   }

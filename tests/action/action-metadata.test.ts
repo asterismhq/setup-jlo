@@ -18,7 +18,7 @@ function loadActionFile(path: string): ActionFile {
 }
 
 describe('action metadata contracts', () => {
-  it('setup-jlo declares node24 and dist entrypoint', () => {
+  it('setup-astm declares node24 and dist entrypoint', () => {
     const action = loadActionFile('action.yml')
     expect(action.runs.using).toBe('node24')
     expect(action.runs.main).toBe('dist/index.js')

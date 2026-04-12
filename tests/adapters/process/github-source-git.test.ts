@@ -43,7 +43,7 @@ describe('github-source-git adapter', () => {
         branch: 'main',
         destination: '/dest',
         token: 'secret',
-        username: 'jlo-bot',
+        username: 'astm-bot',
       })
 
       expect(result.ok).toBe(false)
@@ -66,7 +66,7 @@ describe('github-source-git adapter', () => {
         branch: 'main',
         destination: '/dest',
         token: 'secret',
-        username: 'jlo-bot',
+        username: 'astm-bot',
       })
 
       expect(result.ok).toBe(false)
@@ -89,7 +89,7 @@ describe('github-source-git adapter', () => {
         branch: 'main',
         destination: '/dest',
         token: 'secret',
-        username: 'jlo-bot',
+        username: 'astm-bot',
       })
 
       expect(result.ok).toBe(true)
@@ -102,7 +102,7 @@ describe('github-source-git adapter', () => {
           '--branch',
           'main',
           '--',
-          'https://jlo-bot:secret@github.com/owner/repo.git',
+          'https://astm-bot:secret@github.com/owner/repo.git',
           '/dest',
         ]),
         expect.anything(),
@@ -170,7 +170,7 @@ describe('github-source-git adapter', () => {
       const result = updateGitHubSubmodules({
         cwd: '/src',
         token: 'secret',
-        username: 'jlo-bot',
+        username: 'astm-bot',
       })
 
       expect(result.ok).toBe(false)
@@ -197,7 +197,7 @@ describe('github-source-git adapter', () => {
       const result = updateGitHubSubmodules({
         cwd: '/src',
         token: 'secret',
-        username: 'jlo-bot',
+        username: 'astm-bot',
       })
 
       expect(result.ok).toBe(false)
@@ -218,7 +218,7 @@ describe('github-source-git adapter', () => {
       const result = updateGitHubSubmodules({
         cwd: '/src',
         token: 'secret',
-        username: 'jlo-bot',
+        username: 'astm-bot',
       })
 
       expect(result.ok).toBe(true)
@@ -255,7 +255,7 @@ describe('github-source-git adapter', () => {
         branch: 'main',
         destination: '/dest',
         token: 'secret',
-        username: 'jlo-bot',
+        username: 'astm-bot',
       })
 
       expect(result.ok).toBe(false)
