@@ -2,7 +2,7 @@
 
 ## Scope
 
-`setup-jlo` is a single-action repository. The active product surface is the GitHub Action defined by `action.yml` and the TypeScript runtime in `src/`.
+`setup-astm` is a single-action repository. The active product surface is the GitHub Action defined by `action.yml` and the TypeScript runtime in `src/`.
 
 ## Local Verification
 
@@ -34,8 +34,8 @@ Release automation on `main` runs `npm run package`, commits `dist/` when change
 
 ## Release Model
 
-The repository versions one action. Consumer-facing tags follow `vX.Y.Z`, and the moving major tag for workflows is `v1`.
-Release automation is manually dispatched with an `X.Y.Z` input, validates it on `main`, creates `vX.Y.Z`, moves `v1`, and publishes the GitHub Release.
+The repository versions one action. Consumer-facing tags follow `vX.Y.Z`, and the moving major tag for workflows is `v2`.
+Release automation is manually dispatched with an `X.Y.Z` input, validates it on `main`, creates `vX.Y.Z`, moves `v2`, and publishes the GitHub Release.
 
 ## Documentation
 

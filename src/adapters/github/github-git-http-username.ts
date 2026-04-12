@@ -23,7 +23,7 @@ export async function resolveGitHubHttpUsername(
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github+json',
-      'User-Agent': 'setup-jlo',
+      'User-Agent': 'setup-astm',
     },
   })
 

@@ -5,8 +5,8 @@ import { resolveInstallRequest } from '../../src/action/install-request'
 
 const ENV_KEYS = [
   'HOME',
-  'JLO_ALLOW_DARWIN_X86_64_FALLBACK',
-  'JLO_CACHE_ROOT',
+  'ASTM_ALLOW_DARWIN_X86_64_FALLBACK',
+  'ASTM_CACHE_ROOT',
   'RUNNER_ENVIRONMENT',
   'RUNNER_TEMP',
   'RUNNER_TOOL_CACHE',
@@ -21,7 +21,7 @@ describe('action install request normalization', () => {
     for (const key of ENV_KEYS) {
       vi.stubEnv(key, '')
     }
-    vi.stubEnv('JLO_ALLOW_DARWIN_X86_64_FALLBACK', 'true')
+    vi.stubEnv('ASTM_ALLOW_DARWIN_X86_64_FALLBACK', 'true')
 
     const request = resolveInstallRequest({
       token: ' install-token ',
@@ -32,16 +32,16 @@ describe('action install request normalization', () => {
       token: ' install-token ',
       submoduleToken: 'submodule-token',
       allowDarwinX8664Fallback: true,
-      cacheRoot: resolve(tmpdir(), 'jlo-bin-cache'),
+      cacheRoot: resolve(tmpdir(), 'astm-bin-cache'),
       tempDirectory: tmpdir(),
     })
   })
 
-  it('resolves cacheRoot using JLO_CACHE_ROOT override', () => {
+  it('resolves cacheRoot using ASTM_CACHE_ROOT override', () => {
     for (const key of ENV_KEYS) {
       vi.stubEnv(key, '')
     }
-    vi.stubEnv('JLO_CACHE_ROOT', ' /tmp/cache ')
+    vi.stubEnv('ASTM_CACHE_ROOT', ' /tmp/cache ')
     vi.stubEnv('RUNNER_ENVIRONMENT', ' github-hosted ')
     vi.stubEnv('RUNNER_TEMP', ' /tmp/runner ')
 
@@ -64,7 +64,7 @@ describe('action install request normalization', () => {
       token: 'token',
     })
 
-    expect(request.cacheRoot).toBe(resolve('/tmp/runner', 'jlo-bin-cache'))
+    expect(request.cacheRoot).toBe(resolve('/tmp/runner', 'astm-bin-cache'))
   })
 
   it('resolves cacheRoot for self-hosted runners using RUNNER_TOOL_CACHE', () => {
@@ -77,7 +77,7 @@ describe('action install request normalization', () => {
       token: 'token',
     })
 
-    expect(request.cacheRoot).toBe(resolve('/opt/toolcache', 'jlo-bin-cache'))
+    expect(request.cacheRoot).toBe(resolve('/opt/toolcache', 'astm-bin-cache'))
   })
 
   it('resolves cacheRoot for local fallback using HOME', () => {
@@ -91,7 +91,7 @@ describe('action install request normalization', () => {
     })
 
     expect(request.cacheRoot).toBe(
-      resolve('/home/user/.cache', 'jlo-bin-cache'),
+      resolve('/home/user/.cache', 'astm-bin-cache'),
     )
   })
 })

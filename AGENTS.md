@@ -1,6 +1,6 @@
-# setup-jlo
+# setup-astm
 
-`setup-jlo` is a single TypeScript GitHub Action repository.
+`setup-astm` is a single TypeScript GitHub Action repository.
 The public contract is `action.yml`.
 The authored runtime is under `src/`.
 Tests are under `tests/`.

@@ -22,17 +22,17 @@ export function buildCargoRelease(options: {
 
   if (buildResult.error) {
     throw new Error(
-      `Failed to build jlo from source: ${buildResult.error.message}`,
+      `Failed to build astm from source: ${buildResult.error.message}`,
     )
   }
 
   if (buildResult.status !== 0) {
     throw new Error(
-      `Failed to build jlo from source: ${buildResult.stderr.trim()}`,
+      `Failed to build astm from source: ${buildResult.stderr.trim()}`,
     )
   }
 
-  const builtBinary = join(options.buildTargetDir, 'release', 'jlo')
+  const builtBinary = join(options.buildTargetDir, 'release', 'astm')
   if (!existsSync(builtBinary)) {
     throw new Error(
       `Source build completed but binary not found at '${builtBinary}'.`,

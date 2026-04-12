@@ -27,12 +27,15 @@ export function buildReleaseAssetCandidates(
   allowDarwinX8664Fallback: boolean,
 ): string[] {
   if (platform.arch === 'x86_64') {
-    return [`jlo-${platform.os}-x86_64`, `jlo-${platform.os}-amd64`]
+    return [`astm-${platform.os}-x86_64`, `astm-${platform.os}-amd64`]
   }
 
-  const candidates = [`jlo-${platform.os}-aarch64`, `jlo-${platform.os}-arm64`]
+  const candidates = [
+    `astm-${platform.os}-aarch64`,
+    `astm-${platform.os}-arm64`,
+  ]
   if (platform.os === 'darwin' && allowDarwinX8664Fallback) {
-    candidates.push(`jlo-${platform.os}-x86_64`)
+    candidates.push(`astm-${platform.os}-x86_64`)
   }
   return candidates
 }
@@ -44,7 +47,7 @@ function normalizeOs(raw: string): InstallerOs {
     case 'darwin':
       return 'darwin'
     default:
-      throw new Error(`Unsupported OS for setup-jlo: ${raw}`)
+      throw new Error(`Unsupported OS for setup-astm: ${raw}`)
   }
 }
 
@@ -55,7 +58,7 @@ function normalizeArch(raw: string): InstallerArch {
     case 'arm64':
       return 'aarch64'
     default:
-      throw new Error(`Unsupported architecture for setup-jlo: ${raw}`)
+      throw new Error(`Unsupported architecture for setup-astm: ${raw}`)
   }
 }
 

@@ -42,7 +42,7 @@ describe('release-asset-api adapter', () => {
         token: 'token',
         releaseRepository: { owner: 'owner', repo: 'repo' },
         tagVersion: 'v1.0.0',
-        candidates: ['jlo-linux-x86_64'],
+        candidates: ['astm-linux-x86_64'],
       })
 
       expect(result.ok).toBe(false)

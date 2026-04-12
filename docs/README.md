@@ -1,6 +1,23 @@
 # Documentation
 
-This directory is the central documentation index for `setup-jlo`.
+This directory is the central documentation index for `setup-astm`.
+
+## Migration Contract
+
+Current migration work follows these fixed naming decisions.
+
+- Action identity: `setup-astm`
+- Installed binary name: `astm`
+- Upstream repository slug default: `asterismhq/asterism`
+- Product-owned environment variable prefix: `ASTM_`
+- Worker branch default expected from the runtime ecosystem: `astm`
+
+The residue scan allowlist is limited to backend-integration ownership boundaries in the companion runtime repository.
+
+- `src/adapters/jules_client/**`
+- `src/domain/ports/jules_client.rs`
+- `crates/jls-api-rs/**`
+- `JULES_API_KEY`
 
 ## Usage
 

@@ -65,15 +65,15 @@ describe('app install release orchestration', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    tempTestDir = mkdtempSync(join(tmpdir(), 'vitest-setup-jlo-release-'))
+    tempTestDir = mkdtempSync(join(tmpdir(), 'vitest-setup-astm-release-'))
     mockCacheRoot = join(tempTestDir, 'cache')
     mockTempDirectory = join(tempTestDir, 'runner-temp')
     mkdirSync(mockCacheRoot, { recursive: true })
     mkdirSync(mockTempDirectory, { recursive: true })
 
     detectPlatformTuple.mockReturnValue({ os: 'linux', arch: 'x86_64' })
-    buildReleaseAssetCandidates.mockReturnValue(['jlo-linux-x86_64'])
-    detectBinaryVersion.mockReturnValue('jlo 1.2.3')
+    buildReleaseAssetCandidates.mockReturnValue(['astm-linux-x86_64'])
+    detectBinaryVersion.mockReturnValue('astm 1.2.3')
     vi.mocked(isCachedBinaryForVersion).mockReturnValue(false)
   })
 
@@ -87,7 +87,7 @@ describe('app install release orchestration', () => {
     vi.mocked(isCachedBinaryForVersion).mockReturnValue(true)
     const installDir = join(mockCacheRoot, 'linux-x86_64', 'v1.2.3')
     mkdirSync(installDir, { recursive: true })
-    writeFileSync(join(installDir, 'jlo'), 'jlo 1.2.3')
+    writeFileSync(join(installDir, 'astm'), 'astm 1.2.3')
 
     await installReleaseVersion(
       {
@@ -106,16 +106,16 @@ describe('app install release orchestration', () => {
     expect(buildReleaseAssetCandidates).not.toHaveBeenCalled()
     expect(fetchReleaseAsset).not.toHaveBeenCalled()
     expect(info).toHaveBeenCalledWith(
-      'jlo 1.2.3 already cached; skipping download.',
+      'astm 1.2.3 already cached; skipping download.',
     )
-    expect(info).toHaveBeenCalledWith('jlo installed: jlo 1.2.3')
+    expect(info).toHaveBeenCalledWith('astm installed: astm 1.2.3')
   })
 
   it('downloads release asset and places it in cache', async () => {
     fetchReleaseAsset.mockResolvedValue({
       ok: true,
       value: {
-        name: 'jlo-linux-x86_64',
+        name: 'astm-linux-x86_64',
         contents: Buffer.from('binary-data'),
       },
     })
@@ -139,8 +139,8 @@ describe('app install release orchestration', () => {
     expect(installBinaryOnPath).toHaveBeenCalled()
 
     const installDir = join(mockCacheRoot, 'linux-x86_64', 'v1.2.3')
-    expect(readdirSync(installDir)).toContain('jlo')
-    expect(readFileSync(join(installDir, 'jlo'), 'utf8')).toBe('binary-data')
+    expect(readdirSync(installDir)).toContain('astm')
+    expect(readFileSync(join(installDir, 'astm'), 'utf8')).toBe('binary-data')
     expect(readdirSync(mockTempDirectory)).toEqual([])
   })
 
@@ -148,7 +148,7 @@ describe('app install release orchestration', () => {
     fetchReleaseAsset.mockResolvedValue({
       ok: true,
       value: {
-        name: 'jlo-linux-x86_64',
+        name: 'astm-linux-x86_64',
         contents: Buffer.from(''),
       },
     })
@@ -168,7 +168,7 @@ describe('app install release orchestration', () => {
         },
       ),
     ).rejects.toThrow(
-      "Downloaded release asset 'jlo-linux-x86_64' is missing or empty in 'asterismhq/jlo' (v1.2.3).",
+      "Downloaded release asset 'astm-linux-x86_64' is missing or empty in 'asterismhq/asterism' (v1.2.3).",
     )
 
     expect(readdirSync(mockTempDirectory)).toEqual([])
@@ -178,7 +178,7 @@ describe('app install release orchestration', () => {
     fetchReleaseAsset.mockResolvedValue({
       ok: true,
       value: {
-        name: 'jlo-linux-x86_64',
+        name: 'astm-linux-x86_64',
         contents: Buffer.from('binary-data'),
       },
     })

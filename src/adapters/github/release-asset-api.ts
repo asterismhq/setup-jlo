@@ -27,7 +27,7 @@ export async function fetchReleaseAsset(options: {
   const headers = {
     Authorization: `Bearer ${options.token}`,
     Accept: 'application/vnd.github+json',
-    'User-Agent': 'setup-jlo',
+    'User-Agent': 'setup-astm',
   }
 
   const metadataResponse = await fetch(

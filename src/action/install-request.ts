@@ -14,9 +14,9 @@ export function resolveInstallRequest(options: {
   submoduleToken?: string
 }): InstallRequest {
   const allowDarwinX8664Fallback = parseBooleanEnv(
-    process.env.JLO_ALLOW_DARWIN_X86_64_FALLBACK,
+    process.env.ASTM_ALLOW_DARWIN_X86_64_FALLBACK,
   )
-  const cacheRootOverride = normalizeOptional(process.env.JLO_CACHE_ROOT)
+  const cacheRootOverride = normalizeOptional(process.env.ASTM_CACHE_ROOT)
   const runnerEnvironment = normalizeOptional(process.env.RUNNER_ENVIRONMENT)
   const runnerTemp = normalizeOptional(process.env.RUNNER_TEMP)
   const runnerToolCache = normalizeOptional(process.env.RUNNER_TOOL_CACHE)
@@ -28,12 +28,12 @@ export function resolveInstallRequest(options: {
   if (cacheRootOverride) {
     cacheRoot = cacheRootOverride
   } else if (runnerEnvironment === 'github-hosted') {
-    cacheRoot = resolve(runnerTemp ?? tmpdir(), 'jlo-bin-cache')
+    cacheRoot = resolve(runnerTemp ?? tmpdir(), 'astm-bin-cache')
   } else {
     const base =
       runnerToolCache ??
       (homeDirectory ? resolve(homeDirectory, '.cache') : tmpdir())
-    cacheRoot = resolve(base, 'jlo-bin-cache')
+    cacheRoot = resolve(base, 'astm-bin-cache')
   }
 
   return {

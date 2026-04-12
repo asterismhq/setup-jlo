@@ -1,6 +1,6 @@
 # Verify E2E on macOS
 #
-# Runs end-to-end verification of the local `setup-jlo` action implementation
+# Runs end-to-end verification of the local `setup-astm` action implementation
 # on macOS runners when explicitly dispatched.
 
 name: Verify E2E on macOS
@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       release_version:
-        description: Semver release version of jlo to install
+        description: Semver release version of astm to install
         required: true
-        default: 23.2.0
+        default: 27.0.0
         type: string
 
 permissions:
@@ -32,22 +32,22 @@ jobs:
       - name: Build Action Distribution
         run: npm run package
 
-      - name: Run setup-jlo in Release Mode
-        id: setup_jlo
+      - name: Run setup-astm in Release Mode
+        id: setup_astm
         uses: ./
         with:
-          token: ${{ secrets.JLO_RELEASE_PAT }}
+          token: ${{ secrets.ASTM_RELEASE_PAT }}
           version: ${{ inputs.release_version }}
 
       - name: Verify Action Outputs
         run: |
-          test "${{ steps.setup_jlo.outputs.version-ref }}" = "${{ inputs.release_version }}"
-          test "${{ steps.setup_jlo.outputs.install-mode }}" = "release-tag"
+          test "${{ steps.setup_astm.outputs.version-ref }}" = "${{ inputs.release_version }}"
+          test "${{ steps.setup_astm.outputs.install-mode }}" = "release-tag"
 
-      - name: Verify Installed jlo Binary
+      - name: Verify Installed astm Binary
         run: |
-          command -v jlo
-          jlo --version
+          command -v astm
+          astm --version
 
   main-macos:
     name: Main Install on macOS
@@ -66,20 +66,20 @@ jobs:
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Run setup-jlo in Main Mode
-        id: setup_jlo
+      - name: Run setup-astm in Main Mode
+        id: setup_astm
         uses: ./
         with:
-          token: ${{ secrets.JLO_RELEASE_PAT }}
+          token: ${{ secrets.ASTM_RELEASE_PAT }}
           version: main
-          submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
+          submodule_token: ${{ secrets.ASTM_SUBMODULE_PAT }}
 
       - name: Verify Action Outputs
         run: |
-          test "${{ steps.setup_jlo.outputs.version-ref }}" = "main"
-          test "${{ steps.setup_jlo.outputs.install-mode }}" = "main"
+          test "${{ steps.setup_astm.outputs.version-ref }}" = "main"
+          test "${{ steps.setup_astm.outputs.install-mode }}" = "main"
 
-      - name: Verify Installed jlo Binary
+      - name: Verify Installed astm Binary
         run: |
-          command -v jlo
-          jlo --version
+          command -v astm
+          astm --version

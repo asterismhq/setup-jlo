@@ -2,12 +2,12 @@
 
 ## Inputs
 
-`setup-jlo` defines these inputs in `action.yml`:
+`setup-astm` defines these inputs in `action.yml`:
 
 | Input | Required | Default | Meaning |
 |------|----------|---------|---------|
 | `token` | yes | none | GitHub token used to read release metadata, release assets, and the source repository for `main` mode |
-| `version` | yes | none | jlo version ref to install, such as `23.0.0` or `main`; a leading `v` is also accepted for semver releases |
+| `version` | yes | none | astm version ref to install, such as `27.0.0` or `main`; a leading `v` is also accepted for semver releases |
 | `submodule_token` | no | empty | GitHub token used for required authenticated submodule fetch during `main` mode |
 
 ## Outputs
