@@ -15,7 +15,7 @@ The repository packages one distributable action. The runtime contract is intent
 
 ## Usage
 
-Usage centers on two install modes: semver refs download `astm` runtime release assets from `asterismhq/astm` and the `main` ref resolves the current `main` head, reuses a matching cached build when present, or builds `astm` from source on the runner.
+Usage centers on two install modes: semver refs download `astm` runtime release assets from `asterismhq/asterism` and the `main` ref resolves the current `main` head, reuses a matching cached build when present, or builds `astm` from source on the runner.
 
 See [docs/usage.md](docs/usage.md) for the input surface, install modes, and workflow examples.
 
@@ -27,6 +27,6 @@ See [docs/architecture.md](docs/architecture.md) for ownership boundaries, depen
 
 ## Configuration
 
-Configuration consists of action inputs, runtime environment variables, token scopes, and private-action access settings. The action installs the version ref supplied by the workflow and reads release assets and `main`-mode source from `asterismhq/astm`.
+Configuration consists of action inputs, runtime environment variables, token scopes, and private-action access settings. The action installs the version ref supplied by the workflow and reads release assets and `main`-mode source from `asterismhq/asterism`.
 
 See [docs/README.md](docs/README.md) for inputs, environment overrides, and access requirements.

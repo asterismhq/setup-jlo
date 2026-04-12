@@ -19,7 +19,7 @@ Examples use the bare semver form. A leading `v` is also accepted for semver rel
 
 The `version` input accepts two version ref classes:
 
-- semver such as `22.0.1`: downloads the matching `astm-*` runtime release asset from `asterismhq/astm`; a leading `v` is also accepted and resolves to the same release tag
+- semver such as `22.0.1`: downloads the matching `astm-*` runtime release asset from `asterismhq/asterism`; a leading `v` is also accepted and resolves to the same release tag
 - `main`: resolves the current `main` head SHA, reuses a matching cached build when present, or clones the source repository, fetches required submodules, and builds `astm` with `cargo`
 
 ## Main-mode Example

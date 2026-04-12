@@ -12,9 +12,9 @@ The runtime `token` input is separate from the token GitHub Actions uses interna
 
 The `token` input requires read access to:
 
-- `asterismhq/astm`
+- `asterismhq/asterism`
 
-`asterismhq/astm` serves as both the runtime release repository and the default `main` source repository, so the same token covers source resolution and clone access.
+`asterismhq/asterism` serves as both the runtime release repository and the default `main` source repository, so the same token covers source resolution and clone access.
 
 ## Submodule Access
 
