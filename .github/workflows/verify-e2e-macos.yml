@@ -11,7 +11,7 @@ on:
       release_version:
         description: Semver release version of astm to install
         required: true
-        default: 23.2.0
+        default: 27.0.0
         type: string
 
 permissions:

@@ -19,7 +19,7 @@ on:
       release_version:
         description: Semver release version of astm to install
         required: true
-        default: 23.2.0
+        default: 27.0.0
         type: string
 
 concurrency:
@@ -50,11 +50,11 @@ jobs:
         uses: ./
         with:
           token: ${{ secrets.ASTM_RELEASE_PAT }}
-          version: ${{ inputs.release_version || '23.2.0' }}
+          version: ${{ inputs.release_version || '27.0.0' }}
 
       - name: Verify Action Outputs
         run: |
-          test "${{ steps.setup_astm.outputs.version-ref }}" = "${{ inputs.release_version || '23.2.0' }}"
+          test "${{ steps.setup_astm.outputs.version-ref }}" = "${{ inputs.release_version || '27.0.0' }}"
           test "${{ steps.setup_astm.outputs.install-mode }}" = "release-tag"
 
       - name: Verify Installed astm Binary
