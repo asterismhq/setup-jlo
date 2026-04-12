@@ -8,10 +8,10 @@
 - uses: asterismhq/setup-astm@v1
   with:
     token: ${{ secrets.ASTM_INSTALL_TOKEN }}
-    version: 23.0.0
+    version: 27.0.0
 ```
 
-This default form installs the semver-pinned runtime binary for `23.0.0`.
+This default form installs the semver-pinned runtime binary for `27.0.0`.
 
 Examples use the bare semver form. A leading `v` is also accepted for semver releases and resolves to the same release tag.
 

@@ -10,7 +10,7 @@ The repository packages one distributable action. The runtime contract is intent
 - uses: asterismhq/setup-astm@v1
   with:
     token: ${{ secrets.ASTM_INSTALL_TOKEN }}
-    version: 23.0.0
+    version: 27.0.0
 ```
 
 ## Usage
